@@ -1,54 +1,118 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Topbar } from '../-components/topbar'
 import { Button } from '@/components/ui/button'
-import { Edit, Funnel, Loader, Plus, RefreshCcw, Trash } from 'lucide-react'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Edit, Funnel, RefreshCcw, Trash } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { NewBrandSheet } from './-components/new-brand'
+import { privateInstance } from '@/lib/auth'
+import { EditBrandSheet } from './-components/edit-brand'
+import { DeleteBrand } from './-components/delete-brand'
+import { DataTable } from '@/components/data-table'
+import type { ColumnDef } from '@/components/data-table'
+
+
 
 export const Route = createFileRoute('/dashboard/brands/')({
   component: RouteComponent,
 })
 
 type Brand = {
-  id: string
-  created_at: number,
-  updated_at: number,
+  id: number
+  created_at: number
+  updated_at: number
   name: string
   company_id: number
 }
 
-
+type BrandsResponse = {
+  itemsReceived: number
+  curPage: number
+  nextPage: number | null
+  prevPage: number | null
+  offset: number
+  perPage: number
+  itemsTotal: number
+  pageTotal: number
+  items: Brand[]
+}
 
 function RouteComponent() {
+  const [currentPage, setCurrentPage] = useState(1)
+  const [perPage, setPerPage] = useState(10)
+  const [selectedBrands, setSelectedBrands] = useState<number[]>([])
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
 
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
-    queryKey: ['brands'],
-    queryFn: () => {
-      return fetch('https://x8ki-letl-twmt.n7.xano.io/api:tc5G7www/brands', {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Bearer ' + localStorage.getItem('kayla-token')
-        }
-      })
+    queryKey: ['brands', currentPage, perPage],
+    queryFn: async () => {
+      const response = await privateInstance.get(`api:tc5G7www/brands?page=${currentPage}&per_page=${perPage}`)
+      if (response.status !== 200) {
+        throw new Error('Erro ao carregar marcas')
+      }
+      return await response.data as BrandsResponse
     }
   })
 
   const [brands, setBrands] = useState<Brand[]>([])
 
+  const columns: ColumnDef<Brand>[] = [
+    {
+      id: 'select',
+      width: '60px',
+      header: () => (
+        <div className='flex justify-center items-center'>
+          <Checkbox
+            checked={brands.length > 0 && selectedBrands.length === brands.length}
+            onCheckedChange={toggleSelectAll}
+          />
+        </div>
+      ),
+      cell: (brand) => (
+        <div className='flex justify-center items-center'>
+          <Checkbox
+            checked={selectedBrands.includes(brand.id)}
+            onCheckedChange={() => toggleSelectBrand(brand.id)}
+          />
+        </div>
+      ),
+      headerClassName: 'w-[60px] border-r',
+      className: 'font-medium border-r p-2!'
+    },
+    {
+      id: 'name',
+      header: 'Nome',
+      cell: (brand) => brand.name,
+      className: 'border-r p-2!'
+    },
+    {
+      id: 'products',
+      header: 'Produtos',
+      cell: (_brand) => 0,
+      headerClassName: 'w-[70px] border-r',
+      className: 'w-[120px] p-2!'
+    },
+  ]
+
   useEffect(() => {
+    if (!data) return
 
-    if (data) {
-      data.json().then((brands) => {
-        setBrands(brands)
-      })
-    }
+    const items = Array.isArray(data.items) ? data.items : []
+    setBrands(items)
 
-  }, [data])
+    const itemsTotal = typeof data.itemsTotal === 'number' ? data.itemsTotal : items.length
+    setTotalItems(itemsTotal)
+
+    const pageTotal = typeof data.pageTotal === 'number' ? data.pageTotal : Math.max(1, Math.ceil(itemsTotal / perPage))
+    setTotalPages(pageTotal)
+
+    // Não sobrescrever currentPage com data.curPage para evitar conflitos de navegação
+    // O currentPage deve ser controlado apenas pelas funções de navegação
+  }, [data, perPage])
 
   useEffect(() => {
     if (isError) {
@@ -56,11 +120,42 @@ function RouteComponent() {
     }
   }, [isError])
 
+  // Resetar seleção quando mudar de página ou itens por página
   useEffect(() => {
-    if (isRefetching === true) {
-      setBrands([])
+    setSelectedBrands([])
+  }, [currentPage, perPage])
+
+  // Limpar seleção ao atualizar/refetch da listagem
+  useEffect(() => {
+    if (isRefetching) {
+      setSelectedBrands([])
     }
   }, [isRefetching])
+
+  // Garantir que a página atual está dentro dos limites
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages)
+    }
+  }, [totalPages, currentPage])
+
+
+  // Gerenciar seleção de itens
+  const toggleSelectAll = () => {
+    if (selectedBrands.length === brands.length) {
+      setSelectedBrands([])
+    } else {
+      setSelectedBrands(brands.map(brand => brand.id))
+    }
+  }
+
+  const toggleSelectBrand = (brandId: number) => {
+    if (selectedBrands.includes(brandId)) {
+      setSelectedBrands(selectedBrands.filter(id => id !== brandId))
+    } else {
+      setSelectedBrands([...selectedBrands, brandId])
+    }
+  }
 
   return (
     <div className='flex flex-col w-full h-full'>
@@ -71,7 +166,7 @@ function RouteComponent() {
       <div className='flex flex-col w-full h-full flex-1 overflow-hidden'>
 
         {/* Actions */}
-        <div className='border-b flex w-full items-center px-4 py-4 gap-4'>
+        <div className='border-b flex w-full items-center p-2 gap-4'>
 
           {/* Filters */}
           <div className='flex items-center gap-2 flex-1'>
@@ -83,64 +178,51 @@ function RouteComponent() {
           </div>
 
           <div className='flex items-center gap-2'>
-            <Button size={'sm'} variant={'outline'} onClick={() => refetch()}>
+            <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedBrands([]); refetch() }}>
               {
                 (isLoading || isRefetching)
                   ? <><RefreshCcw className='animate-spin' /> Atualizando...</>
                   : <><RefreshCcw /> Atualizar</>
               }
             </Button>
-            <Button size={'sm'} variant={'ghost'} disabled> <Trash /> Excluir</Button>
-            <Button size={'sm'} variant={'ghost'} disabled> <Edit /> Editar</Button>
+
+            {selectedBrands.length === 1 ? (
+              <DeleteBrand brandId={selectedBrands[0]} />
+            ) : (
+              <Button size={'sm'} variant={'ghost'} disabled>
+                <Trash /> Exluir
+              </Button>
+            )}
+
+            {selectedBrands.length === 1 ? (
+              <EditBrandSheet brandId={selectedBrands[0]} />
+            ) : (
+              <Button size={'sm'} variant={'ghost'} disabled>
+                <Edit /> Editar
+              </Button>
+            )}
             <NewBrandSheet />
           </div>
 
         </div>
 
         {/* Table */}
-        <div className='flex flex-col w-full flex-1 overflow-auto'>
-
-          <Table className='border-b h-'>
-
-            <TableHeader className='sticky top-0 bg-neutral-50 z-10 border-b'>
-              <TableRow className='bg-neutral-50'>
-                <TableHead className="w-[60px] border-r">
-                  <div className='flex justify-center items-center'><Checkbox /></div>
-                </TableHead>
-                <TableHead className='border-r'>Nome</TableHead>
-                <TableHead className='w-[70px] border-r'>Produtos</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-
-              {(isLoading || isRefetching) && <TableRow>
-                <TableCell colSpan={3} className='text-center'>Carregando...</TableCell>
-              </TableRow>}
-
-              {brands.length > 0 && brands.map((marca, index) => (
-                <TableRow key={marca.id} className={index % 2 === 0 ? '' : 'bg-neutral-50'}>
-                  <TableCell className="font-medium border-r p-2!">
-                    <div className='flex justify-center items-center'><Checkbox /></div>
-                  </TableCell>
-                  <TableCell className='border-r p-2!'>{marca.name}</TableCell>
-                  <TableCell className='w-[120px] p-2!'>{0}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-        </div>
-
-        {/* Table Footer */}
-        <div className='border-t h-12 w-full p-2 flex items-center'>
-
-          <span className='text-sm'>Mostrando do 1 ao 20 de 35 items.</span>
-
-        </div>
+        <DataTable
+          columns={columns}
+          data={brands}
+          loading={isLoading || isRefetching}
+          page={currentPage}
+          perPage={perPage}
+          totalItems={totalItems}
+          emptyMessage='Nenhuma marca encontrada'
+          onChange={({ page, perPage }) => {
+            if (typeof page === 'number') setCurrentPage(page)
+            if (typeof perPage === 'number') setPerPage(perPage)
+            // Disparar refetch quando houver mudança
+            refetch()
+          }} />
 
       </div>
-
     </div>
   )
 }

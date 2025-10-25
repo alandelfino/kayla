@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { auth, formSchema } from "@/lib/auth"
+import type { AxiosError } from "axios"
 
 export function LoginForm({
   className,
@@ -22,29 +23,23 @@ export function LoginForm({
   const { isPending, mutate } = useMutation({
     mutationFn: auth.login,
     onSuccess: (response) => {
-      if (response.ok) {
-
-        response.json().then((data) => {
-          localStorage.setItem("kayla-token", data.authToken)
-          localStorage.setItem("kayla-user", JSON.stringify(data.user))
-        })
-
+      if (response.status === 200) {
         toast.success("Login realizado com sucesso!")
         navigate({ to: "/dashboard" })
       } else {
         toast.error('Credenciais invalidas')
       }
     },
-    onError: (error) => {
-      toast.error(error.message)
+    onError: (error: AxiosError) => {
+      toast.error('Credenciais invalidas')
     },
   })
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: "alan_delfino@hotmail.com",
+      password: "160512@Adc",
     },
   })
 
@@ -82,7 +77,7 @@ export function LoginForm({
               <FormItem>
                 <FormLabel>Senha</FormLabel>
                 <FormControl>
-                  <Input placeholder="********" {...field} />
+                  <Input placeholder="********" {...field} type="password" />
                 </FormControl>
                 <FormMessage />
               </FormItem>

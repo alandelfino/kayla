@@ -14,11 +14,11 @@ export function Topbar({ title, breadcrumbs }: { title: string, breadcrumbs: Bre
         <div className='w-full bg-pattern dark:bg-neutral-950'>
 
             {/* Top navigation - Fixed */}
-            <div className='border-b h-14 w-full flex items-center px-4 bg-white dark:bg-neutral-900 sticky top-0 z-10 gap-4'>
+            <div className='border-b h-14 w-full flex items-center px-2 bg-white dark:bg-neutral-900 sticky top-0 z-10 gap-4'>
 
                 <SidebarTrigger />
 
-                <h1 className='text-md font-semibold'>{title}</h1>
+                <h1 className='text- font-semibold'>{title}</h1>
 
                 <div className='w-px h-6 border-l'></div>
 
