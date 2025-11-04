@@ -49,7 +49,9 @@ function Tree({ indent = 20, tree, className, ...props }: TreeProps) {
         style={mergedStyle}
         className={cn("flex flex-col", className)}
         {...otherProps}
-      />
+      >
+        {props.children}
+      </div>
     </TreeContext.Provider>
   )
 }
