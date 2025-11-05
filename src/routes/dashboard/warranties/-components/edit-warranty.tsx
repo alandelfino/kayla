@@ -24,6 +24,13 @@ export function EditWarrantySheet({ className, warrantyId, ...props }: React.Com
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const queryClient = useQueryClient()
+  const formatCurrencyBRL = (centavos: number) => {
+    const value = typeof centavos === 'number' && !isNaN(centavos) ? centavos : 0
+    const reais = Math.floor(value / 100)
+    const cents = Math.abs(value % 100)
+    return `R$ ${reais.toLocaleString('pt-BR')},${cents.toString().padStart(2, '0')}`
+  }
+  const [priceDisplay, setPriceDisplay] = useState<string>(formatCurrencyBRL(0))
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema) as any,
@@ -39,6 +46,7 @@ export function EditWarrantySheet({ className, warrantyId, ...props }: React.Com
   const closeSheet = () => {
     setOpen(false)
     form.reset()
+    setPriceDisplay(formatCurrencyBRL(0))
   }
 
   async function fetchWarranty() {
@@ -54,6 +62,7 @@ export function EditWarrantySheet({ className, warrantyId, ...props }: React.Com
         amount: warranty.amount ?? 12,
         price: warranty.price ?? 0,
       })
+      setPriceDisplay(formatCurrencyBRL(warranty.price ?? 0))
     } catch (error: any) {
       toast.error(error?.message ?? 'Erro ao carregar garantia')
     } finally {
@@ -163,7 +172,18 @@ export function EditWarrantySheet({ className, warrantyId, ...props }: React.Com
                 <FormItem>
                   <FormLabel>Preço</FormLabel>
                   <FormControl>
-                    <Input type="number" min={0} step={1} placeholder="Ex.: 100" {...field} disabled={loading || isPending} />
+                    <Input
+                      inputMode="numeric"
+                      placeholder="R$ 0,00"
+                      value={priceDisplay}
+                      onChange={(e) => {
+                        const onlyDigits = e.target.value.replace(/\D/g, '')
+                        const centavos = onlyDigits ? parseInt(onlyDigits, 10) : 0
+                        setPriceDisplay(formatCurrencyBRL(centavos))
+                        field.onChange(centavos)
+                      }}
+                      disabled={loading || isPending}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
