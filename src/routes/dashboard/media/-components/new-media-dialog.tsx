@@ -14,7 +14,7 @@ const mediaSchema = z.object({
   name: z.string().min(1, { message: 'Nome é obrigatório' }),
 })
 
-export function NewMediaDialog({ onCreated }: { onCreated?: () => void }) {
+export function NewMediaDialog({ onCreated, onOpenChange }: { onCreated?: () => void, onOpenChange?: (open: boolean) => void }) {
   const [open, setOpen] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -44,6 +44,7 @@ export function NewMediaDialog({ onCreated }: { onCreated?: () => void }) {
       setImagePreview(null)
       setImageFile(null)
       setOpen(false)
+      onOpenChange?.(false)
       onCreated?.()
     } catch (e: any) {
       toast.error(e?.message ?? 'Erro ao criar mídia')
@@ -53,7 +54,7 @@ export function NewMediaDialog({ onCreated }: { onCreated?: () => void }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); onOpenChange?.(v) }}>
       <DialogTrigger asChild>
         <Button size={'sm'}>
           <UploadCloud /> Nova mídia

@@ -1,95 +1,167 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
+import { Topbar } from '../-components/topbar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { PlusIcon, RefreshCwIcon, Trash2Icon, EditIcon, ListIcon } from 'lucide-react'
-import * as React from 'react'
+import { Edit, Funnel, RefreshCcw, Trash } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { privateInstance } from '@/lib/auth'
+import { DataTable } from '@/components/data-table'
+import type { ColumnDef } from '@/components/data-table'
+import { NewWarrantySheet } from './-components/new-warranty'
+import { EditWarrantySheet } from './-components/edit-warranty'
+import { DeleteWarranty } from './-components/delete-warranty'
 
 export const Route = createFileRoute('/dashboard/warranties/')({
   component: RouteComponent,
 })
 
-type Garantia = {
-  id: string
-  nome: string
-  dias: number
-  itens: number
+type Warranty = {
+  id: number
+  created_at?: number
+  updated_at?: number
+  name: string
+  store_name: string
+  period: 'day' | 'month' | 'year'
+  amount: number
+  price: number
 }
 
-const dadosIniciais: Garantia[] = [
-  { id: '1', nome: 'Garantia 90 dias', dias: 90, itens: 8 },
-  { id: '2', nome: 'Garantia 180 dias', dias: 180, itens: 5 },
-  { id: '3', nome: 'Garantia 365 dias', dias: 365, itens: 11 },
-]
+type WarrantiesResponse = {
+  itemsReceived: number
+  curPage: number
+  nextPage: number | null
+  prevPage: number | null
+  offset: number
+  perPage: number
+  itemsTotal: number
+  pageTotal: number
+  items: Warranty[]
+}
 
 function RouteComponent() {
-  const [busca, setBusca] = React.useState('')
-  const [dados, setDados] = React.useState<Garantia[]>(dadosIniciais)
+  const formatCurrencyBRL = (centavos: number) => {
+    const value = typeof centavos === 'number' && !isNaN(centavos) ? centavos : 0
+    const reais = Math.floor(value / 100)
+    const cents = Math.abs(value % 100)
+    return `R$ ${reais.toLocaleString('pt-BR')},${cents.toString().padStart(2, '0')}`
+  }
+  const [currentPage, setCurrentPage] = useState(1)
+  const [perPage, setPerPage] = useState(20)
+  const [selected, setSelected] = useState<number[]>([])
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
 
-  const filtrados = dados.filter((d) => {
-    return busca
-      ? d.nome.toLowerCase().includes(busca.toLowerCase()) || String(d.dias).includes(busca)
-      : true
+  const { data, isLoading, isRefetching, isError, refetch } = useQuery({
+    refetchOnWindowFocus: false,
+    queryKey: ['warranties', currentPage, perPage],
+    queryFn: async () => {
+      const response = await privateInstance.get(`/api:PcyOgAiT/warranties?page=${currentPage}&per_page=${perPage}`)
+      if (response.status !== 200) {
+        throw new Error('Erro ao carregar garantias')
+      }
+      return await response.data as WarrantiesResponse
+    }
   })
 
-  return (
-    <div className='flex h-full flex-col'>
-      {/* Breadcrumb */}
-      <div className='px-4 pt-2'>
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href='/dashboard'>Dashboard</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Garantias</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
+  const [items, setItems] = useState<Warranty[]>([])
 
-      {/* Toolbar */}
-      <div className='flex h-14 items-center gap-2 px-4'>
-        <Input placeholder='Procurar...' value={busca} onChange={(e) => setBusca(e.target.value)} className='h-9 w-64' />
-        <Button variant='ghost' className='ml-2'><RefreshCwIcon /> Atualizar</Button>
-        <Button variant='ghost'><ListIcon /> Itens</Button>
-        <Button variant='ghost'><Trash2Icon /> Excluir</Button>
-        <Button variant='ghost'><EditIcon /> Editar</Button>
-        <div className='ml-auto'>
-          <Button><PlusIcon /> Cadastrar</Button>
+  const columns: ColumnDef<Warranty>[] = [
+    {
+      id: 'select',
+      width: '60px',
+      header: () => (
+        <div className='flex justify-center items-center'>
+          <Checkbox
+            checked={items.length > 0 && selected.length === items.length}
+            onCheckedChange={toggleSelectAll}
+          />
         </div>
-      </div>
+      ),
+      cell: (row) => (
+        <div className='flex justify-center items-center'>
+          <Checkbox
+            checked={selected.includes(row.id)}
+            onCheckedChange={() => toggleSelect(row.id)}
+          />
+        </div>
+      ),
+      headerClassName: 'w-[60px] border-r',
+      className: 'font-medium border-r p-2!'
+    },
+    { id: 'name', header: 'Nome', cell: (w) => w.name, className: 'border-r p-2!' },
+    { id: 'store_name', header: 'Loja', cell: (w) => w.store_name, className: 'border-r p-2!' },
+    { id: 'period', header: 'Período', cell: (w) => ({ day: 'Dia', month: 'Mês', year: 'Ano' }[w.period]), headerClassName: 'w-[90px] border-r', className: 'w-[120px] p-2!' },
+    { id: 'amount', header: 'Qtd.', cell: (w) => w.amount, headerClassName: 'w-[70px] border-r', className: 'w-[90px] p-2!' },
+    { id: 'price', header: 'Preço', cell: (w) => formatCurrencyBRL(w.price), headerClassName: 'w-[90px] border-r', className: 'w-[140px] p-2!' },
+  ]
 
-      <Separator />
+  useEffect(() => {
+    if (!data) return
 
-      {/* Table */}
-      <div className='px-4 py-2'>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className='w-6'></TableHead>
-              <TableHead>Nome</TableHead>
-              <TableHead className='text-right'>Dias</TableHead>
-              <TableHead className='text-right'>Itens</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtrados.map((d) => (
-              <TableRow key={d.id}>
-                <TableCell className='w-6'>
-                  <input type='radio' name='sel' className='size-4 accent-primary' />
-                </TableCell>
-                <TableCell className='font-medium'>{d.nome}</TableCell>
-                <TableCell className='text-right'>{d.dias}</TableCell>
-                <TableCell className='text-right'>{d.itens}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <div className='px-1 pt-2 text-xs text-muted-foreground'>Mostrando {filtrados.length} de {dados.length} registros</div>
+    const itemsArr = Array.isArray(data.items) ? data.items : []
+    setItems(itemsArr)
+
+    const itemsTotal = typeof data.itemsTotal === 'number' ? data.itemsTotal : itemsArr.length
+    setTotalItems(itemsTotal)
+
+    const pageTotal = typeof data.pageTotal === 'number' ? data.pageTotal : Math.max(1, Math.ceil(itemsTotal / perPage))
+    setTotalPages(pageTotal)
+  }, [data, perPage])
+
+  useEffect(() => { if (isError) toast.error('Erro ao carregar garantias') }, [isError])
+  useEffect(() => { setSelected([]) }, [currentPage, perPage])
+  useEffect(() => { if (isRefetching) setSelected([]) }, [isRefetching])
+  useEffect(() => { if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages) }, [totalPages, currentPage])
+
+  const toggleSelectAll = () => { if (selected.length === items.length) setSelected([]); else setSelected(items.map(i => i.id)) }
+  const toggleSelect = (id: number) => { if (selected.includes(id)) setSelected(selected.filter(s => s !== id)); else setSelected([...selected, id]) }
+
+  return (
+    <div className='flex flex-col w-full h-full'>
+      <Topbar title="Garantias" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard', isLast: false }, { label: 'Garantias', href: '/dashboard/warranties', isLast: true }]} />
+      <div className='flex flex-col w-full h-full flex-1 overflow-hidden'>
+        <div className='border-b flex w-full items-center p-2 gap-4'>
+          <div className='flex items-center gap-2 flex-1'>
+            <Button variant={'outline'} size={'sm'}>
+              <Funnel /> Filtros
+            </Button>
+          </div>
+          <div className='flex items-center gap-2'>
+            <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
+              {(isLoading || isRefetching) ? (<><RefreshCcw className='animate-spin' /> Atualizando...</>) : (<><RefreshCcw /> Atualizar</>)}
+            </Button>
+
+            {selected.length === 1 ? (
+              <DeleteWarranty warrantyId={selected[0]} />
+            ) : (
+              <Button size={'sm'} variant={'ghost'} disabled>
+                <Trash /> Excluir
+              </Button>
+            )}
+
+            {selected.length === 1 ? (
+              <EditWarrantySheet warrantyId={selected[0]} />
+            ) : (
+              <Button size={'sm'} variant={'ghost'} disabled>
+                <Edit /> Editar
+              </Button>
+            )}
+            <NewWarrantySheet />
+          </div>
+        </div>
+
+        <DataTable
+          columns={columns}
+          data={items}
+          loading={isLoading || isRefetching}
+          page={currentPage}
+          perPage={perPage}
+          totalItems={totalItems}
+          emptyMessage='Nenhuma garantia encontrada'
+          onChange={({ page, perPage }) => { if (typeof page === 'number') setCurrentPage(page); if (typeof perPage === 'number') setPerPage(perPage); refetch() }}
+        />
       </div>
     </div>
   )
