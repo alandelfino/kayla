@@ -13,6 +13,7 @@ import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
 import { Route as DashboardWarrantiesIndexRouteImport } from './routes/dashboard/warranties/index'
+import { Route as DashboardMediaIndexRouteImport } from './routes/dashboard/media/index'
 import { Route as DashboardDerivationsIndexRouteImport } from './routes/dashboard/derivations/index'
 import { Route as DashboardCategoriesIndexRouteImport } from './routes/dashboard/categories/index'
 import { Route as DashboardBrandsIndexRouteImport } from './routes/dashboard/brands/index'
@@ -38,6 +39,11 @@ const DashboardWarrantiesIndexRoute =
     path: '/warranties/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardMediaIndexRoute = DashboardMediaIndexRouteImport.update({
+  id: '/media/',
+  path: '/media/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardDerivationsIndexRoute =
   DashboardDerivationsIndexRouteImport.update({
     id: '/derivations/',
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/brands': typeof DashboardBrandsIndexRoute
   '/dashboard/categories': typeof DashboardCategoriesIndexRoute
   '/dashboard/derivations': typeof DashboardDerivationsIndexRoute
+  '/dashboard/media': typeof DashboardMediaIndexRoute
   '/dashboard/warranties': typeof DashboardWarrantiesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -72,6 +79,7 @@ export interface FileRoutesByTo {
   '/dashboard/brands': typeof DashboardBrandsIndexRoute
   '/dashboard/categories': typeof DashboardCategoriesIndexRoute
   '/dashboard/derivations': typeof DashboardDerivationsIndexRoute
+  '/dashboard/media': typeof DashboardMediaIndexRoute
   '/dashboard/warranties': typeof DashboardWarrantiesIndexRoute
 }
 export interface FileRoutesById {
@@ -82,6 +90,7 @@ export interface FileRoutesById {
   '/dashboard/brands/': typeof DashboardBrandsIndexRoute
   '/dashboard/categories/': typeof DashboardCategoriesIndexRoute
   '/dashboard/derivations/': typeof DashboardDerivationsIndexRoute
+  '/dashboard/media/': typeof DashboardMediaIndexRoute
   '/dashboard/warranties/': typeof DashboardWarrantiesIndexRoute
 }
 export interface FileRouteTypes {
@@ -93,6 +102,7 @@ export interface FileRouteTypes {
     | '/dashboard/brands'
     | '/dashboard/categories'
     | '/dashboard/derivations'
+    | '/dashboard/media'
     | '/dashboard/warranties'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/dashboard/brands'
     | '/dashboard/categories'
     | '/dashboard/derivations'
+    | '/dashboard/media'
     | '/dashboard/warranties'
   id:
     | '__root__'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '/dashboard/brands/'
     | '/dashboard/categories/'
     | '/dashboard/derivations/'
+    | '/dashboard/media/'
     | '/dashboard/warranties/'
   fileRoutesById: FileRoutesById
 }
@@ -150,6 +162,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardWarrantiesIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/media/': {
+      id: '/dashboard/media/'
+      path: '/media'
+      fullPath: '/dashboard/media'
+      preLoaderRoute: typeof DashboardMediaIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/derivations/': {
       id: '/dashboard/derivations/'
       path: '/derivations'
@@ -178,6 +197,7 @@ interface DashboardRouteRouteChildren {
   DashboardBrandsIndexRoute: typeof DashboardBrandsIndexRoute
   DashboardCategoriesIndexRoute: typeof DashboardCategoriesIndexRoute
   DashboardDerivationsIndexRoute: typeof DashboardDerivationsIndexRoute
+  DashboardMediaIndexRoute: typeof DashboardMediaIndexRoute
   DashboardWarrantiesIndexRoute: typeof DashboardWarrantiesIndexRoute
 }
 
@@ -185,6 +205,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardBrandsIndexRoute: DashboardBrandsIndexRoute,
   DashboardCategoriesIndexRoute: DashboardCategoriesIndexRoute,
   DashboardDerivationsIndexRoute: DashboardDerivationsIndexRoute,
+  DashboardMediaIndexRoute: DashboardMediaIndexRoute,
   DashboardWarrantiesIndexRoute: DashboardWarrantiesIndexRoute,
 }
 

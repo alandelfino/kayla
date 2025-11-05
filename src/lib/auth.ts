@@ -51,7 +51,10 @@ export const privateInstance = axios.create({
 })
 
 privateInstance.interceptors.request.use((config) => {
-    config.headers['Content-Type'] = 'application/json';
+    // Preserve existing Content-Type if already set (e.g., multipart/form-data for file uploads)
+    if (!config.headers['Content-Type']) {
+        config.headers['Content-Type'] = 'application/json'
+    }
     config.headers.Authorization = `Bearer ${localStorage.getItem(`${getSubdomain()}-kayla-authToken`)}`
     return config
 })

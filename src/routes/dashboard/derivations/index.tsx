@@ -1,121 +1,230 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
+import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { privateInstance } from '@/lib/auth'
+import { Topbar } from '../-components/topbar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
+import { Checkbox } from '@/components/ui/checkbox'
+import { DataTable, type ColumnDef } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
-import { PlusIcon, RefreshCwIcon, Trash2Icon, EditIcon, ListIcon, ChevronDown } from 'lucide-react'
-import * as React from 'react'
+import { Boxes, Edit, Funnel, RefreshCcw, Trash } from 'lucide-react'
+import { NewDerivationSheet } from './-components/new-derivation'
+import { EditDerivationSheet } from './-components/edit-derivation'
+import { DeleteDerivation } from './-components/delete-derivation'
+import { DerivationItemsSheet } from './-components/derivation-items'
 
 export const Route = createFileRoute('/dashboard/derivations/')({
   component: RouteComponent,
 })
 
-type Derivacao = {
-  id: string
-  nome: string
-  nomeCatalogo: string
-  tipo: 'Cor' | 'Texto'
-  itens: number
+type Derivation = {
+  id: number
+  nome?: string
+  name?: string
+  nomeCatalogo?: string
+  catalog_name?: string
+  store_name?: string
+  tipo?: 'Cor' | 'Texto' | 'Imagem' | 'color' | 'text' | 'image'
+  type?: 'text' | 'color' | 'image'
+  itens?: number
 }
 
-const dadosIniciais: Derivacao[] = [
-  { id: '1', nome: 'Cores', nomeCatalogo: 'Cor', tipo: 'Cor', itens: 4 },
-  { id: '2', nome: 'Tamanhos (34 ao 60)', nomeCatalogo: 'Tamanhos', tipo: 'Texto', itens: 14 },
-  { id: '3', nome: 'Tamanhos (PP ao EG)', nomeCatalogo: 'Tamanhos', tipo: 'Texto', itens: 6 },
-]
-
 function RouteComponent() {
-  const [busca, setBusca] = React.useState('')
-  const [tipo, setTipo] = React.useState<'Todos' | 'Cor' | 'Texto'>('Todos')
-  const [dados, setDados] = React.useState<Derivacao[]>(dadosIniciais)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [perPage, setPerPage] = useState(10)
+  const [selectedDerivations, setSelectedDerivations] = useState<number[]>([])
+  const [totalItems, setTotalItems] = useState(0)
 
-  const filtrados = dados.filter((d) => {
-    const m1 = busca ? (d.nome.toLowerCase().includes(busca.toLowerCase()) || d.nomeCatalogo.toLowerCase().includes(busca.toLowerCase())) : true
-    const m2 = tipo === 'Todos' ? true : d.tipo === tipo
-    return m1 && m2
+  const { data, isLoading, isRefetching, isError, refetch } = useQuery({
+    refetchOnWindowFocus: false,
+    queryKey: ['derivations', currentPage, perPage],
+    queryFn: async () => {
+      // Ajuste os parâmetros conforme o Swagger do endpoint Derivations
+      const response = await privateInstance.get(`api:JOs6IYNo/derivations?page=${currentPage}&per_page=${perPage}`)
+      if (response.status !== 200) {
+        throw new Error('Erro ao carregar derivações')
+      }
+      return await response.data as any
+    }
   })
 
-  return (
-    <div className='flex h-full flex-col'>
-      {/* Breadcrumb */}
-      <div className='px-4 pt-2'>
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href='/dashboard'>Dashboard</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Derivações</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
+  const [derivations, setDerivations] = useState<Derivation[]>([])
+  const selectedDerivation = useMemo(() => derivations.find(d => d.id === selectedDerivations[0]), [derivations, selectedDerivations])
+  const selectedDerivationType: 'text' | 'color' | 'image' | undefined = useMemo(() => {
+    const d = selectedDerivation
+    if (!d) return undefined
+    const t = d.type ?? (
+      d.tipo === 'color' ? 'color' :
+        d.tipo === 'text' ? 'text' :
+          d.tipo === 'image' ? 'image' : undefined
+    )
+    return t as any
+  }, [selectedDerivation])
 
-      {/* Toolbar */}
-      <div className='flex h-14 items-center gap-2 px-4'>
-        <Input placeholder='Procurar...' value={busca} onChange={(e) => setBusca(e.target.value)} className='h-9 w-64' />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant='outline' className='h-9'>
-              Tipo <ChevronDown className='ml-1 size-4' />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='start'>
-            {(['Todos', 'Cor', 'Texto'] as const).map(op => (
-              <DropdownMenuItem key={op} onClick={() => setTipo(op)}>
-                {op}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button variant='ghost' className='ml-2'><RefreshCwIcon /> Atualizar</Button>
-        <Button variant='ghost'><ListIcon /> Itens</Button>
-        <Button variant='ghost'><Trash2Icon /> Excluir</Button>
-        <Button variant='ghost'><EditIcon /> Editar</Button>
-        <div className='ml-auto'>
-          <Button><PlusIcon /> Cadastrar</Button>
+  const columns: ColumnDef<Derivation>[] = [
+    {
+      id: 'select',
+      width: '60px',
+      header: (
+        <div className='flex justify-center items-center text-xs text-muted-foreground'>Sel.</div>
+      ),
+      cell: (derivation) => (
+        <div className='flex justify-center items-center'>
+          <Checkbox
+            checked={selectedDerivations.includes(derivation.id)}
+            onCheckedChange={() => toggleSelect(derivation.id)}
+          />
         </div>
-      </div>
+      ),
+      headerClassName: 'w-[60px] border-r',
+      className: 'font-medium border-r p-2!'
+    },
+    {
+      id: 'name',
+      header: 'Nome',
+      cell: (d) => d.nome ?? d.name ?? '',
+      className: 'border-r p-2!'
+    },
+    {
+      id: 'catalog',
+      header: 'Nome no catálogo',
+      cell: (d) => d.store_name ?? d.nomeCatalogo ?? d.catalog_name ?? '-',
+      className: 'border-r p-2!'
+    },
+    {
+      id: 'type',
+      header: 'Tipo',
+      cell: (d) => {
+        const t = d.type ?? (
+          d.tipo === 'color' ? 'color' :
+            d.tipo === 'text' ? 'text' :
+              d.tipo === 'image' ? 'image' : undefined
+        )
+        const label = t === 'color' ? 'Cor' : t === 'text' ? 'Texto' : t === 'image' ? 'Imagem' : '-'
+        return <Badge variant='outline'>{label}</Badge>
+      },
+      headerClassName: 'w-[120px] border-r',
+      className: 'w-[120px] p-2!'
+    },
+    {
+      id: 'items',
+      header: 'Itens',
+      cell: (d) => <span className='block text-right'>{d.itens ?? 0}</span>,
+      headerClassName: 'w-[100px] border-r',
+      className: 'w-[100px] p-2!'
+    },
+  ]
 
-      <Separator />
+  useEffect(() => {
+    if (!data) return
 
-      {/* Table */}
-      <div className='px-4 py-2'>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className='w-6'></TableHead>
-              <TableHead>Nome</TableHead>
-              <TableHead>Nome no catálogo</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead className='text-right'>Itens</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtrados.map((d) => (
-              <TableRow key={d.id}>
-                <TableCell className='w-6'>
-                  <input type='radio' name='sel' className='size-4 accent-primary' />
-                </TableCell>
-                <TableCell className='font-medium'>{d.nome}</TableCell>
-                <TableCell>{d.nomeCatalogo}</TableCell>
-                <TableCell>
-                  {d.tipo === 'Cor' ? (
-                    <Badge variant='outline'>Cor</Badge>
-                  ) : (
-                    <Badge variant='outline'>Texto</Badge>
-                  )}
-                </TableCell>
-                <TableCell className='text-right'>{d.itens}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <div className='px-1 pt-2 text-xs text-muted-foreground'>Mostrando {filtrados.length} de {dados.length} registros</div>
+    const items = Array.isArray((data as any).items) ? (data as any).items : Array.isArray(data) ? data : []
+    setDerivations(items)
+
+    const itemsTotal = typeof (data as any).itemsTotal === 'number' ? (data as any).itemsTotal : items.length
+    setTotalItems(itemsTotal)
+
+    // pageTotal não é exigido aqui, DataTable calcula por totalItems/perPage
+  }, [data, perPage])
+
+  useEffect(() => {
+    if (isError) {
+      // Opcional: exibir toast
+      console.error('Erro ao carregar derivações')
+    }
+  }, [isError])
+
+  // Resetar seleção quando mudar de página ou itens por página
+  useEffect(() => {
+    setSelectedDerivations([])
+  }, [currentPage, perPage])
+
+  // Limpar seleção ao atualizar/refetch da listagem
+  useEffect(() => {
+    if (isRefetching) {
+      setSelectedDerivations([])
+    }
+  }, [isRefetching])
+
+  const toggleSelect = (id: number) => {
+    // Seleção única: se já estiver selecionado, desmarca; caso contrário, seleciona somente ele
+    if (selectedDerivations.includes(id)) {
+      setSelectedDerivations([])
+    } else {
+      setSelectedDerivations([id])
+    }
+  }
+
+  return (
+    <div className='flex flex-col w-full h-full'>
+
+      <Topbar title="Derivações" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard', isLast: false }, { label: 'Derivações', href: '/dashboard/derivations', isLast: true }]} />
+
+      {/* Content */}
+      <div className='flex flex-col w-full h-full flex-1 overflow-hidden'>
+
+        {/* Actions */}
+        <div className='border-b flex w-full items-center p-2 gap-4'>
+
+          {/* Filters */}
+          <div className='flex items-center gap-2 flex-1'>
+            <Button variant={'outline'} size={'sm'}>
+              <Funnel /> Filtros
+            </Button>
+          </div>
+
+          <div className='flex items-center gap-2'>
+            <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedDerivations([]); refetch() }}>
+              {
+                (isLoading || isRefetching)
+                  ? <><RefreshCcw className='animate-spin' /> Atualizando...</>
+                  : <><RefreshCcw /> Atualizar</>
+              }
+            </Button>
+
+            {selectedDerivations.length === 1 ? (
+              <DeleteDerivation derivationId={selectedDerivations[0]} onDeleted={() => { setSelectedDerivations([]); refetch() }} />
+            ) : (
+              <Button size={'sm'} variant={'ghost'} disabled>
+                <Trash /> Excluir
+              </Button>
+            )}
+
+            {selectedDerivations.length === 1 && selectedDerivationType ? (
+              <DerivationItemsSheet derivationId={selectedDerivations[0]} derivationType={selectedDerivationType} />
+            ) : (
+              <Button size={'sm'} variant={'ghost'} disabled>
+                <Boxes /> Items
+              </Button>
+            )}
+
+            {selectedDerivations.length === 1 ? (
+              <EditDerivationSheet derivationId={selectedDerivations[0]} />
+            ) : (
+              <Button size={'sm'} variant={'ghost'} disabled>
+                <Edit /> Editar
+              </Button>
+            )}
+            <NewDerivationSheet onCreated={() => { setSelectedDerivations([]); refetch() }} />
+          </div>
+
+        </div>
+
+        {/* Table */}
+        <DataTable
+          columns={columns}
+          data={derivations}
+          loading={isLoading || isRefetching}
+          page={currentPage}
+          perPage={perPage}
+          totalItems={totalItems}
+          emptyMessage='Nenhuma derivação encontrada'
+          onChange={({ page, perPage }) => {
+            if (typeof page === 'number') setCurrentPage(page)
+            if (typeof perPage === 'number') setPerPage(perPage)
+            refetch()
+          }} />
+
       </div>
     </div>
   )
