@@ -4,54 +4,25 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader, Plus } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { toast } from "sonner"
 import { privateInstance } from "@/lib/auth"
-import { useMemo, useState } from "react"
-
-// Tipos básicos da API de categorias
-type ApiCategory = {
-  id: number | string
-  name: string
-  parent_id?: number | string | null
-}
+import { useState } from "react"
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Nome é obrigatório" }),
-  parent_id: z.number().optional().default(0),
+  type: z.enum(["integer", "decimal"], { message: "Tipo é obrigatório" }),
 })
 
-export function NewCategorySheet({
+export function NewUnitSheet({
   className,
   ...props
 }: React.ComponentProps<"form">) {
   const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
-
-  const { data: categoriesResponse, isLoading: isLoadingCategories } = useQuery({
-    queryKey: ["categories"],
-    refetchOnWindowFocus: false,
-    queryFn: async () => {
-      const res = await privateInstance.get("/api:ojk_IOB-/categories")
-      if (res.status !== 200) {
-        throw new Error("Erro ao carregar categorias")
-      }
-      return res.data
-    },
-  })
-
-  const categories: ApiCategory[] = useMemo(() => {
-    const data = categoriesResponse
-    if (!data) return []
-    if (Array.isArray(data)) return data as ApiCategory[]
-    if (Array.isArray((data as any).items)) return (data as any).items as ApiCategory[]
-    if (Array.isArray((data as any).categories)) return (data as any).categories as ApiCategory[]
-    if (Array.isArray((data as any).data)) return (data as any).data as ApiCategory[]
-    return []
-  }, [categoriesResponse])
 
   const closeSheet = () => {
     setOpen(false)
@@ -60,25 +31,20 @@ export function NewCategorySheet({
 
   const { isPending, mutate } = useMutation({
     mutationFn: (values: z.infer<typeof formSchema>) => {
-      // Garante que parent_id seja número e que 0 representa raiz
-      const payload = {
-        name: values.name,
-        parent_id: Number(values.parent_id ?? 0),
-      }
-      return privateInstance.post("/api:ojk_IOB-/categories", payload)
+      return privateInstance.post('/api:-b71x_vk/unit_of_measurement', values)
     },
     onSuccess: (response) => {
       if (response.status === 200 || response.status === 201) {
-        toast.success("Categoria cadastrada com sucesso!")
+        toast.success("Unidade cadastrada com sucesso!")
         closeSheet()
-        // Atualiza a listagem de categorias
-        queryClient.invalidateQueries({ queryKey: ["categories"] })
+        // Atualiza a listagem de unidades
+        queryClient.invalidateQueries({ queryKey: ['units'] })
       } else {
-        toast.error("Erro ao cadastrar categoria")
+        toast.error('Erro ao cadastrar unidade')
       }
     },
     onError: (error: any) => {
-      toast.error(error?.message ?? "Erro ao cadastrar categoria")
+      toast.error(error?.message ?? 'Erro ao cadastrar unidade')
     },
   })
 
@@ -86,7 +52,7 @@ export function NewCategorySheet({
     resolver: zodResolver(formSchema as any),
     defaultValues: {
       name: "",
-      parent_id: 0,
+      type: "integer",
     },
   })
 
@@ -98,14 +64,14 @@ export function NewCategorySheet({
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="default">
-          <Plus className="w-4 h-4" /> Adicionar Categoria
+          <Plus className="w-4 h-4" />Cadastrar
         </Button>
       </SheetTrigger>
       <SheetContent>
         <Form {...form}>
           <form {...props} onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
             <SheetHeader>
-              <SheetTitle>Cadastro de categoria</SheetTitle>
+              <SheetTitle>Cadastro de unidade</SheetTitle>
               <SheetDescription>
                 Preencha os campos abaixo para cadastrar.
               </SheetDescription>
@@ -118,7 +84,7 @@ export function NewCategorySheet({
                   <FormItem>
                     <FormLabel>Nome</FormLabel>
                     <FormControl>
-                      <Input placeholder="Digite o nome da categoria..." {...field} />
+                      <Input placeholder="Digite o nome da unidade..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -127,30 +93,19 @@ export function NewCategorySheet({
 
               <FormField
                 control={form.control}
-                name="parent_id"
+                name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Categoria pai</FormLabel>
+                    <FormLabel>Tipo</FormLabel>
                     <FormControl>
-                      <Select
-                        value={String(field.value ?? 0)}
-                        onValueChange={(val) => field.onChange(parseInt(val))}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecione a categoria pai" />
+                          <SelectValue placeholder="Selecione o tipo" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            <SelectItem value={"0"}>Sem categoria pai</SelectItem>
-                            {isLoadingCategories ? (
-                              <SelectItem value={"loading"} disabled>Carregando...</SelectItem>
-                            ) : (
-                              categories.map((cat) => (
-                                <SelectItem key={String(cat.id)} value={String(cat.id)}>
-                                  {cat.name}
-                                </SelectItem>
-                              ))
-                            )}
+                            <SelectItem value={"integer"}>Inteiro</SelectItem>
+                            <SelectItem value={"decimal"}>Decimal</SelectItem>
                           </SelectGroup>
                         </SelectContent>
                       </Select>

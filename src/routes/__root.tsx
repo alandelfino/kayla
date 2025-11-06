@@ -1,8 +1,10 @@
 import { Toaster } from '@/components/ui/sonner'
 import { createRootRoute, Outlet } from '@tanstack/react-router'
+import { PageLoader } from '@/components/page-loader'
 
 const RootLayout = () => (
     <>
+        <PageLoader />
         <Outlet />
         <Toaster richColors />
     </>

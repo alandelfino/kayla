@@ -22,17 +22,24 @@ type ApiCategory = {
   children?: ApiCategory[]
 }
 
+type FlatCategory = {
+  id: number | string
+  category: ApiCategory
+  depth: number
+}
+
 function RouteComponent() {
   const [currentPage, setCurrentPage] = useState(1)
-  const [perPage, setPerPage] = useState(10)
+  const [perPage, setPerPage] = useState(20)
   const [selectedCategories, setSelectedCategories] = useState<Array<number | string>>([])
-  const [totalItems, setTotalItems] = useState(0)
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories', currentPage, perPage],
     refetchOnWindowFocus: false,
     queryFn: async () => {
-      const res = await privateInstance.get('/api:ojk_IOB-/categories')
+      const res = await privateInstance.get('/api:ojk_IOB-/categories', {
+        params: { page: currentPage, per_page: perPage }
+      })
       if (res.status !== 200) throw new Error('Erro ao carregar categorias')
       return res.data
     },
@@ -48,10 +55,7 @@ function RouteComponent() {
     return []
   }, [data])
 
-  useEffect(() => {
-    const itemsTotal = categories.length
-    setTotalItems(itemsTotal)
-  }, [categories])
+  // totalItems removido: usamos diretamente flattenedCategories.length no DataTable
 
   // Resetar seleção quando mudar de página ou atualizar
   useEffect(() => {
@@ -70,39 +74,85 @@ function RouteComponent() {
     return map
   }, [categories])
 
-  const toggleSelectAll = () => {
-    if (selectedCategories.length === categories.length) {
-      setSelectedCategories([])
-    } else {
-      setSelectedCategories(categories.map((c) => c.id))
-    }
-  }
+  // Seleção geral removida: a listagem usa seleção única por linha
 
   const toggleSelectCategory = (id: number | string) => {
-    if (selectedCategories.includes(id)) {
-      setSelectedCategories(selectedCategories.filter((cid) => cid !== id))
-    } else {
-      setSelectedCategories([...selectedCategories, id])
-    }
+    // Seleção única: se já estiver selecionado, desmarca; caso contrário, seleciona apenas este
+    setSelectedCategories((prev) => (prev.includes(id) ? [] : [id]))
   }
 
-  const columns: ColumnDef<ApiCategory>[] = [
+  const indent = 18
+
+  const flattenedCategories: FlatCategory[] = useMemo(() => {
+    // Se houver nested children, usar DFS direta
+    const hasNested = categories.some((c) => Array.isArray(c.children) && c.children!.length > 0)
+    if (hasNested) {
+      const res: FlatCategory[] = []
+      const visit = (cat: ApiCategory, depth: number) => {
+        res.push({ id: cat.id, category: cat, depth })
+        if (Array.isArray(cat.children)) {
+          for (const child of cat.children) {
+            visit(child, depth + 1)
+          }
+        }
+      }
+      for (const cat of categories) visit(cat, 0)
+      return res
+    }
+
+    // Caso flat com parent_id, construir mapa e percorrer em pré-ordem
+    const byId = new Map<string, ApiCategory>()
+    const childrenMap = new Map<string, string[]>()
+    const roots: string[] = []
+
+    const getId = (c: ApiCategory) => String(c.id)
+    const getParent = (c: ApiCategory) => {
+      const raw = c.parent_id as unknown as string | number | null | undefined
+      const pid = raw == null || raw === 0 || raw === '0' ? null : String(raw)
+      return pid
+    }
+
+    for (const c of categories) {
+      const id = getId(c)
+      byId.set(id, c)
+      childrenMap.set(id, [])
+    }
+
+    for (const c of categories) {
+      const id = getId(c)
+      const parentId = getParent(c)
+      if (parentId && childrenMap.has(parentId)) {
+        childrenMap.get(parentId)!.push(id)
+      } else {
+        roots.push(id)
+      }
+    }
+
+    const res: FlatCategory[] = []
+    const visit = (id: string, depth: number) => {
+      const cat = byId.get(id)
+      if (!cat) return
+      res.push({ id: cat.id, category: cat, depth })
+      for (const childId of childrenMap.get(id) ?? []) {
+        visit(childId, depth + 1)
+      }
+    }
+
+    for (const root of roots) visit(root, 0)
+    return res
+  }, [categories])
+
+  const columns: ColumnDef<FlatCategory>[] = [
     {
       id: 'select',
       width: '60px',
-      header: () => (
+      // Sem seleção geral: apenas seleção única por linha
+      header: () => (<div className="flex justify-center items-center" />),
+      cell: (row) => (
         <div className="flex justify-center items-center">
           <Checkbox
-            checked={categories.length > 0 && selectedCategories.length === categories.length}
-            onCheckedChange={toggleSelectAll}
-          />
-        </div>
-      ),
-      cell: (cat) => (
-        <div className="flex justify-center items-center">
-          <Checkbox
-            checked={selectedCategories.includes(cat.id)}
-            onCheckedChange={() => toggleSelectCategory(cat.id)}
+            checked={selectedCategories.includes(row.category.id)}
+            onCheckedChange={() => toggleSelectCategory(row.category.id)}
           />
         </div>
       ),
@@ -112,30 +162,31 @@ function RouteComponent() {
     {
       id: 'name',
       header: 'Nome',
-      cell: (cat) => cat.name ?? cat.nome ?? 'Categoria',
+      cell: (row) => (
+        (() => {
+          const id = String(row.category.id)
+          const hasChildren = (Array.isArray(row.category.children) && row.category.children.length > 0) || ((childrenCountMap.get(id) ?? 0) > 0)
+          const guides = Array.from({ length: row.depth }, (_, i) => {
+            const left = (i + 1) * indent - 1
+            return (
+              <span
+                key={i}
+                className="absolute inset-y-0 -z-10"
+                style={{ left: `${left}px`, width: '1px', background: 'hsl(var(--border))' }}
+              />
+            )
+          })
+          return (
+            <div className="relative overflow-hidden">
+              {guides}
+              <div style={{ paddingLeft: `${row.depth * indent}px` }} className={hasChildren ? 'font-semibold' : ''}>
+                {row.category.name ?? row.category.nome ?? 'Categoria'}
+              </div>
+            </div>
+          )
+        })()
+      ),
       className: 'border-r p-2!'
-    },
-    {
-      id: 'parent',
-      header: 'Pai',
-      cell: (cat) => {
-        const parentRaw = cat.parent_id as unknown as string | number | null | undefined
-        const parentId = parentRaw == null || parentRaw === 0 || parentRaw === '0' ? null : String(parentRaw)
-        return parentId ?? '-'
-      },
-      headerClassName: 'w-[140px] border-r',
-      className: 'w-[140px] p-2!'
-    },
-    {
-      id: 'children',
-      header: 'Filhos',
-      cell: (cat) => {
-        const id = String(cat.id)
-        const count = Array.isArray(cat.children) ? cat.children.length : (childrenCountMap.get(id) ?? 0)
-        return <span className="block text-right">{count}</span>
-      },
-      headerClassName: 'w-[100px] border-r',
-      className: 'w-[100px] p-2!'
     },
   ]
 
@@ -192,11 +243,11 @@ function RouteComponent() {
         {/* Table */}
         <DataTable
           columns={columns}
-          data={categories}
+          data={flattenedCategories}
           loading={isLoading || isRefetching}
           page={currentPage}
           perPage={perPage}
-          totalItems={totalItems}
+          totalItems={flattenedCategories.length}
           emptyMessage='Nenhuma categoria encontrada'
           onChange={({ page, perPage }) => {
             if (typeof page === 'number') setCurrentPage(page)

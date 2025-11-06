@@ -102,9 +102,9 @@ export function Navigation() {
                     href: '/dashboard/media',
                 },
                 {
-                    label: 'Unidades de medidas',
+                    label: 'Unidades de medida',
                     icon: <Ruler />,
-                    href: '/dashboard/unit-measures',
+                    href: '/dashboard/units',
                 },
             ]
         },
