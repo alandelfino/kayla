@@ -19,7 +19,7 @@ export function DerivationItemDeleteDialog({ itemId, onDeleted }: { itemId: numb
       setOpen(false)
       onDeleted?.()
     },
-    onError: (error: any) => toast.error(error?.message ?? 'Erro ao excluir item')
+    onError: (error: any) => toast.error(error?.response?.data?.message ?? 'Erro ao excluir item')
   })
 
   return (

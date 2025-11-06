@@ -24,7 +24,7 @@ export function DeleteUnit({ unitId, disabled = false }: { unitId: number; disab
             }
         },
         onError: (error: any) => {
-            toast.error(error?.message ?? 'Erro ao excluir unidade')
+            toast.error(error?.response?.data?.message ?? 'Erro ao excluir unidade')
         }
     })
 

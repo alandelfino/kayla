@@ -47,7 +47,7 @@ export function NewMediaDialog({ onCreated, onOpenChange }: { onCreated?: () => 
       onOpenChange?.(false)
       onCreated?.()
     } catch (e: any) {
-      toast.error(e?.message ?? 'Erro ao criar mídia')
+      toast.error(e?.response?.data?.message ?? 'Erro ao criar mídia')
     } finally {
       setCreating(false)
     }

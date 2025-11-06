@@ -1,5 +1,6 @@
 import React from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
@@ -19,6 +20,7 @@ type DataTableProps<T> = {
   data: T[]
   loading?: boolean
   emptyMessage?: string
+  emptySlot?: React.ReactNode
   page: number
   perPage: number
   totalItems: number
@@ -30,6 +32,7 @@ export function DataTable<T extends { id?: number | string }>({
   data,
   loading = false,
   emptyMessage = 'Nenhum item encontrado',
+  emptySlot,
   page,
   perPage,
   totalItems,
@@ -62,7 +65,7 @@ export function DataTable<T extends { id?: number | string }>({
   return (
     <div className='flex flex-col w-full flex-1 overflow-auto'>
 
-      <div className='h-full'>
+      <div className='relative h-full'>
         <Table className='border-b'>
           <TableHeader className='sticky top-0 bg-neutral-50 z-10 border-b'>
             <TableRow className='bg-neutral-50'>
@@ -80,17 +83,68 @@ export function DataTable<T extends { id?: number | string }>({
 
           <TableBody>
             {loading && (
-              <TableRow>
-                <TableCell colSpan={columns.length} className='text-center'>Carregando...</TableCell>
-              </TableRow>
+              <>
+                {Array.from({ length: Math.min(perPage, 8) }).map((_, rIdx) => (
+                  <TableRow key={`skeleton-row-${rIdx}`} className={`h-10 ${rIdx % 2 === 1 ? 'bg-neutral-50' : ''}`}>
+                    {columns.map((col, cIdx) => {
+                      // Fixed widths for specific columns in derivations list
+                      const fixedCellWidthPx = col.id === 'select' ? 60 : col.id === 'items' ? 100 : col.id === 'type' ? 120 : undefined
+
+                      // Dynamic width for other columns
+                      const pxMatch = (col.width ?? '').match(/(\d+)/)
+                      const base = pxMatch ? Math.min(parseInt(pxMatch[1]), 220) : 160
+                      const variance = 0.6 + ((rIdx + cIdx) % 5) * 0.08 // 60% to ~92%
+                      const dynamicWidth = Math.round(base * variance)
+
+                      // Choose skeleton content per column
+                      let cellContent: React.ReactNode
+                      if (col.id === 'select') {
+                        cellContent = (
+                          <div className='flex items-center justify-center'>
+                            <Skeleton className='h-4 w-4 rounded-[4px]' />
+                          </div>
+                        )
+                      } else if (col.id === 'items') {
+                        cellContent = (
+                          <div className='flex items-center'>
+                            <Skeleton className='h-4 w-10' />
+                          </div>
+                        )
+                      } else if (col.id === 'type') {
+                        cellContent = (
+                          <div className='flex items-center'>
+                            <Skeleton className='h-4 w-20' />
+                          </div>
+                        )
+                      } else {
+                        cellContent = (
+                          <div className='flex items-center gap-2'>
+                            <Skeleton className='h-4' style={{ width: dynamicWidth }} />
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <TableCell
+                          key={col.id}
+                          className={`border-r !px-4 ${col.className ?? ''}`}
+                          style={fixedCellWidthPx ? { width: `${fixedCellWidthPx}px` } : col.width ? { width: col.width } : undefined}
+                        >
+                          {cellContent}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                ))}
+              </>
             )}
 
             {!loading && data.length > 0 && (
               <>
                 {data.map((item, index) => (
-                  <TableRow key={(item as any).id ?? index} className={index % 2 === 0 ? '' : 'bg-neutral-50'}>
+                  <TableRow key={(item as any).id ?? index} className={`h-10 ${index % 2 === 0 ? '' : 'bg-neutral-50'}`}>
                     {columns.map((col) => (
-                      <TableCell key={col.id} className={`border-r p-2! ${col.className ?? ''}`} style={col.width ? { width: col.width } : undefined}>
+                      <TableCell key={col.id} className={`border-r !px-4 ${col.className ?? ''}`} style={col.width ? { width: col.width } : undefined}>
                         {col.cell(item)}
                       </TableCell>
                     ))}
@@ -99,13 +153,23 @@ export function DataTable<T extends { id?: number | string }>({
               </>
             )}
 
-            {!loading && data.length === 0 && (
+            {!loading && data.length === 0 && !emptySlot && (
               <TableRow>
-                <TableCell colSpan={columns.length} className='text-center'>{emptyMessage}</TableCell>
+                <TableCell colSpan={columns.length} className='text-center'>
+                  {emptySlot ?? (
+                    <div className='py-16 text-center text-muted-foreground'>{emptyMessage}</div>
+                  )}
+                </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
+
+        {!loading && data.length === 0 && emptySlot && (
+          <div className='absolute inset-0 flex items-center justify-center p-4'>
+            {emptySlot}
+          </div>
+        )}
       </div>
 
       {/* Table Footer */}

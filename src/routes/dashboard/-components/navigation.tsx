@@ -1,6 +1,6 @@
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeftRight, BadgeDollarSign, BanknoteArrowDown, BetweenHorizonalStart, BookOpen, BookUser, BringToFront, ChartNoAxesColumnIncreasing, Contact, Copyright, File, FileBadge, FileClock, FolderTree, GitFork, Image, Images, Kanban, ListChecks, Package, Ruler, TextCursorInput, Users, Wallpaper } from "lucide-react";
+import { ArrowLeftRight, BadgeDollarSign, BanknoteArrowDown, BetweenHorizonalStart, BookOpen, BookUser, BringToFront, ChartNoAxesColumnIncreasing, Contact, Copyright, File, FileBadge, FileClock, FolderTree, GitFork, Image, Images, Kanban, ListChecks, Mail, Package, Ruler, TextCursorInput, Users, Wallpaper } from "lucide-react";
 import { useRouterState } from "@tanstack/react-router";
 
 export function Navigation() {
@@ -121,6 +121,11 @@ export function Navigation() {
         {
             groupName: 'Equipe',
             items: [
+                {
+                    label: 'Convites',
+                    icon: <Mail />,
+                    href: '/dashboard/invitations',
+                },
                 {
                     label: 'Usuários',
                     icon: <Users />,

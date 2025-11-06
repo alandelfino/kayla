@@ -35,7 +35,7 @@ export function NewCategorySheet({
     queryKey: ["categories"],
     refetchOnWindowFocus: false,
     queryFn: async () => {
-      const res = await privateInstance.get("/api:ojk_IOB-/categories")
+      const res = await privateInstance.get("/api:ojk_IOB-/categories?page=1&per_page=50")
       if (res.status !== 200) {
         throw new Error("Erro ao carregar categorias")
       }
@@ -78,7 +78,7 @@ export function NewCategorySheet({
       }
     },
     onError: (error: any) => {
-      toast.error(error?.message ?? "Erro ao cadastrar categoria")
+      toast.error(error?.response?.data?.message ?? "Erro ao cadastrar categoria")
     },
   })
 

@@ -24,7 +24,7 @@ export function DeleteBrand({ brandId, disabled = false }: { brandId: number; di
             }
         },
         onError: (error: any) => {
-            toast.error(error?.message ?? 'Erro ao excluir marca')
+            toast.error(error?.response?.data?.message ?? 'Erro ao excluir marca')
         }
     })
 

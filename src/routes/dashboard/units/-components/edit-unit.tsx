@@ -49,7 +49,7 @@ export function EditUnitSheet({
       }
       form.reset({ name: unit.name ?? "", type: unit.type ?? "integer" })
     } catch (error: any) {
-      toast.error(error?.message ?? 'Erro ao carregar unidade')
+      toast.error(error?.response?.data?.message ?? 'Erro ao carregar unidade')
     } finally {
       setUnitLoading(false)
     }

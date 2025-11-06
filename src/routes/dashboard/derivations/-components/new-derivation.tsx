@@ -1,11 +1,11 @@
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+// Removed Select in favor of a card-based radio group for type selection
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
-import { Loader, Plus } from 'lucide-react'
+import { Loader, Plus, Type as TypeIcon, Palette, Image as ImageIcon } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { z } from 'zod'
@@ -50,7 +50,7 @@ export function NewDerivationSheet({ onCreated }: { onCreated?: () => void }) {
       }
     },
     onError: (error: any) => {
-      toast.error(error?.message ?? 'Erro ao cadastrar derivação')
+      toast.error(error?.response?.data?.message ?? 'Erro ao cadastrar derivação')
     },
   })
 
@@ -107,20 +107,35 @@ export function NewDerivationSheet({ onCreated }: { onCreated?: () => void }) {
                 name='type'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tipo</FormLabel>
+                    <FormLabel>Selecione um tipo</FormLabel>
                     <FormControl>
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className='w-full'>
-                          <SelectValue placeholder='Selecione o tipo' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value='color'>Cor</SelectItem>
-                            <SelectItem value='text'>Texto</SelectItem>
-                            <SelectItem value='image'>Imagem</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
+                      <div role='radiogroup' aria-label='Tipo de derivação' className='grid grid-cols-3 gap-3'>
+                        {[
+                          { value: 'text' as const, label: 'Texto', Icon: TypeIcon },
+                          { value: 'color' as const, label: 'Cor', Icon: Palette },
+                          { value: 'image' as const, label: 'Imagem', Icon: ImageIcon },
+                        ].map(({ value, label, Icon }) => {
+                          const selected = field.value === value
+                          return (
+                            <button
+                              type='button'
+                              key={value}
+                              role='radio'
+                              aria-checked={selected}
+                              onClick={() => field.onChange(value)}
+                              className={`rounded-md border bg-background p-4 text-left shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring flex flex-col items-center gap-2 ${
+                                selected ? 'border-foreground' : 'border-muted'
+                              } hover:bg-muted/40`}
+                            >
+                              <Icon className={`h-6 w-6 ${selected ? 'text-foreground' : 'text-muted-foreground'}`} />
+                              <span className='text-sm font-medium'>{label}</span>
+                              <span className={`mt-2 inline-flex items-center justify-center h-4 w-4 rounded-full border ${selected ? 'border-foreground' : 'border-muted-foreground'}`}>
+                                <span className={`h-2 w-2 rounded-full ${selected ? 'bg-foreground' : 'bg-transparent'}`} />
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

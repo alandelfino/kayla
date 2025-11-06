@@ -9,6 +9,7 @@ import { DataTable, type ColumnDef } from '@/components/data-table'
 import { Edit, Funnel, RefreshCcw, Trash } from 'lucide-react'
 import { EditCategorySheet } from './-components/edit-category'
 import { useEffect, useMemo, useState } from 'react'
+import { DeleteCategory } from './-components/delete-category'
 
 export const Route = createFileRoute('/dashboard/categories/')({
   component: RouteComponent,
@@ -218,9 +219,7 @@ function RouteComponent() {
             </Button>
 
             {selectedCategories.length === 1 ? (
-              <Button size={'sm'} variant={'destructive'} disabled>
-                <Trash /> Excluir
-              </Button>
+              <DeleteCategory categoryId={selectedCategories[0]} />
             ) : (
               <Button size={'sm'} variant={'ghost'} disabled>
                 <Trash /> Excluir

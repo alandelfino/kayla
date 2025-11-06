@@ -24,7 +24,7 @@ export function DeleteWarranty({ warrantyId, disabled = false }: { warrantyId: n
       }
     },
     onError: (error: any) => {
-      toast.error(error?.message ?? 'Erro ao excluir garantia')
+      toast.error(error?.response?.data?.message ?? 'Erro ao excluir garantia')
     }
   })
 

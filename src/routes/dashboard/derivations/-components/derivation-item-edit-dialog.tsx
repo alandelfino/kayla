@@ -12,16 +12,19 @@ import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { privateInstance } from '@/lib/auth'
 
-type DerivationItem = { id: number; order: number; value: string }
+type DerivationItem = { id: number; order: number; value: string; name?: string; nome?: string }
 
 const getSchemaByType = (t: 'text' | 'color' | 'image') => {
+  const base = z.object({
+    nome: z.string().min(1, { message: 'Nome é obrigatório' }),
+  })
   if (t === 'color') {
-    return z.object({ value: z.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/i, { message: 'Informe a cor em hex, ex.: #000000' }) })
+    return base.merge(z.object({ value: z.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/i, { message: 'Informe a cor em hex, ex.: #000000' }) }))
   }
   if (t === 'image') {
-    return z.object({ value: z.string().url({ message: 'Informe uma URL válida para a imagem' }) })
+    return base.merge(z.object({ value: z.string().url({ message: 'Informe uma URL válida para a imagem' }) }))
   }
-  return z.object({ value: z.string().min(1, { message: 'Valor é obrigatório' }) })
+  return base.merge(z.object({ value: z.string().min(1, { message: 'Valor é obrigatório' }) }))
 }
 
 export function DerivationItemEditDialog({ derivationId, derivationType, item, onUpdated }: {
@@ -36,18 +39,18 @@ export function DerivationItemEditDialog({ derivationId, derivationType, item, o
   const schema = getSchemaByType(derivationType)
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { value: derivationType === 'color' ? '#000000' : '' },
+    defaultValues: { nome: '', value: derivationType === 'color' ? '#000000' : '' },
   })
 
   useEffect(() => {
     if (open) {
-      form.reset({ value: item.value ?? '' })
+      form.reset({ nome: item.name ?? item.nome ?? '', value: item.value ?? '' })
     }
   }, [open, item])
 
   const { isPending: updating, mutate: updateItem } = useMutation({
     mutationFn: async (values: z.infer<typeof schema>) => {
-      const payload: any = { value: values.value, order: item.order, derivation_id: derivationId }
+      const payload: any = { value: values.value, order: item.order, derivation_id: derivationId, name: values.nome }
       const response = await privateInstance.put(`/api:JOs6IYNo/derivation_items/${item.id}`, payload)
       if (response.status !== 200 && response.status !== 204) throw new Error('Erro ao atualizar item')
       return response
@@ -58,7 +61,7 @@ export function DerivationItemEditDialog({ derivationId, derivationType, item, o
       setPickerOpen(false)
       onUpdated?.()
     },
-    onError: (error: any) => toast.error(error?.message ?? 'Erro ao atualizar item')
+    onError: (error: any) => toast.error(error?.response?.data?.message ?? 'Erro ao atualizar item')
   })
 
   return (
@@ -78,6 +81,15 @@ export function DerivationItemEditDialog({ derivationId, derivationType, item, o
               <DialogTitle>Editar item</DialogTitle>
               <DialogDescription>Altere o valor e salve.</DialogDescription>
             </DialogHeader>
+            <FormField control={form.control} name='nome' render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome</FormLabel>
+                <FormControl>
+                  <Input type='text' placeholder='Ex.: Vermelho / EG / Foto 1' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
             {derivationType === 'color' ? (
               <FormField control={form.control} name='value' render={({ field }) => (
                 <FormItem>

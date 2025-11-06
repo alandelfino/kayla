@@ -64,7 +64,7 @@ export function EditWarrantySheet({ className, warrantyId, ...props }: React.Com
       })
       setPriceDisplay(formatCurrencyBRL(warranty.price ?? 0))
     } catch (error: any) {
-      toast.error(error?.message ?? 'Erro ao carregar garantia')
+      toast.error(error?.response?.data?.message ?? 'Erro ao carregar garantia')
     } finally {
       setLoading(false)
     }

@@ -49,7 +49,7 @@ export function EditBrandSheet({
             }
             form.reset({ name: brand.name ?? "" })
         } catch (error: any) {
-            toast.error(error?.message ?? 'Erro ao carregar marca')
+            toast.error(error?.response?.data?.message ?? 'Erro ao carregar marca')
         } finally {
             setBrandLoading(false)
         }

@@ -38,7 +38,7 @@ export function EditMediaDialog({ media, onClose, onSaved }: { media: ApiMedia |
       onSaved?.()
       onClose?.()
     } catch (e: any) {
-      toast.error(e?.message ?? 'Erro ao atualizar mídia')
+      toast.error(e?.response?.data?.message ?? 'Erro ao atualizar mídia')
     } finally {
       setSaving(false)
     }

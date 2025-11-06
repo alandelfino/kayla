@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
-import { Boxes, Edit, Funnel, RefreshCcw, Trash } from 'lucide-react'
+import { Boxes, Edit, Funnel, GitFork, RefreshCcw, Trash, Type as TypeIcon, Palette, Image as ImageIcon, List, ArrowUpRight } from 'lucide-react'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { NewDerivationSheet } from './-components/new-derivation'
 import { EditDerivationSheet } from './-components/edit-derivation'
 import { DeleteDerivation } from './-components/delete-derivation'
@@ -27,6 +28,7 @@ type Derivation = {
   tipo?: 'Cor' | 'Texto' | 'Imagem' | 'color' | 'text' | 'image'
   type?: 'text' | 'color' | 'image'
   itens?: number
+  items?: number
 }
 
 function RouteComponent() {
@@ -66,10 +68,10 @@ function RouteComponent() {
       id: 'select',
       width: '60px',
       header: (
-        <div className='flex justify-center items-center text-xs text-muted-foreground'>Sel.</div>
+        <div className='flex items-center justify-center text-xs text-muted-foreground'>Sel.</div>
       ),
       cell: (derivation) => (
-        <div className='flex justify-center items-center'>
+        <div className='flex items-center justify-center'>
           <Checkbox
             checked={selectedDerivations.includes(derivation.id)}
             onCheckedChange={() => toggleSelect(derivation.id)}
@@ -77,19 +79,19 @@ function RouteComponent() {
         </div>
       ),
       headerClassName: 'w-[60px] border-r',
-      className: 'font-medium border-r p-2!'
+      className: 'font-medium border-r'
     },
     {
       id: 'name',
       header: 'Nome',
       cell: (d) => d.nome ?? d.name ?? '',
-      className: 'border-r p-2!'
+      className: 'border-r'
     },
     {
       id: 'catalog',
       header: 'Nome no catálogo',
       cell: (d) => d.store_name ?? d.nomeCatalogo ?? d.catalog_name ?? '-',
-      className: 'border-r p-2!'
+      className: 'border-r'
     },
     {
       id: 'type',
@@ -101,17 +103,23 @@ function RouteComponent() {
               d.tipo === 'image' ? 'image' : undefined
         )
         const label = t === 'color' ? 'Cor' : t === 'text' ? 'Texto' : t === 'image' ? 'Imagem' : '-'
-        return <Badge variant='outline'>{label}</Badge>
+        const Icon = t === 'color' ? Palette : t === 'text' ? TypeIcon : t === 'image' ? ImageIcon : null
+        return (
+          <Badge variant='outline' className='flex items-center gap-1'>
+            {Icon ? <Icon className='h-3.5 w-3.5' /> : null}
+            <span>{label}</span>
+          </Badge>
+        )
       },
       headerClassName: 'w-[120px] border-r',
-      className: 'w-[120px] p-2!'
+      className: 'w-[120px]'
     },
     {
       id: 'items',
       header: 'Itens',
-      cell: (d) => <span className='block text-right'>{d.itens ?? 0}</span>,
+      cell: (d) => <span className='block'>{(d as any).items ?? d.itens ?? 0}</span>,
       headerClassName: 'w-[100px] border-r',
-      className: 'w-[100px] p-2!'
+      className: 'w-[100px]'
     },
   ]
 
@@ -174,7 +182,7 @@ function RouteComponent() {
           </div>
 
           <div className='flex items-center gap-2'>
-            <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedDerivations([]); refetch() }}>
+            <Button size={'sm'} variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelectedDerivations([]); refetch() }}>
               {
                 (isLoading || isRefetching)
                   ? <><RefreshCcw className='animate-spin' /> Atualizando...</>
@@ -194,7 +202,7 @@ function RouteComponent() {
               <DerivationItemsSheet derivationId={selectedDerivations[0]} derivationType={selectedDerivationType} />
             ) : (
               <Button size={'sm'} variant={'ghost'} disabled>
-                <Boxes /> Items
+                <List /> Items
               </Button>
             )}
 
@@ -219,6 +227,37 @@ function RouteComponent() {
           perPage={perPage}
           totalItems={totalItems}
           emptyMessage='Nenhuma derivação encontrada'
+          emptySlot={(
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <GitFork className='h-6 w-6' />
+                </EmptyMedia>
+                <EmptyTitle>Nenhuma derivação ainda</EmptyTitle>
+                <EmptyDescription>
+                  Você ainda não criou nenhuma derivação. Comece criando sua primeira derivação.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <div className='flex gap-2'>
+                  <NewDerivationSheet onCreated={() => { setSelectedDerivations([]); refetch() }} />
+                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedDerivations([]); refetch() }}>
+                    {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+                  </Button>
+                </div>
+              </EmptyContent>
+              <Button
+                variant='link'
+                asChild
+                className='text-muted-foreground'
+                size='sm'
+              >
+                <a href='#'>
+                  Saiba mais <ArrowUpRight className='inline-block ml-1 h-4 w-4' />
+                </a>
+              </Button>
+            </Empty>
+          )}
           onChange={({ page, perPage }) => {
             if (typeof page === 'number') setCurrentPage(page)
             if (typeof perPage === 'number') setPerPage(perPage)

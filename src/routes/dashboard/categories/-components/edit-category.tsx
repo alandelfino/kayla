@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Edit, Loader } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, type SubmitHandler } from 'react-hook-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { privateInstance } from '@/lib/auth'
@@ -21,7 +21,8 @@ type ApiCategory = {
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Nome é obrigatório' }),
-  parent_id: z.number().optional().default(0),
+  // Mantém o tipo como number e usa Select para converter string->number; default é controlado por RHF
+  parent_id: z.number(),
 })
 
 export function EditCategorySheet({ categoryId, categories: categoriesProp = [] }: { categoryId: number | string; categories?: ApiCategory[] }) {
@@ -81,7 +82,7 @@ export function EditCategorySheet({ categoryId, categories: categoriesProp = [] 
       }
     },
     onError: (error: any) => {
-      toast.error(error?.message ?? 'Erro ao atualizar categoria')
+      toast.error(error?.response?.data?.message ?? 'Erro ao atualizar categoria')
     },
   })
 
@@ -103,14 +104,14 @@ export function EditCategorySheet({ categoryId, categories: categoriesProp = [] 
     })
   }, [currentCategory])
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  const onSubmit: SubmitHandler<z.infer<typeof formSchema>> = (values) => {
     mutate(values)
   }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button size={'sm'} variant={'default'}>
+        <Button size={'sm'} variant={'ghost'}>
           <Edit /> Editar
         </Button>
       </SheetTrigger>

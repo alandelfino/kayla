@@ -84,7 +84,7 @@ export function EditDerivationSheet({ derivationId, onUpdated }: { derivationId:
       }
     },
     onError: (error: any) => {
-      toast.error(error?.message ?? 'Erro ao atualizar derivação')
+      toast.error(error?.response?.data?.message ?? 'Erro ao atualizar derivação')
     },
   })
 

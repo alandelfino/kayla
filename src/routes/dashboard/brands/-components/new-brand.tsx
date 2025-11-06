@@ -44,8 +44,8 @@ export function NewBrandSheet({
                 toast.error('Erro ao cadastrar marca')
             }
         },
-        onError: (error) => {
-            toast.error(error.message)
+        onError: (error: any) => {
+            toast.error(error?.response?.data?.message ?? 'Erro ao cadastrar marca')
         },
     })
 

@@ -44,7 +44,7 @@ export function NewUnitSheet({
       }
     },
     onError: (error: any) => {
-      toast.error(error?.message ?? 'Erro ao cadastrar unidade')
+      toast.error(error?.response?.data?.message ?? 'Erro ao cadastrar unidade')
     },
   })
 

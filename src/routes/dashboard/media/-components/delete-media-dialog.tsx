@@ -20,7 +20,7 @@ export function DeleteMediaDialog({ media, onDeleted }: { media: ApiMedia, onDel
       setOpen(false)
       onDeleted?.()
     } catch (e: any) {
-      toast.error(e?.message ?? 'Erro ao excluir mídia')
+      toast.error(e?.response?.data?.message ?? 'Erro ao excluir mídia')
     } finally {
       setDeleting(false)
     }

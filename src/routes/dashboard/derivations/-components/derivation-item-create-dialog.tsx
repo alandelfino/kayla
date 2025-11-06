@@ -13,17 +13,20 @@ import { toast } from 'sonner'
 import { privateInstance } from '@/lib/auth'
 
 const getSchemaByType = (t: 'text' | 'color' | 'image') => {
+  const base = z.object({
+    nome: z.string().min(1, { message: 'Nome é obrigatório' }),
+  })
   if (t === 'color') {
-    return z.object({
+    return base.merge(z.object({
       value: z.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/i, { message: 'Informe a cor em hex, ex.: #000000' })
-    })
+    }))
   }
   if (t === 'image') {
-    return z.object({
+    return base.merge(z.object({
       value: z.string().url({ message: 'Informe uma URL válida para a imagem' })
-    })
+    }))
   }
-  return z.object({ value: z.string().min(1, { message: 'Valor é obrigatório' }) })
+  return base.merge(z.object({ value: z.string().min(1, { message: 'Valor é obrigatório' }) }))
 }
 
 export function DerivationItemCreateDialog({ derivationId, derivationType, itemsCount = 0, onCreated }: {
@@ -38,31 +41,31 @@ export function DerivationItemCreateDialog({ derivationId, derivationType, items
   const schema = getSchemaByType(derivationType)
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { value: derivationType === 'color' ? '#000000' : '' },
+    defaultValues: { nome: '', value: derivationType === 'color' ? '#000000' : '' },
   })
 
   const { isPending: creating, mutate: createItem } = useMutation({
     mutationFn: async (values: z.infer<typeof schema>) => {
-      const payload: any = { derivation_id: derivationId, value: values.value, order: itemsCount + 1 }
+      const payload: any = { derivation_id: derivationId, value: values.value, order: itemsCount + 1, name: values.nome }
       const response = await privateInstance.post(`/api:JOs6IYNo/derivation_items`, payload)
       if (response.status !== 200 && response.status !== 201) throw new Error('Erro ao cadastrar item')
       return response
     },
     onSuccess: () => {
       toast.success('Item cadastrado com sucesso!')
-      form.reset({ value: derivationType === 'color' ? '#000000' : '' })
+      form.reset({ nome: '', value: derivationType === 'color' ? '#000000' : '' })
       setOpen(false)
       setPickerOpen(false)
       onCreated?.()
     },
-    onError: (error: any) => toast.error(error?.message ?? 'Erro ao cadastrar item')
+    onError: (error: any) => toast.error(error?.response?.data?.message ?? 'Erro ao cadastrar item')
   })
 
   return (
     <Dialog open={open} onOpenChange={(o) => {
       setOpen(o)
       if (!o) {
-        form.reset({ value: derivationType === 'color' ? '#000000' : '' })
+        form.reset({ nome: '', value: derivationType === 'color' ? '#000000' : '' })
         setPickerOpen(false)
       }
     }}>
@@ -78,6 +81,15 @@ export function DerivationItemCreateDialog({ derivationId, derivationType, items
               <DialogTitle>Novo item</DialogTitle>
               <DialogDescription>Preencha o valor e salve.</DialogDescription>
             </DialogHeader>
+            <FormField control={form.control} name='nome' render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome</FormLabel>
+                <FormControl>
+                  <Input type='text' placeholder='Ex.: Vermelho / EG / Foto 1' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
             {derivationType === 'color' ? (
               <FormField control={form.control} name='value' render={({ field }) => (
                 <FormItem>

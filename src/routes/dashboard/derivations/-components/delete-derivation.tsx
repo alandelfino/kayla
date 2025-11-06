@@ -19,7 +19,9 @@ export function DeleteDerivation({ derivationId, onDeleted }: { derivationId: nu
       onDeleted?.()
     },
     onError: (error: any) => {
-      toast.error(error?.message ?? 'Erro ao excluir derivação')
+      toast.error(error?.response?.data?.code == 'ERROR_CODE_ACCESS_DENIED' ? 'Não permitido!' : 'Erro ao excluir derivação!', {
+        description: error?.response?.data?.message ?? 'Erro ao excluir derivação',
+      })
     },
   })
 
