@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { z } from 'zod'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Form, FormField, FormItem, FormLabel, FormMessage, FormControl } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -14,22 +14,35 @@ import { zodResolver } from '@hookform/resolvers/zod'
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Informe um e-mail válido' }),
-  role: z.enum(['admin', 'member', 'viewer']).default('member'),
+  team_id: z.string().min(1, { message: 'Selecione a equipe' }),
 })
 
 export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
   const [open, setOpen] = useState(false)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { email: '', role: 'member' },
+    defaultValues: { email: '', team_id: '' },
+  })
+
+  // Carregar equipes do backend (Xano Teams API)
+  const { data: teamsData, isLoading: isTeamsLoading, isError: isTeamsError } = useQuery({
+    queryKey: ['teams'],
+    enabled: open,
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      // GET /api:VPDORr9u/teams
+      const response = await privateInstance.get('/api:VPDORr9u/teams')
+      if (response.status !== 200) throw new Error('Erro ao carregar equipes')
+      return response.data as any
+    }
   })
 
   const { isPending, mutate } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
       // Ajuste de acordo com a documentação da API:
-      // POST /api:eA5lqIuH/invitations { email, role, company_id }
-      const payload: any = { email: values.email, role: values.role }
-      const response = await privateInstance.post('/api:eA5lqIuH/invitations', payload)
+      // POST /api:eA5lqIuH/invitations { email, team_id, company_id }
+      const payload: any = { email: values.email, team_id: Number(values.team_id) }
+      const response = await privateInstance.post('/api:0jQElwax/invitations/invite', payload)
       if (response.status !== 200 && response.status !== 201) throw new Error('Erro ao criar convite')
       return response
     },
@@ -37,7 +50,7 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
       toast.success('Convite criado com sucesso!')
       setOpen(false)
       onCreated?.()
-      form.reset({ email: '', role: 'member' })
+      form.reset({ email: '', team_id: '' })
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message ?? 'Erro ao criar convite')
@@ -80,20 +93,26 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
 
               <FormField
                 control={form.control}
-                name='role'
+                name='team_id'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Função</FormLabel>
+                    <FormLabel>Equipe</FormLabel>
                     <FormControl>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select value={field.value} onValueChange={field.onChange} disabled={isTeamsLoading}>
                         <SelectTrigger className='w-full'>
-                          <SelectValue placeholder='Selecione a função' />
+                          <SelectValue placeholder={isTeamsLoading ? 'Carregando equipes...' : 'Selecione a equipe'} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            <SelectItem value='admin'>Administrador</SelectItem>
-                            <SelectItem value='member'>Membro</SelectItem>
-                            <SelectItem value='viewer'>Leitor</SelectItem>
+                            {Array.isArray((teamsData as any)?.items)
+                              ? (teamsData as any).items.map((t: any) => (
+                                <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                              ))
+                              : Array.isArray(teamsData)
+                                ? (teamsData as any).map((t: any) => (
+                                  <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                                ))
+                                : null}
                           </SelectGroup>
                         </SelectContent>
                       </Select>

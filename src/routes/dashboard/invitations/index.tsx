@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { Users, RefreshCcw, ArrowUpRight } from 'lucide-react'
 import { NewInvitationSheet } from './-components/new-invitation'
+import { InvitationActionsCell } from './-components/invitation-actions'
 
 export const Route = createFileRoute('/dashboard/invitations/')({
   component: RouteComponent,
@@ -19,6 +20,8 @@ type Invitation = {
   email: string
   role?: 'admin' | 'member' | 'viewer'
   status?: 'pending' | 'accepted' | 'revoked'
+  active?: boolean
+  accepted?: boolean
   company_id?: number
   workspace_id?: number
   token?: string
@@ -28,7 +31,7 @@ type Invitation = {
 
 function RouteComponent() {
   const [currentPage, setCurrentPage] = useState(1)
-  const [perPage, setPerPage] = useState(10)
+  const [perPage, setPerPage] = useState(20)
   const [totalItems, setTotalItems] = useState(0)
 
   // Ajuste os endpoints conforme a documentação de Convites da API
@@ -38,7 +41,7 @@ function RouteComponent() {
     queryFn: async () => {
       // Exemplos (ajuste de acordo com a doc):
       // GET /api:eA5lqIuH/invitations?page={page}&per_page={perPage}&company_id={companyId}
-      const response = await privateInstance.get(`/api:eA5lqIuH/invitations?page=${currentPage}&per_page=${perPage}`)
+      const response = await privateInstance.get(`/api:0jQElwax/invitations?page=${currentPage}&per_page=${perPage}`)
       if (response.status !== 200) {
         throw new Error('Erro ao carregar convites')
       }
@@ -56,25 +59,21 @@ function RouteComponent() {
       className: 'border-r'
     },
     {
-      id: 'role',
-      header: 'Função',
+      id: 'accepted',
+      header: 'Aceito',
       cell: (i) => {
-        const label = i.role === 'admin' ? 'Administrador' : i.role === 'viewer' ? 'Leitor' : 'Membro'
-        return (
-          <Badge variant='outline' className='flex items-center gap-1'>
-            <span>{label}</span>
-          </Badge>
-        )
+        const accepted = i.accepted === true || i.status === 'accepted' || (i as any).accepted === true
+        return accepted ? 'Sim' : 'Não'
       },
-      headerClassName: 'w-[140px] border-r',
-      className: 'w-[140px]'
+      headerClassName: 'w-[120px] border-r',
+      className: 'w-[120px]'
     },
     {
       id: 'status',
       header: 'Status',
       cell: (i) => {
-        const label = i.status === 'accepted' ? 'Aceito' : i.status === 'revoked' ? 'Revogado' : 'Pendente'
-        return label
+        const isActive = i.active === true || (i as any).active === true
+        return isActive ? 'Ativo' : 'Inativo'
       },
       headerClassName: 'w-[120px] border-r',
       className: 'w-[120px]'
@@ -93,6 +92,15 @@ function RouteComponent() {
       },
       headerClassName: 'w-[200px] border-r',
       className: 'w-[200px]'
+    },
+    {
+      id: 'actions',
+      header: 'Ações',
+      cell: (i) => (
+        <InvitationActionsCell invitation={i} onChanged={() => refetch()} />
+      ),
+      headerClassName: 'w-[160px] border-r',
+      className: 'w-[160px]'
     },
   ]
 
