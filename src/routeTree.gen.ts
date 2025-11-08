@@ -15,6 +15,8 @@ import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
 import { Route as DashboardWarrantiesIndexRouteImport } from './routes/dashboard/warranties/index'
 import { Route as DashboardUsersIndexRouteImport } from './routes/dashboard/users/index'
 import { Route as DashboardUnitsIndexRouteImport } from './routes/dashboard/units/index'
+import { Route as DashboardProfilesIndexRouteImport } from './routes/dashboard/profiles/index'
+import { Route as DashboardProfileIndexRouteImport } from './routes/dashboard/profile/index'
 import { Route as DashboardMediaIndexRouteImport } from './routes/dashboard/media/index'
 import { Route as DashboardInvitationsIndexRouteImport } from './routes/dashboard/invitations/index'
 import { Route as DashboardDerivationsIndexRouteImport } from './routes/dashboard/derivations/index'
@@ -50,6 +52,16 @@ const DashboardUsersIndexRoute = DashboardUsersIndexRouteImport.update({
 const DashboardUnitsIndexRoute = DashboardUnitsIndexRouteImport.update({
   id: '/units/',
   path: '/units/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardProfilesIndexRoute = DashboardProfilesIndexRouteImport.update({
+  id: '/profiles/',
+  path: '/profiles/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardProfileIndexRoute = DashboardProfileIndexRouteImport.update({
+  id: '/profile/',
+  path: '/profile/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardMediaIndexRoute = DashboardMediaIndexRouteImport.update({
@@ -90,6 +102,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/derivations': typeof DashboardDerivationsIndexRoute
   '/dashboard/invitations': typeof DashboardInvitationsIndexRoute
   '/dashboard/media': typeof DashboardMediaIndexRoute
+  '/dashboard/profile': typeof DashboardProfileIndexRoute
+  '/dashboard/profiles': typeof DashboardProfilesIndexRoute
   '/dashboard/units': typeof DashboardUnitsIndexRoute
   '/dashboard/users': typeof DashboardUsersIndexRoute
   '/dashboard/warranties': typeof DashboardWarrantiesIndexRoute
@@ -103,6 +117,8 @@ export interface FileRoutesByTo {
   '/dashboard/derivations': typeof DashboardDerivationsIndexRoute
   '/dashboard/invitations': typeof DashboardInvitationsIndexRoute
   '/dashboard/media': typeof DashboardMediaIndexRoute
+  '/dashboard/profile': typeof DashboardProfileIndexRoute
+  '/dashboard/profiles': typeof DashboardProfilesIndexRoute
   '/dashboard/units': typeof DashboardUnitsIndexRoute
   '/dashboard/users': typeof DashboardUsersIndexRoute
   '/dashboard/warranties': typeof DashboardWarrantiesIndexRoute
@@ -117,6 +133,8 @@ export interface FileRoutesById {
   '/dashboard/derivations/': typeof DashboardDerivationsIndexRoute
   '/dashboard/invitations/': typeof DashboardInvitationsIndexRoute
   '/dashboard/media/': typeof DashboardMediaIndexRoute
+  '/dashboard/profile/': typeof DashboardProfileIndexRoute
+  '/dashboard/profiles/': typeof DashboardProfilesIndexRoute
   '/dashboard/units/': typeof DashboardUnitsIndexRoute
   '/dashboard/users/': typeof DashboardUsersIndexRoute
   '/dashboard/warranties/': typeof DashboardWarrantiesIndexRoute
@@ -132,6 +150,8 @@ export interface FileRouteTypes {
     | '/dashboard/derivations'
     | '/dashboard/invitations'
     | '/dashboard/media'
+    | '/dashboard/profile'
+    | '/dashboard/profiles'
     | '/dashboard/units'
     | '/dashboard/users'
     | '/dashboard/warranties'
@@ -145,6 +165,8 @@ export interface FileRouteTypes {
     | '/dashboard/derivations'
     | '/dashboard/invitations'
     | '/dashboard/media'
+    | '/dashboard/profile'
+    | '/dashboard/profiles'
     | '/dashboard/units'
     | '/dashboard/users'
     | '/dashboard/warranties'
@@ -158,6 +180,8 @@ export interface FileRouteTypes {
     | '/dashboard/derivations/'
     | '/dashboard/invitations/'
     | '/dashboard/media/'
+    | '/dashboard/profile/'
+    | '/dashboard/profiles/'
     | '/dashboard/units/'
     | '/dashboard/users/'
     | '/dashboard/warranties/'
@@ -213,6 +237,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardUnitsIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/profiles/': {
+      id: '/dashboard/profiles/'
+      path: '/profiles'
+      fullPath: '/dashboard/profiles'
+      preLoaderRoute: typeof DashboardProfilesIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/profile/': {
+      id: '/dashboard/profile/'
+      path: '/profile'
+      fullPath: '/dashboard/profile'
+      preLoaderRoute: typeof DashboardProfileIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/media/': {
       id: '/dashboard/media/'
       path: '/media'
@@ -257,6 +295,8 @@ interface DashboardRouteRouteChildren {
   DashboardDerivationsIndexRoute: typeof DashboardDerivationsIndexRoute
   DashboardInvitationsIndexRoute: typeof DashboardInvitationsIndexRoute
   DashboardMediaIndexRoute: typeof DashboardMediaIndexRoute
+  DashboardProfileIndexRoute: typeof DashboardProfileIndexRoute
+  DashboardProfilesIndexRoute: typeof DashboardProfilesIndexRoute
   DashboardUnitsIndexRoute: typeof DashboardUnitsIndexRoute
   DashboardUsersIndexRoute: typeof DashboardUsersIndexRoute
   DashboardWarrantiesIndexRoute: typeof DashboardWarrantiesIndexRoute
@@ -268,6 +308,8 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardDerivationsIndexRoute: DashboardDerivationsIndexRoute,
   DashboardInvitationsIndexRoute: DashboardInvitationsIndexRoute,
   DashboardMediaIndexRoute: DashboardMediaIndexRoute,
+  DashboardProfileIndexRoute: DashboardProfileIndexRoute,
+  DashboardProfilesIndexRoute: DashboardProfilesIndexRoute,
   DashboardUnitsIndexRoute: DashboardUnitsIndexRoute,
   DashboardUsersIndexRoute: DashboardUsersIndexRoute,
   DashboardWarrantiesIndexRoute: DashboardWarrantiesIndexRoute,

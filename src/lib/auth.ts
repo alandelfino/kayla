@@ -42,6 +42,13 @@ loginInstance.interceptors.response.use((response) => {
         const authToken = response.data.authToken
         localStorage.setItem(`${getSubdomain()}-kayla-authToken`, authToken)
         localStorage.setItem(`${getSubdomain()}-kayla-user`, JSON.stringify(response.data.user))
+        // Notifica UI (sidebar/nav) que o usuário foi carregado/atualizado
+        try {
+            const avatarUrl = response?.data?.user?.image?.url ?? response?.data?.user?.avatar_url ?? null
+            window.dispatchEvent(new CustomEvent('kayla:user-updated', {
+                detail: { name: response?.data?.user?.name, email: response?.data?.user?.email, avatarUrl }
+            }))
+        } catch {}
     }
     return response
 })
@@ -82,6 +89,18 @@ export const auth = {
             .then((response) => {
                 if (response.status !== 200) {
                     window.location.href = '/sign-in'
+                } else {
+                    // Persiste usuário (inclui imagem) para que o sidebar/menus tenham a URL do avatar
+                    try {
+                        localStorage.setItem(`${getSubdomain()}-kayla-user`, JSON.stringify(response.data))
+                    } catch {}
+                    // Notifica UI (sidebar/nav) que o usuário foi carregado/atualizado
+                    try {
+                        const avatarUrl = response?.data?.image?.url ?? response?.data?.avatar_url ?? null
+                        window.dispatchEvent(new CustomEvent('kayla:user-updated', {
+                            detail: { name: response?.data?.name, email: response?.data?.email, avatarUrl }
+                        }))
+                    } catch {}
                 }
             })
             .catch(() => {

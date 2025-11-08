@@ -132,9 +132,9 @@ export function Navigation() {
                     href: '/dashboard/users',
                 },
                 {
-                    label: 'Funções',
+                    label: 'Perfis',
                     icon: <Contact />,
-                    href: '/dashboard/roles',
+                    href: '/dashboard/profiles',
                 },
                 {
                     label: 'Níveis',

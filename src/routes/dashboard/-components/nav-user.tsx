@@ -6,7 +6,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 
 
-type User = { email: string, name: string }
+type User = { email: string, name: string, avatarUrl?: string | null }
 
 export function NavUser() {
 
@@ -31,14 +31,41 @@ export function NavUser() {
     }, [darkMode])
 
     useEffect(() => {
+        // Respeita o mesmo padrão de chave usado em lib/auth.ts (subdomínio + sufixo)
+        const subdomain = window.location.hostname.split('.')[0]
+        const storageKey = `${subdomain}-kayla-user`
 
-        const user = JSON.parse(localStorage.getItem("kayla-user") || "{}")
-        setUser(user)
-
-        if (!user) {
-            navigate({ to: '/sign-in' })
+        const raw = localStorage.getItem(storageKey)
+        let parsed: any = null
+        try {
+            parsed = raw ? JSON.parse(raw) : null
+        } catch {
+            parsed = null
         }
 
+        if (parsed && typeof parsed === 'object') {
+            const avatarUrl: string | null = parsed?.image?.url ?? parsed?.avatar_url ?? null
+            setUser({ email: parsed.email ?? '', name: parsed.name ?? '', avatarUrl })
+        } else {
+            setUser(null)
+            navigate({ to: '/sign-in' })
+        }
+    }, [navigate])
+
+    // Ouve atualizações do perfil para refletir imediatamente no sidebar
+    useEffect(() => {
+        const handler = (evt: Event) => {
+            const e = evt as CustomEvent<{ name?: string, email?: string, avatarUrl?: string | null }>
+            const detail = e.detail
+            if (!detail) return
+            setUser((prev) => ({
+                email: detail.email ?? prev?.email ?? '',
+                name: detail.name ?? prev?.name ?? '',
+                avatarUrl: detail.avatarUrl ?? prev?.avatarUrl ?? null,
+            }))
+        }
+        window.addEventListener('kayla:user-updated', handler as EventListener)
+        return () => window.removeEventListener('kayla:user-updated', handler as EventListener)
     }, [])
 
     // Função para gerar iniciais do usuário
@@ -60,7 +87,7 @@ export function NavUser() {
                             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                         >
                             <Avatar className="h-8 w-8 rounded-lg">
-                                <AvatarImage src={user?.name} alt={user?.name || ''} />
+                                <AvatarImage src={user?.avatarUrl || undefined} alt={user?.name || ''} />
                                 <AvatarFallback className="rounded-lg">{getInitials(user?.name || '')}</AvatarFallback>
                             </Avatar>
                             <div className="grid flex-1 text-left text-sm leading-tight">
@@ -79,7 +106,7 @@ export function NavUser() {
                         <DropdownMenuLabel className="p-0 font-normal">
                             <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                                 <Avatar className="h-8 w-8 rounded-lg">
-                                    <AvatarImage src={user?.name} alt={user?.name || ''} />
+                                    <AvatarImage src={user?.avatarUrl || undefined} alt={user?.name || ''} />
                                     <AvatarFallback className="rounded-lg">{getInitials(user?.name || '')}</AvatarFallback>
                                 </Avatar>
                                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -91,7 +118,7 @@ export function NavUser() {
                         <DropdownMenuSeparator />
 
                         <DropdownMenuGroup>
-                            <DropdownMenuItem> <User /> Meu Perfil </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate({ to: '/dashboard/profile' })}> <User /> Meu Perfil </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setDarkMode(!darkMode)}>
                                 <Moon /><span className="w-full">Dark mode</span> {darkMode && <Check />}
                             </DropdownMenuItem>
