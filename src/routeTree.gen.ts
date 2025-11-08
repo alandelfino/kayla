@@ -13,6 +13,7 @@ import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
 import { Route as DashboardWarrantiesIndexRouteImport } from './routes/dashboard/warranties/index'
+import { Route as DashboardUsersIndexRouteImport } from './routes/dashboard/users/index'
 import { Route as DashboardUnitsIndexRouteImport } from './routes/dashboard/units/index'
 import { Route as DashboardMediaIndexRouteImport } from './routes/dashboard/media/index'
 import { Route as DashboardInvitationsIndexRouteImport } from './routes/dashboard/invitations/index'
@@ -41,6 +42,11 @@ const DashboardWarrantiesIndexRoute =
     path: '/warranties/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardUsersIndexRoute = DashboardUsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardUnitsIndexRoute = DashboardUnitsIndexRouteImport.update({
   id: '/units/',
   path: '/units/',
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/invitations': typeof DashboardInvitationsIndexRoute
   '/dashboard/media': typeof DashboardMediaIndexRoute
   '/dashboard/units': typeof DashboardUnitsIndexRoute
+  '/dashboard/users': typeof DashboardUsersIndexRoute
   '/dashboard/warranties': typeof DashboardWarrantiesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/dashboard/invitations': typeof DashboardInvitationsIndexRoute
   '/dashboard/media': typeof DashboardMediaIndexRoute
   '/dashboard/units': typeof DashboardUnitsIndexRoute
+  '/dashboard/users': typeof DashboardUsersIndexRoute
   '/dashboard/warranties': typeof DashboardWarrantiesIndexRoute
 }
 export interface FileRoutesById {
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/dashboard/invitations/': typeof DashboardInvitationsIndexRoute
   '/dashboard/media/': typeof DashboardMediaIndexRoute
   '/dashboard/units/': typeof DashboardUnitsIndexRoute
+  '/dashboard/users/': typeof DashboardUsersIndexRoute
   '/dashboard/warranties/': typeof DashboardWarrantiesIndexRoute
 }
 export interface FileRouteTypes {
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/dashboard/invitations'
     | '/dashboard/media'
     | '/dashboard/units'
+    | '/dashboard/users'
     | '/dashboard/warranties'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/dashboard/invitations'
     | '/dashboard/media'
     | '/dashboard/units'
+    | '/dashboard/users'
     | '/dashboard/warranties'
   id:
     | '__root__'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/dashboard/invitations/'
     | '/dashboard/media/'
     | '/dashboard/units/'
+    | '/dashboard/users/'
     | '/dashboard/warranties/'
   fileRoutesById: FileRoutesById
 }
@@ -185,6 +197,13 @@ declare module '@tanstack/react-router' {
       path: '/warranties'
       fullPath: '/dashboard/warranties'
       preLoaderRoute: typeof DashboardWarrantiesIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/users/': {
+      id: '/dashboard/users/'
+      path: '/users'
+      fullPath: '/dashboard/users'
+      preLoaderRoute: typeof DashboardUsersIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/units/': {
@@ -239,6 +258,7 @@ interface DashboardRouteRouteChildren {
   DashboardInvitationsIndexRoute: typeof DashboardInvitationsIndexRoute
   DashboardMediaIndexRoute: typeof DashboardMediaIndexRoute
   DashboardUnitsIndexRoute: typeof DashboardUnitsIndexRoute
+  DashboardUsersIndexRoute: typeof DashboardUsersIndexRoute
   DashboardWarrantiesIndexRoute: typeof DashboardWarrantiesIndexRoute
 }
 
@@ -249,6 +269,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardInvitationsIndexRoute: DashboardInvitationsIndexRoute,
   DashboardMediaIndexRoute: DashboardMediaIndexRoute,
   DashboardUnitsIndexRoute: DashboardUnitsIndexRoute,
+  DashboardUsersIndexRoute: DashboardUsersIndexRoute,
   DashboardWarrantiesIndexRoute: DashboardWarrantiesIndexRoute,
 }
 

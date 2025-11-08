@@ -9,11 +9,13 @@ import { Loader, Power } from 'lucide-react'
 type InvitationLike = {
   id: number
   active?: boolean
+  accepted?: boolean
 }
 
 export function InvitationActionsCell({ invitation, onChanged }: { invitation: InvitationLike, onChanged?: () => void }) {
   const [open, setOpen] = useState(false)
   const isActive = invitation.active === true
+  const isAccepted = invitation.accepted === true
 
   const { isPending, mutateAsync } = useMutation({
     mutationFn: async (nextActive: boolean) => {
@@ -39,7 +41,7 @@ export function InvitationActionsCell({ invitation, onChanged }: { invitation: I
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size={'sm'} variant={isActive ? 'destructive' : 'default'} className='w-full'>
+        <Button size={'sm'} variant={isActive ? 'destructive' : 'default'} className='w-full' disabled={isPending || isAccepted}>
           {isPending ? <Loader className='animate-spin' /> : <Power />} {isActive ? 'Desativar' : 'Ativar'}
         </Button>
       </DialogTrigger>
@@ -54,7 +56,7 @@ export function InvitationActionsCell({ invitation, onChanged }: { invitation: I
         </DialogHeader>
         <DialogFooter className='flex gap-2'>
           <Button variant={'outline'} onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={confirm} disabled={isPending} variant={isActive ? 'destructive' : 'default'}>
+          <Button onClick={confirm} disabled={isPending || isAccepted} variant={isActive ? 'destructive' : 'default'}>
             {isPending ? <Loader className='animate-spin' /> : null}
             {isActive ? 'Desativar' : 'Ativar'}
           </Button>

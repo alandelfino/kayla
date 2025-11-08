@@ -25,6 +25,7 @@ type DataTableProps<T> = {
   perPage: number
   totalItems: number
   onChange: (next: { page?: number; perPage?: number }) => void
+  skeletonCount?: number
 }
 
 export function DataTable<T extends { id?: number | string }>({
@@ -37,6 +38,7 @@ export function DataTable<T extends { id?: number | string }>({
   perPage,
   totalItems,
   onChange,
+  skeletonCount,
 }: DataTableProps<T>) {
   const totalPages = Math.max(1, Math.ceil(totalItems / Math.max(perPage, 1)))
   const startIndex = (page - 1) * perPage
@@ -84,7 +86,7 @@ export function DataTable<T extends { id?: number | string }>({
           <TableBody>
             {loading && (
               <>
-                {Array.from({ length: Math.min(perPage, 8) }).map((_, rIdx) => (
+                {Array.from({ length: (typeof skeletonCount === 'number' ? Math.max(0, skeletonCount) : Math.min(perPage, 8)) }).map((_, rIdx) => (
                   <TableRow key={`skeleton-row-${rIdx}`} className={`h-10 ${rIdx % 2 === 1 ? 'bg-neutral-50' : ''}`}>
                     {columns.map((col, cIdx) => {
                       // Fixed widths for specific columns in derivations list
