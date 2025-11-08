@@ -19,7 +19,7 @@ type Invitation = {
   id: number
   email: string
   role?: 'admin' | 'member' | 'viewer'
-  status?: 'pending' | 'accepted' | 'revoked'
+  status?: 'pending' | 'canceled' | 'accepted'
   active?: boolean
   accepted?: boolean
   company_id?: number
@@ -59,21 +59,29 @@ function RouteComponent() {
       className: 'border-r'
     },
     {
-      id: 'accepted',
-      header: 'Aceito',
-      cell: (i) => {
-        const accepted = i.accepted === true || i.status === 'accepted' || (i as any).accepted === true
-        return accepted ? 'Sim' : 'Não'
-      },
-      headerClassName: 'w-[120px] border-r',
-      className: 'w-[120px]'
-    },
-    {
       id: 'status',
       header: 'Status',
       cell: (i) => {
-        const isActive = i.active === true || (i as any).active === true
-        return isActive ? 'Ativo' : 'Inativo'
+        const raw = (i.status ?? (i as any).status ?? '') as string
+        const normalized = raw.toString().trim().toLowerCase()
+        const isAccepted = i.accepted === true || normalized === 'accepted'
+        const isCanceled = normalized === 'canceled' || normalized === 'cancelled'
+        const status = isAccepted ? 'accepted' : isCanceled ? 'canceled' : 'pending'
+        const label = status === 'accepted' ? 'Aceito' : status === 'canceled' ? 'Cancelado' : 'Pendente'
+        return (
+          <span
+            className={
+              status === 'accepted'
+                ? 'inline-flex items-center gap-1 px-2 py-1 rounded-full border border-green-200 bg-green-100 text-green-700'
+                : status === 'canceled'
+                ? 'inline-flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200 bg-gray-100 text-gray-700'
+                : 'inline-flex items-center gap-1 px-2 py-1 rounded-full border border-amber-200 bg-amber-100 text-amber-700'
+            }
+          >
+            <span className={status === 'accepted' ? 'h-1.5 w-1.5 rounded-full bg-green-600' : status === 'canceled' ? 'h-1.5 w-1.5 rounded-full bg-gray-500' : 'h-1.5 w-1.5 rounded-full bg-amber-600'} />
+            {label}
+          </span>
+        )
       },
       headerClassName: 'w-[120px] border-r',
       className: 'w-[120px]'
