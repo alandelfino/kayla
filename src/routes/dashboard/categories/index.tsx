@@ -6,10 +6,11 @@ import { NewCategorySheet } from './-components/new-category'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
-import { Edit, Funnel, RefreshCcw, Trash } from 'lucide-react'
+import { Edit, Funnel, RefreshCcw, Trash, List } from 'lucide-react'
 import { EditCategorySheet } from './-components/edit-category'
 import { useEffect, useMemo, useState } from 'react'
 import { DeleteCategory } from './-components/delete-category'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 
 export const Route = createFileRoute('/dashboard/categories/')({
   component: RouteComponent,
@@ -248,6 +249,27 @@ function RouteComponent() {
           perPage={perPage}
           totalItems={flattenedCategories.length}
           emptyMessage='Nenhuma categoria encontrada'
+          emptySlot={(
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <List className='h-6 w-6' />
+                </EmptyMedia>
+                <EmptyTitle>Nenhuma categoria ainda</EmptyTitle>
+                <EmptyDescription>
+                  Você ainda não criou nenhuma categoria. Comece criando sua primeira categoria.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <div className='flex gap-2'>
+                  <NewCategorySheet />
+                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedCategories([]); refetch() }}>
+                    {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+                  </Button>
+                </div>
+              </EmptyContent>
+            </Empty>
+          )}
           onChange={({ page, perPage }) => {
             if (typeof page === 'number') setCurrentPage(page)
             if (typeof perPage === 'number') setPerPage(perPage)

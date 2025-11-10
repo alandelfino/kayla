@@ -1,13 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Topbar } from '../-components/topbar'
 import { Button } from '@/components/ui/button'
-import { Edit, Funnel, RefreshCcw, Trash } from 'lucide-react'
+import { Edit, Funnel, RefreshCcw, Trash, Ruler } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { privateInstance } from '@/lib/auth'
 import { DataTable, type ColumnDef } from '@/components/data-table'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { NewUnitSheet } from './-components/new-unit'
 import { EditUnitSheet } from './-components/edit-unit'
 import { DeleteUnit } from './-components/delete-unit'
@@ -198,6 +199,27 @@ function RouteComponent() {
           perPage={perPage}
           totalItems={totalItems}
           emptyMessage='Nenhuma unidade encontrada'
+          emptySlot={(
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Ruler className='h-6 w-6' />
+                </EmptyMedia>
+                <EmptyTitle>Nenhuma unidade de medida ainda</EmptyTitle>
+                <EmptyDescription>
+                  Você ainda não criou nenhuma unidade. Comece criando sua primeira unidade de medida.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <div className='flex gap-2'>
+                  <NewUnitSheet />
+                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedUnits([]); refetch() }}>
+                    {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+                  </Button>
+                </div>
+              </EmptyContent>
+            </Empty>
+          )}
           onChange={({ page, perPage }) => {
             if (typeof page === 'number') setCurrentPage(page)
             if (typeof perPage === 'number') setPerPage(perPage)

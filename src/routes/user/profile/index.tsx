@@ -70,59 +70,33 @@ function RouteComponent() {
     },
   })
 
-  // Carrega dados iniciais do usuário
+  // Carrega dados iniciais do usuário diretamente do endpoint `users/me` (Xano) e atualiza os dados locais
   useEffect(() => {
     async function loadMe() {
       try {
         setLoadingMe(true)
-        const subdomain = getSubdomain()
-        const raw = localStorage.getItem(`${subdomain}-kayla-user`)
-        let localUser: any = null
-        try { localUser = raw ? JSON.parse(raw) : null } catch { localUser = null }
-
-        if (localUser && localUser.id) {
-          setMe({ id: localUser.id, name: localUser.name ?? '', email: localUser.email ?? '', image: localUser.image ?? null })
-          form.reset({ name: localUser.name ?? '' })
-          setPreviewUrl(localUser.image?.url ?? localUser.avatar_url ?? null)
-
-          const hasLocalImage = Boolean(
-            (localUser?.image?.url && !String(localUser?.image?.url).startsWith('blob:'))
-            || localUser?.avatar_url
-          )
-          if (!hasLocalImage) {
+        const res = await privateInstance.get('https://x8ki-letl-twmt.n7.xano.io/api:paM0Fhtw/users/me')
+        if (res.status === 200) {
+          const payload = res.data?.me ?? null
+          if (payload?.id) {
+            const meData: MeResponse = { id: payload.id, name: payload.name ?? '', email: payload.email ?? '', image: payload.image ?? null }
+            setMe(meData)
+            form.reset({ name: meData.name ?? '' })
+            setPreviewUrl(meData.image?.url ?? null)
             try {
-              const res = await privateInstance.get('/api:eA5lqIuH/auth/me')
-              if (res.status === 200) {
-                const data = Array.isArray(res.data) ? (res.data[0] ?? null) : res.data
-                if (data?.id) {
-                  const meData: MeResponse = { id: data.id, name: data.name ?? '', email: data.email ?? '', image: data.image ?? null }
-                  setMe(meData)
-                  form.reset({ name: meData.name ?? '' })
-                  setPreviewUrl(meData.image?.url ?? data?.avatar_url ?? null)
-                  try {
-                    const nextUser = { ...(localUser ?? {}), name: meData.name, email: meData.email, image: meData.image }
-                    localStorage.setItem(`${subdomain}-kayla-user`, JSON.stringify(nextUser))
-                  } catch {}
-                }
-              }
+              const subdomain = getSubdomain()
+              localStorage.setItem(`${subdomain}-kayla-user`, JSON.stringify({ id: meData.id, name: meData.name, email: meData.email, image: meData.image }))
             } catch {}
-          }
-        } else {
-          const res = await privateInstance.get('/api:eA5lqIuH/auth/me')
-          if (res.status === 200) {
-            const data = Array.isArray(res.data) ? (res.data[0] ?? null) : res.data
-            if (data?.id) {
-              const meData: MeResponse = { id: data.id, name: data.name ?? '', email: data.email ?? '', image: data.image ?? null }
-              setMe(meData)
-              form.reset({ name: meData.name ?? '' })
-              setPreviewUrl(meData.image?.url ?? data?.avatar_url ?? null)
-              try {
-                localStorage.setItem(`${subdomain}-kayla-user`, JSON.stringify({ id: meData.id, name: meData.name, email: meData.email, image: meData.image }))
-              } catch {}
-            }
+            try {
+              window.dispatchEvent(new CustomEvent('kayla:user-updated', {
+                detail: { name: meData.name, email: meData.email, avatarUrl: meData.image?.url ?? null }
+              }))
+            } catch {}
           } else {
             toast.error('Não foi possível carregar seus dados')
           }
+        } else {
+          toast.error('Não foi possível carregar seus dados')
         }
       } catch (err: any) {
         toast.error(err?.response?.data?.message ?? 'Erro ao carregar seu perfil')
@@ -133,7 +107,7 @@ function RouteComponent() {
     loadMe()
   }, [])
 
-  const userId = useMemo(() => me?.id ?? null, [me])
+  // Removido: derivação de userId local; os dados agora são sempre provenientes do endpoint `me`
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -195,9 +169,9 @@ function RouteComponent() {
           if (!removeImage) {
             try {
               setTimeout(async () => {
-                const check = await privateInstance.get('/api:eA5lqIuH/auth/me')
-                const data2 = Array.isArray(check?.data) ? (check?.data[0] ?? null) : check?.data
-                const finalUrl: string | undefined = data2?.image?.url
+                const check = await privateInstance.get('https://x8ki-letl-twmt.n7.xano.io/api:paM0Fhtw/users/me')
+                const payload2 = check?.data?.me ?? null
+                const finalUrl: string | undefined = payload2?.image?.url
                 if (finalUrl && typeof finalUrl === 'string' && !finalUrl.startsWith('blob:')) {
                   const raw2 = localStorage.getItem(`${subdomain}-kayla-user`)
                   let localUser2: any = null

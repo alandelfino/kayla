@@ -86,7 +86,7 @@ export function DataTable<T extends { id?: number | string }>({
           <TableBody>
             {loading && (
               <>
-                {Array.from({ length: (typeof skeletonCount === 'number' ? Math.max(0, skeletonCount) : Math.min(perPage, 8)) }).map((_, rIdx) => (
+                {Array.from({ length: (typeof skeletonCount === 'number' ? Math.max(0, skeletonCount) : 3) }).map((_, rIdx) => (
                   <TableRow key={`skeleton-row-${rIdx}`} className={`h-10 ${rIdx % 2 === 1 ? 'bg-neutral-50' : ''}`}>
                     {columns.map((col, cIdx) => {
                       // Fixed widths for specific columns in derivations list

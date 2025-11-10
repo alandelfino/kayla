@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Topbar } from '../-components/topbar'
 import { Button } from '@/components/ui/button'
-import { Edit, Funnel, RefreshCcw, Trash } from 'lucide-react'
+import { Edit, Funnel, RefreshCcw, Trash, ShieldCheck } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -12,6 +12,7 @@ import type { ColumnDef } from '@/components/data-table'
 import { NewWarrantySheet } from './-components/new-warranty'
 import { EditWarrantySheet } from './-components/edit-warranty'
 import { DeleteWarranty } from './-components/delete-warranty'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 
 export const Route = createFileRoute('/dashboard/warranties/')({
   component: RouteComponent,
@@ -160,6 +161,27 @@ function RouteComponent() {
           perPage={perPage}
           totalItems={totalItems}
           emptyMessage='Nenhuma garantia encontrada'
+          emptySlot={(
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <ShieldCheck className='h-6 w-6' />
+                </EmptyMedia>
+                <EmptyTitle>Nenhuma garantia ainda</EmptyTitle>
+                <EmptyDescription>
+                  Você ainda não criou nenhuma garantia. Comece criando sua primeira garantia.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <div className='flex gap-2'>
+                  <NewWarrantySheet />
+                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
+                    {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+                  </Button>
+                </div>
+              </EmptyContent>
+            </Empty>
+          )}
           onChange={({ page, perPage }) => { if (typeof page === 'number') setCurrentPage(page); if (typeof perPage === 'number') setPerPage(perPage); refetch() }}
         />
       </div>

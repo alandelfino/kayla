@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator'
 import { NewMediaDialog } from './-components/new-media-dialog'
 import { EditMediaDialog } from './-components/edit-media-dialog'
 import { DeleteMediaDialog } from './-components/delete-media-dialog'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 
 export const Route = createFileRoute('/dashboard/media/')({
   component: RouteComponent,
@@ -110,7 +111,25 @@ function RouteComponent() {
         {/* Grid de arquivos */}
         <div className='flex-1 overflow-auto p-4'>
           {medias.length === 0 ? (
-            <div className='w-full h-full flex items-center justify-center text-sm text-muted-foreground'>Nenhuma mídia encontrada</div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Images className='h-6 w-6' />
+                </EmptyMedia>
+                <EmptyTitle>Nenhuma mídia ainda</EmptyTitle>
+                <EmptyDescription>
+                  Você ainda não adicionou nenhuma mídia. Faça upload da sua primeira mídia.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <div className='flex gap-2'>
+                  <NewMediaDialog onCreated={() => refetch()} />
+                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
+                    {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+                  </Button>
+                </div>
+              </EmptyContent>
+            </Empty>
           ) : (
             <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4'>
               {medias.map((m) => (

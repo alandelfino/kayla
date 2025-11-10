@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { privateInstance, auth } from '@/lib/auth'
@@ -10,7 +10,18 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Loader2, ChevronRight, Building2 } from 'lucide-react'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 
-type UserCompany = { id: number; created_at: number; user_id?: number; name: string; alias?: string | null }
+type UserCompany = {
+  id: number
+  created_at: number
+  user_id?: number | null
+  name: string
+  alias?: string | null
+  // New fields from updated API model
+  is_me?: boolean
+  company_id?: number
+  active?: boolean
+  users_profile_id?: number
+}
 
 export const Route = createFileRoute('/user/companies/')({
   component: UserCompaniesPage,
@@ -20,15 +31,33 @@ function getSubdomain() { return window.location.hostname.split('.')[0] }
 
 function UserCompaniesPage() {
   const navigate = useNavigate()
-  const [userId, setUserId] = useState<number | null>(null)
   const [loggingCompanyId, setLoggingCompanyId] = useState<number | null>(null)
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['auth', 'companies'],
     queryFn: async () => {
       const res = await privateInstance.get('/api:eA5lqIuH/auth/companies')
-      const items: UserCompany[] = Array.isArray(res.data) ? res.data : (res.data?.items ?? [])
-      return items.filter((uc: any) => uc && typeof uc.id === 'number' && typeof uc.name === 'string') as UserCompany[]
+      const rawItems = Array.isArray(res.data) ? res.data : (res.data?.items ?? [])
+      // Normalize to our UserCompany type, supporting the new model (prefer `id` over `company_id`)
+      const normalized: UserCompany[] = rawItems
+        .map((it: any) => {
+          const rawId = Number(it.id)
+          const rawCompanyId = typeof it.company_id === 'number' ? it.company_id : undefined
+          return {
+            // Prefer the API's `id`; fall back to company_id only if id is invalid
+            id: Number.isFinite(rawId) ? rawId : (rawCompanyId ?? rawId),
+            company_id: rawCompanyId,
+            created_at: Number(it.created_at) || Date.now(),
+            user_id: typeof it.user_id === 'number' ? it.user_id : null,
+            name: String(it.name ?? ''),
+            alias: typeof it.alias === 'string' ? it.alias : null,
+            is_me: Boolean(it.is_me),
+            active: typeof it.active === 'boolean' ? it.active : undefined,
+            users_profile_id: typeof it.users_profile_id === 'number' ? it.users_profile_id : undefined,
+          }
+        })
+        .filter((uc: UserCompany) => Number.isFinite(uc.id) && !!uc.name)
+      return normalized
     },
   })
 
@@ -43,22 +72,17 @@ function UserCompaniesPage() {
 
   useEffect(() => {
     auth.userGuard()
-    try {
-      const sub = getSubdomain()
-      const raw = localStorage.getItem(`${sub}-kayla-user`)
-      const parsed = raw ? JSON.parse(raw) : null
-      const id: number | null = parsed?.id ?? parsed?.user?.id ?? null
-      setUserId(id)
-    } catch {}
   }, [])
 
   async function enterCompany(uc: UserCompany) {
-    setLoggingCompanyId(uc.id)
+    const companyId = uc.company_id ?? uc.id
+    setLoggingCompanyId(companyId)
     try {
-      const res = await privateInstance.post('/api:eA5lqIuH/auth/login-company', { company_id: uc.id })
+      // Enviar a propriedade `company_id` da listagem como `company_id` na requisição
+      const res = await privateInstance.post('/api:eA5lqIuH/auth/login-company', { company_id: companyId })
       const authToken: string | undefined = res?.data?.authToken
       const user = res?.data?.user
-      const company = res?.data?.company ?? { id: uc.id, name: uc.name, alias: uc.alias }
+      const company = res?.data?.company ?? { id: companyId, name: uc.name, alias: uc.alias }
       const sub = getSubdomain()
       if (authToken) { localStorage.setItem(`${sub}-kayla-authToken`, authToken) }
       if (user) {
@@ -79,6 +103,12 @@ function UserCompaniesPage() {
 
   return (
     <div className='container mx-auto p-6'>
+
+      <div className='flex items-center gap-2 mb-4'>
+        <Building2 className='h-5 w-5 text-muted-foreground' />
+        <span className='text-base font-semibold'>Minhas Contas</span>
+      </div>
+
       <div className='space-y-3'>
         {isLoading && (
           <div className='space-y-3'>
@@ -104,12 +134,13 @@ function UserCompaniesPage() {
                   <div className='flex items-center gap-3'>
                     <span className='font-medium leading-none'>{uc.name}</span>
                     {uc.alias ? <Badge variant={'secondary'}>{uc.alias}</Badge> : null}
-                    {userId != null && uc.user_id === userId ? (
+                    
+                    {uc.is_me ? (
                       <Badge variant={'default'} className='text-xs'>proprietário</Badge>
                     ) : null}
                   </div>
                   <div className='flex items-center gap-2'>
-                    <Button onClick={() => enterCompany(uc)} disabled={loggingCompanyId === uc.id}>
+                    <Button onClick={() => enterCompany(uc)} disabled={loggingCompanyId === (uc.company_id ?? uc.id)}>
                       {loggingCompanyId === uc.id ? (
                         <>
                           <Loader2 className='mr-2 h-4 w-4 animate-spin' />

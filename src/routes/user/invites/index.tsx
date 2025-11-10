@@ -39,6 +39,10 @@ function InvitesPage() {
 
   return (
     <div className='container mx-auto p-6'>
+      <div className='flex items-center gap-2 mb-4'>
+        <Mail className='h-5 w-5 text-muted-foreground' />
+        <span className='text-base font-semibold'>Convites</span>
+      </div>
       {isLoading && (
         <div className='space-y-3'>
           {[1,2].map((i) => (

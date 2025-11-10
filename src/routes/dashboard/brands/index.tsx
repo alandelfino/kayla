@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Topbar } from '../-components/topbar'
 import { Button } from '@/components/ui/button'
-import { Edit, Funnel, RefreshCcw, Trash } from 'lucide-react'
+import { Edit, Funnel, RefreshCcw, Trash, Tag } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -12,6 +12,7 @@ import { EditBrandSheet } from './-components/edit-brand'
 import { DeleteBrand } from './-components/delete-brand'
 import { DataTable } from '@/components/data-table'
 import type { ColumnDef } from '@/components/data-table'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 
 
 
@@ -215,6 +216,27 @@ function RouteComponent() {
           perPage={perPage}
           totalItems={totalItems}
           emptyMessage='Nenhuma marca encontrada'
+          emptySlot={(
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Tag className='h-6 w-6' />
+                </EmptyMedia>
+                <EmptyTitle>Nenhuma marca ainda</EmptyTitle>
+                <EmptyDescription>
+                  Você ainda não criou nenhuma marca. Comece criando sua primeira marca.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <div className='flex gap-2'>
+                  <NewBrandSheet />
+                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedBrands([]); refetch() }}>
+                    {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+                  </Button>
+                </div>
+              </EmptyContent>
+            </Empty>
+          )}
           onChange={({ page, perPage }) => {
             if (typeof page === 'number') setCurrentPage(page)
             if (typeof perPage === 'number') setPerPage(perPage)

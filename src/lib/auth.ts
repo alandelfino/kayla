@@ -83,7 +83,7 @@ export const auth = {
         const authToken = getToken()
         if (!authToken) {
             // Sem token: redireciona imediatamente
-            window.location.href = '/sign-in'
+            //window.location.href = '/sign-in'
             return
         }
 
@@ -93,7 +93,7 @@ export const auth = {
                 // Apenas se for 401/403 consideramos sessão inválida
                 const status = response.status
                 if (status === 401 || status === 403) {
-                    window.location.href = '/sign-in'
+                    //window.location.href = '/sign-in'
                 }
                 return
             }
@@ -103,7 +103,7 @@ export const auth = {
             const user = Array.isArray(data) ? (data[0] ?? null) : data
             if (!user || !user.id) {
                 // Apenas se não houver usuário válido e houver erro de autorização, redireciona
-                window.location.href = '/sign-in'
+                //window.location.href = '/sign-in'
                 return
             }
 
@@ -123,7 +123,7 @@ export const auth = {
             // Só redireciona se o backend respondeu 401/403.
             const status = err?.response?.status
             if (status === 401 || status === 403) {
-                window.location.href = '/sign-in'
+                //window.location.href = '/sign-in'
             } else {
                 console.warn('userGuard: falha ao validar sessão, mantendo usuário na página:', err?.message ?? err)
             }
