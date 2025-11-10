@@ -1,41 +1,57 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useMutation } from '@tanstack/react-query'
 import { privateInstance } from '@/lib/auth'
 import { toast } from 'sonner'
-import { Loader, Ban } from 'lucide-react'
+import { Loader, Power, XCircle } from 'lucide-react'
 
 type InvitationLike = {
   id: number
   active?: boolean
   accepted?: boolean
-  status?: 'pending' | 'canceled' | 'accepted'
+  status?: 'pending' | 'accepted' | 'canceled' | 'revoked'
   email?: string
 }
 
 export function InvitationActionsCell({ invitation, onChanged }: { invitation: InvitationLike, onChanged?: () => void }) {
   const [open, setOpen] = useState(false)
-  const [confirmEmail, setConfirmEmail] = useState('')
+  const [openCancel, setOpenCancel] = useState(false)
+  const isActive = invitation.active === true
   const rawStatus = ((invitation as any)?.status ?? '').toString().trim().toLowerCase()
-  const isAccepted = invitation.accepted === true || rawStatus === 'accepted'
-  const isCanceled = rawStatus === 'canceled' || rawStatus === 'cancelled'
-  const canCancel = !isAccepted && !isCanceled && (rawStatus === 'pending' || rawStatus === '')
-  const emailToConfirm = ((invitation as any)?.email ?? '').toString()
-  const emailToConfirmNormalized = emailToConfirm.trim().toLowerCase()
-  const confirmMatches = confirmEmail.trim().toLowerCase() === emailToConfirmNormalized && emailToConfirmNormalized.length > 0
+  const isCanceled = rawStatus === 'canceled' || rawStatus === 'cancelled' || rawStatus === 'revoked'
 
   const { isPending, mutateAsync } = useMutation({
-    mutationFn: async () => {
-      const url = `/api:0jQElwax/invitations/${invitation.id}/cancel`
-      const response = await privateInstance.post(url, {})
-      if (response.status !== 200) throw new Error('Falha ao cancelar convite')
+    mutationFn: async (nextActive: boolean) => {
+      const url = `/api:0jQElwax/invitations/${invitation.id}/status`
+      const response = await privateInstance.put(url, { active: nextActive })
+      if (response.status !== 200) throw new Error('Falha ao atualizar status do convite')
       return response.data
     },
     onSuccess: () => {
-      toast.success('Convite cancelado com sucesso')
+      toast.success('Status do convite atualizado')
+      onChanged?.()
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message ?? 'Erro ao atualizar convite')
+    }
+  })
+
+  async function confirm() {
+    // Apenas desativar; nunca ativar novamente
+    await mutateAsync(false)
+    setOpen(false)
+  }
+
+  const { isPending: isCancelling, mutateAsync: cancelInvite } = useMutation({
+    mutationFn: async () => {
+      const url = `/api:0jQElwax/invitations/${invitation.id}/cancel`
+      const response = await privateInstance.post(url, {})
+      if (response.status < 200 || response.status >= 300) throw new Error('Falha ao cancelar convite')
+      return response.data
+    },
+    onSuccess: () => {
+      toast.success('Convite cancelado')
       onChanged?.()
     },
     onError: (error: any) => {
@@ -43,56 +59,69 @@ export function InvitationActionsCell({ invitation, onChanged }: { invitation: I
     }
   })
 
-  async function confirm() {
-    if (!confirmMatches) {
-      toast.error('Para confirmar, digite exatamente o e-mail do convite.')
-      return
-    }
-    await mutateAsync()
-    setOpen(false)
-    setConfirmEmail('')
+  async function confirmCancel() {
+    await cancelInvite()
+    setOpenCancel(false)
   }
 
-  if (!canCancel) {
-    // Não renderiza o botão de cancelar quando o convite já foi aceito ou cancelado
+  // Se o convite estiver cancelado, não renderiza ação
+  if (isCanceled) {
     return null
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size={'sm'} variant={'destructive'} className='w-full' disabled={isPending || !canCancel}>
-          {isPending ? <Loader className='animate-spin' /> : <Ban />} Cancelar
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Cancelar convite</DialogTitle>
-          <DialogDescription>
-            Tem certeza que deseja cancelar este convite? Convites só podem ser cancelados quando estão pendentes.
-          </DialogDescription>
-        </DialogHeader>
-        <div className='space-y-2 py-2'>
-          <Label htmlFor='confirmEmail'>Para confirmar, digite o e-mail do convite</Label>
-          <Input
-            id='confirmEmail'
-            placeholder={emailToConfirm || 'email@exemplo.com'}
-            value={confirmEmail}
-            onChange={(e) => setConfirmEmail(e.target.value)}
-            autoFocus
-          />
-          {confirmEmail.length > 0 && !confirmMatches ? (
-            <p className='text-xs text-red-600'>O e-mail digitado não corresponde ao convite.</p>
-          ) : null}
-        </div>
-        <DialogFooter className='flex gap-2'>
-          <Button variant={'outline'} onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={confirm} disabled={isPending || !canCancel || !confirmMatches} variant={'destructive'}>
-            {isPending ? <Loader className='animate-spin' /> : null}
-            Confirmar cancelamento
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <div className='space-y-2'>
+      {isActive && (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button size={'sm'} variant={'destructive'} className='w-full' disabled={isPending}>
+              {isPending ? <Loader className='animate-spin' /> : <Power />} Desativar
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Desativar convite</DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja desativar este convite? O usuário não poderá utilizá-lo.
+              </DialogDescription>
+            </DialogHeader>
+            <div className='space-y-2 py-2'></div>
+            <DialogFooter className='flex gap-2'>
+              <Button variant={'outline'} onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button onClick={confirm} disabled={isPending} variant={'destructive'}>
+                {isPending ? <Loader className='animate-spin' /> : null}
+                Desativar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {rawStatus === 'pending' && (
+        <Dialog open={openCancel} onOpenChange={setOpenCancel}>
+          <DialogTrigger asChild>
+            <Button size={'sm'} variant={'destructive'} className='w-full' disabled={isCancelling}>
+              {isCancelling ? <Loader className='animate-spin' /> : <XCircle />} Cancelar
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Cancelar convite</DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja cancelar este convite? O usuário não poderá utilizá-lo e não poderá ser reativado.
+              </DialogDescription>
+            </DialogHeader>
+            <div className='space-y-2 py-2'></div>
+            <DialogFooter className='flex gap-2'>
+              <Button variant={'outline'} onClick={() => setOpenCancel(false)}>Voltar</Button>
+              <Button onClick={confirmCancel} disabled={isCancelling} variant={'destructive'}>
+                {isCancelling ? <Loader className='animate-spin' /> : null}
+                Cancelar convite
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
   )
 }

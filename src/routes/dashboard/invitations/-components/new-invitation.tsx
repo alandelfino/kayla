@@ -15,13 +15,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 const formSchema = z.object({
   email: z.string().email({ message: 'Informe um e-mail válido' }),
   team_id: z.string().min(1, { message: 'Selecione a equipe' }),
+  user_profile_id: z.string().min(1, { message: 'Selecione o perfil' }),
 })
 
 export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
   const [open, setOpen] = useState(false)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { email: '', team_id: '' },
+    defaultValues: { email: '', team_id: '', user_profile_id: '' },
   })
 
   // Carregar equipes do backend (Xano Teams API)
@@ -37,11 +38,28 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
     }
   })
 
+  // Carregar perfis do backend
+  const { data: profilesData, isLoading: isProfilesLoading } = useQuery({
+    queryKey: ['profiles', 'for-invitations'],
+    enabled: open,
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      // GET /api:BXIMsMQ7/user_profile?per_page=100
+      const response = await privateInstance.get('/api:BXIMsMQ7/user_profile?per_page=50')
+      if (response.status !== 200) throw new Error('Erro ao carregar perfis')
+      return response.data as any
+    }
+  })
+
   const { isPending, mutate } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
       // Ajuste de acordo com a documentação da API:
       // POST /api:eA5lqIuH/invitations { email, team_id, company_id }
-      const payload: any = { email: values.email, team_id: Number(values.team_id) }
+      const payload: any = {
+        email: values.email,
+        team_id: Number(values.team_id),
+        user_profile_id: Number(values.user_profile_id),
+      }
       const response = await privateInstance.post('/api:0jQElwax/invitations/invite', payload)
       if (response.status !== 200 && response.status !== 201) throw new Error('Erro ao criar convite')
       return response
@@ -50,7 +68,7 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
       toast.success('Convite criado com sucesso!')
       setOpen(false)
       onCreated?.()
-      form.reset({ email: '', team_id: '' })
+      form.reset({ email: '', team_id: '', user_profile_id: '' })
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message ?? 'Erro ao criar convite')
@@ -111,6 +129,37 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
                               : Array.isArray(teamsData)
                                 ? (teamsData as any).map((t: any) => (
                                   <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                                ))
+                                : null}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='user_profile_id'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Perfil</FormLabel>
+                    <FormControl>
+                      <Select value={field.value} onValueChange={field.onChange} disabled={isProfilesLoading}>
+                        <SelectTrigger className='w-full'>
+                          <SelectValue placeholder={isProfilesLoading ? 'Carregando perfis...' : 'Selecione o perfil'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {Array.isArray((profilesData as any)?.items)
+                              ? (profilesData as any).items.map((p: any) => (
+                                <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                              ))
+                              : Array.isArray(profilesData)
+                                ? (profilesData as any).map((p: any) => (
+                                  <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
                                 ))
                                 : null}
                           </SelectGroup>

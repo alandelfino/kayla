@@ -136,11 +136,6 @@ export function Navigation() {
                     icon: <Contact />,
                     href: '/dashboard/profiles',
                 },
-                {
-                    label: 'Níveis',
-                    icon: <ChartNoAxesColumnIncreasing />,
-                    href: '/dashboard/levels',
-                },
             ]
         },
     ]

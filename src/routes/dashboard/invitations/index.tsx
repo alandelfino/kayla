@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
-import { Users, RefreshCcw, ArrowUpRight } from 'lucide-react'
+import { Users, RefreshCcw, ArrowUpRight, SortAsc, SortDesc } from 'lucide-react'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { NewInvitationSheet } from './-components/new-invitation'
 import { InvitationActionsCell } from './-components/invitation-actions'
 
@@ -33,15 +34,17 @@ function RouteComponent() {
   const [currentPage, setCurrentPage] = useState(1)
   const [perPage, setPerPage] = useState(20)
   const [totalItems, setTotalItems] = useState(0)
+  const [sortBy, setSortBy] = useState<'email' | 'status' | 'created_at'>('created_at')
+  const [orderBy, setOrderBy] = useState<'asc' | 'desc'>('desc')
 
   // Ajuste os endpoints conforme a documentação de Convites da API
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
-    queryKey: ['invitations', currentPage, perPage],
+    queryKey: ['invitations', currentPage, perPage, sortBy, orderBy],
     queryFn: async () => {
-      // Exemplos (ajuste de acordo com a doc):
-      // GET /api:eA5lqIuH/invitations?page={page}&per_page={perPage}&company_id={companyId}
-      const response = await privateInstance.get(`/api:0jQElwax/invitations?page=${currentPage}&per_page=${perPage}`)
+      // Busca convites usando GET com query params (inclui sort_by)
+      // GET /api:0jQElwax/invitations?page={page}&per_page={perPage}&sort_by={sortBy}&order_by={orderBy}
+      const response = await privateInstance.get(`/api:0jQElwax/invitations?page=${currentPage}&per_page=${perPage}&sort_by=${sortBy ?? 'created_at'}&order_by=${orderBy}`)
       if (response.status !== 200) {
         throw new Error('Erro ao carregar convites')
       }
@@ -133,10 +136,34 @@ function RouteComponent() {
       <div className='flex flex-col w-full h-full flex-1 overflow-hidden'>
         {/* Actions */}
         <div className='border-b flex w-full items-center p-2 gap-4'>
-          <div className='flex items-center gap-2 flex-1'>
-            {/* Espaço para filtros futuros */}
+          <div className='flex items-center gap-4 flex-1'>
+            {/* Ordenação - alinhada à esquerda */}
+            <div className='flex items-center gap-2'>
+              <span className='text-sm text-neutral-600 dark:text-neutral-300'>Ordenar por</span>
+              <Select value={sortBy} onValueChange={(v) => { setSortBy(v as any); refetch() }}>
+                <SelectTrigger className='w-[180px]'>
+                  <SelectValue placeholder='Selecione' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value='email'>E-mail</SelectItem>
+                    <SelectItem value='status'>Status</SelectItem>
+                    <SelectItem value='created_at'>Data de criação</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Button
+                size={'sm'}
+                variant={'ghost'}
+                title={orderBy === 'asc' ? 'Ascendente' : 'Descendente'}
+                aria-label={orderBy === 'asc' ? 'Ordenação ascendente' : 'Ordenação descendente'}
+                onClick={() => { setOrderBy(orderBy === 'asc' ? 'desc' : 'asc'); refetch() }}
+              >
+                {orderBy === 'asc' ? <SortAsc /> : <SortDesc />}
+              </Button>
+            </div>
           </div>
-          <div className='flex items-center gap-2'>
+          <div className='flex items-center gap-4'>
             <Button size={'sm'} variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
               {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
             </Button>

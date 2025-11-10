@@ -25,7 +25,8 @@ export function LoginForm({
     onSuccess: (response) => {
       if (response.status === 200) {
         toast.success("Login realizado com sucesso!")
-        navigate({ to: "/dashboard" })
+        // Após login, direciona para o novo dashboard do usuário (Minhas contas)
+        navigate({ to: "/user/companies" })
       } else {
         toast.error('Credenciais invalidas')
       }

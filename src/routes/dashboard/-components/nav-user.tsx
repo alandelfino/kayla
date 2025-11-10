@@ -4,6 +4,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar, } from "@/components/ui/sidebar"
 import { useEffect, useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
+import { useMutation } from "@tanstack/react-query"
+import { privateInstance } from "@/lib/auth"
+import { toast } from "sonner"
 
 
 type User = { email: string, name: string, avatarUrl?: string | null }
@@ -77,6 +80,33 @@ export function NavUser() {
             .join('')
     }
 
+    const getSubdomain = () => window.location.hostname.split('.')[0]
+
+    const { isPending: isLoggingOut, mutateAsync: doLogout } = useMutation({
+        mutationFn: async () => {
+            // Executa logout na API
+            const res = await privateInstance.post('/api:eA5lqIuH/auth/logout', {})
+            return res.data
+        },
+        onSettled: () => {
+            // Limpa storage e redireciona
+            try {
+                const sub = getSubdomain()
+                localStorage.removeItem(`${sub}-kayla-authToken`)
+                localStorage.removeItem(`${sub}-kayla-user`)
+            } catch {}
+            toast.success('Você saiu da sua conta')
+            navigate({ to: '/sign-in' })
+        },
+        onError: () => {
+            // Mesmo se falhar na API, prossegue com logout local
+        }
+    })
+
+    async function handleLogout() {
+        await doLogout()
+    }
+
     return (
         <SidebarMenu>
             <SidebarMenuItem>
@@ -118,7 +148,7 @@ export function NavUser() {
                         <DropdownMenuSeparator />
 
                         <DropdownMenuGroup>
-                            <DropdownMenuItem onClick={() => navigate({ to: '/dashboard/profile' })}> <User /> Meu Perfil </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate({ to: '/user/profile' })}> <User /> Meu Perfil </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setDarkMode(!darkMode)}>
                                 <Moon /><span className="w-full">Dark mode</span> {darkMode && <Check />}
                             </DropdownMenuItem>
@@ -126,7 +156,9 @@ export function NavUser() {
 
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem> <LogOut /> Sair </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
+                            <LogOut /> {isLoggingOut ? 'Saindo...' : 'Sair'}
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>

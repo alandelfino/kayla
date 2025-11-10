@@ -68,7 +68,8 @@ privateInstance.interceptors.request.use((config) => {
 
 export const auth = {
     login: async (values: z.infer<typeof formSchema>) => {
-        return loginInstance.post(`/api:eA5lqIuH/auth/${getSubdomain()}/login`, values)
+        // Novo endpoint de login sem subdomínio na URL
+        return loginInstance.post(`/api:eA5lqIuH/auth/login`, values)
     },
     getCompany: async () => {
         const response = await publicInstance.get(`/api:3QngmZuz/companies/${getSubdomain()}`)
@@ -78,34 +79,54 @@ export const auth = {
         }
         return { status: response.status, data: null }
     },
-    userGuard: () => {
-
+    userGuard: async () => {
         const authToken = getToken()
         if (!authToken) {
+            // Sem token: redireciona imediatamente
             window.location.href = '/sign-in'
+            return
         }
 
-        privateInstance.get('/api:eA5lqIuH/auth/me')
-            .then((response) => {
-                if (response.status !== 200) {
+        try {
+            const response = await privateInstance.get('/api:eA5lqIuH/auth/me')
+            if (response.status !== 200) {
+                // Apenas se for 401/403 consideramos sessão inválida
+                const status = response.status
+                if (status === 401 || status === 403) {
                     window.location.href = '/sign-in'
-                } else {
-                    // Persiste usuário (inclui imagem) para que o sidebar/menus tenham a URL do avatar
-                    try {
-                        localStorage.setItem(`${getSubdomain()}-kayla-user`, JSON.stringify(response.data))
-                    } catch {}
-                    // Notifica UI (sidebar/nav) que o usuário foi carregado/atualizado
-                    try {
-                        const avatarUrl = response?.data?.image?.url ?? response?.data?.avatar_url ?? null
-                        window.dispatchEvent(new CustomEvent('kayla:user-updated', {
-                            detail: { name: response?.data?.name, email: response?.data?.email, avatarUrl }
-                        }))
-                    } catch {}
                 }
-            })
-            .catch(() => {
-                window.location.href = '/sign-in'
-            })
+                return
+            }
 
+            // Novo formato: API pode retornar um array com 1 usuário.
+            const data = response?.data
+            const user = Array.isArray(data) ? (data[0] ?? null) : data
+            if (!user || !user.id) {
+                // Apenas se não houver usuário válido e houver erro de autorização, redireciona
+                window.location.href = '/sign-in'
+                return
+            }
+
+            // Persiste usuário (inclui imagem) para que o sidebar/menus tenham a URL do avatar
+            try {
+                localStorage.setItem(`${getSubdomain()}-kayla-user`, JSON.stringify(user))
+            } catch {}
+            // Notifica UI (sidebar/nav) que o usuário foi carregado/atualizado
+            try {
+                const avatarUrl = user?.image?.url ?? user?.avatar_url ?? null
+                window.dispatchEvent(new CustomEvent('kayla:user-updated', {
+                    detail: { name: user?.name, email: user?.email, avatarUrl }
+                }))
+            } catch {}
+        } catch (err: any) {
+            // Em falha de rede (timeout, abort, CORS), não redireciona.
+            // Só redireciona se o backend respondeu 401/403.
+            const status = err?.response?.status
+            if (status === 401 || status === 403) {
+                window.location.href = '/sign-in'
+            } else {
+                console.warn('userGuard: falha ao validar sessão, mantendo usuário na página:', err?.message ?? err)
+            }
+        }
     }
 }

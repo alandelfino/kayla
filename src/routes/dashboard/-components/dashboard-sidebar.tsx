@@ -1,5 +1,4 @@
 import * as React from "react"
-import { NavUser } from "./nav-user"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, SidebarMenuButton } from "@/components/ui/sidebar"
 import { Navigation } from "./navigation"
 
@@ -26,9 +25,8 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
             <SidebarContent className="dark:bg-neutral-950">
                 <Navigation />
             </SidebarContent>
-            <SidebarFooter className="dark:bg-neutral-950">
-                <NavUser />
-            </SidebarFooter>
+            {/* User session moved to Topbar */}
+            <SidebarFooter className="dark:bg-neutral-950" />
             <SidebarRail />
         </Sidebar>
     )
