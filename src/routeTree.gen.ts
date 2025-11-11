@@ -24,6 +24,7 @@ import { Route as DashboardProfileIndexRouteImport } from './routes/dashboard/pr
 import { Route as DashboardMediaIndexRouteImport } from './routes/dashboard/media/index'
 import { Route as DashboardInvitationsIndexRouteImport } from './routes/dashboard/invitations/index'
 import { Route as DashboardDerivationsIndexRouteImport } from './routes/dashboard/derivations/index'
+import { Route as DashboardCustomersIndexRouteImport } from './routes/dashboard/customers/index'
 import { Route as DashboardCompanyProfileIndexRouteImport } from './routes/dashboard/company-profile/index'
 import { Route as DashboardCategoriesIndexRouteImport } from './routes/dashboard/categories/index'
 import { Route as DashboardBrandsIndexRouteImport } from './routes/dashboard/brands/index'
@@ -106,6 +107,11 @@ const DashboardDerivationsIndexRoute =
     path: '/derivations/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardCustomersIndexRoute = DashboardCustomersIndexRouteImport.update({
+  id: '/customers/',
+  path: '/customers/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardCompanyProfileIndexRoute =
   DashboardCompanyProfileIndexRouteImport.update({
     id: '/company-profile/',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/brands': typeof DashboardBrandsIndexRoute
   '/dashboard/categories': typeof DashboardCategoriesIndexRoute
   '/dashboard/company-profile': typeof DashboardCompanyProfileIndexRoute
+  '/dashboard/customers': typeof DashboardCustomersIndexRoute
   '/dashboard/derivations': typeof DashboardDerivationsIndexRoute
   '/dashboard/invitations': typeof DashboardInvitationsIndexRoute
   '/dashboard/media': typeof DashboardMediaIndexRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/dashboard/brands': typeof DashboardBrandsIndexRoute
   '/dashboard/categories': typeof DashboardCategoriesIndexRoute
   '/dashboard/company-profile': typeof DashboardCompanyProfileIndexRoute
+  '/dashboard/customers': typeof DashboardCustomersIndexRoute
   '/dashboard/derivations': typeof DashboardDerivationsIndexRoute
   '/dashboard/invitations': typeof DashboardInvitationsIndexRoute
   '/dashboard/media': typeof DashboardMediaIndexRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/dashboard/brands/': typeof DashboardBrandsIndexRoute
   '/dashboard/categories/': typeof DashboardCategoriesIndexRoute
   '/dashboard/company-profile/': typeof DashboardCompanyProfileIndexRoute
+  '/dashboard/customers/': typeof DashboardCustomersIndexRoute
   '/dashboard/derivations/': typeof DashboardDerivationsIndexRoute
   '/dashboard/invitations/': typeof DashboardInvitationsIndexRoute
   '/dashboard/media/': typeof DashboardMediaIndexRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/dashboard/brands'
     | '/dashboard/categories'
     | '/dashboard/company-profile'
+    | '/dashboard/customers'
     | '/dashboard/derivations'
     | '/dashboard/invitations'
     | '/dashboard/media'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/dashboard/brands'
     | '/dashboard/categories'
     | '/dashboard/company-profile'
+    | '/dashboard/customers'
     | '/dashboard/derivations'
     | '/dashboard/invitations'
     | '/dashboard/media'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/dashboard/brands/'
     | '/dashboard/categories/'
     | '/dashboard/company-profile/'
+    | '/dashboard/customers/'
     | '/dashboard/derivations/'
     | '/dashboard/invitations/'
     | '/dashboard/media/'
@@ -362,6 +374,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardDerivationsIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/customers/': {
+      id: '/dashboard/customers/'
+      path: '/customers'
+      fullPath: '/dashboard/customers'
+      preLoaderRoute: typeof DashboardCustomersIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/company-profile/': {
       id: '/dashboard/company-profile/'
       path: '/company-profile'
@@ -390,6 +409,7 @@ interface DashboardRouteRouteChildren {
   DashboardBrandsIndexRoute: typeof DashboardBrandsIndexRoute
   DashboardCategoriesIndexRoute: typeof DashboardCategoriesIndexRoute
   DashboardCompanyProfileIndexRoute: typeof DashboardCompanyProfileIndexRoute
+  DashboardCustomersIndexRoute: typeof DashboardCustomersIndexRoute
   DashboardDerivationsIndexRoute: typeof DashboardDerivationsIndexRoute
   DashboardInvitationsIndexRoute: typeof DashboardInvitationsIndexRoute
   DashboardMediaIndexRoute: typeof DashboardMediaIndexRoute
@@ -404,6 +424,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardBrandsIndexRoute: DashboardBrandsIndexRoute,
   DashboardCategoriesIndexRoute: DashboardCategoriesIndexRoute,
   DashboardCompanyProfileIndexRoute: DashboardCompanyProfileIndexRoute,
+  DashboardCustomersIndexRoute: DashboardCustomersIndexRoute,
   DashboardDerivationsIndexRoute: DashboardDerivationsIndexRoute,
   DashboardInvitationsIndexRoute: DashboardInvitationsIndexRoute,
   DashboardMediaIndexRoute: DashboardMediaIndexRoute,

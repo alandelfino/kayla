@@ -119,7 +119,15 @@
 
 @layer base {
   * {
-    @apply font-geist border-border outline-ring/50 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500;
+    @apply font-geist border-border outline-ring/50 [&::-webkit-scrollbar]:w-[5px] [&::-webkit-scrollbar]:h-[5px] [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-neutral-200 dark:[&::-webkit-scrollbar-track]:bg-transparent dark:[&::-webkit-scrollbar-thumb]:bg-neutral-200;
+    /* Firefox */
+    scrollbar-width: thin; /* Aproxima o tamanho; Firefox não suporta valor exato em px */
+    scrollbar-color: #e5e5e5 transparent; /* thumb neutral-200, track transparente */
+  }
+
+  /* Firefox em modo escuro: manter thumb neutral-300 e track próximo de neutral-700 */
+  .dark * {
+    scrollbar-color: #e5e5e5 transparent; /* thumb neutral-200, track transparente */
   }
 
   body {

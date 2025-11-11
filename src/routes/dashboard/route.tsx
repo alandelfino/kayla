@@ -17,7 +17,7 @@ function RouteComponent() {
   return (
     <SidebarProvider>
       <DashboardSidebar />
-      <main className='flex flex-col w-full h-lvh'>
+      <main className='flex flex-col w-full h-lvh overflow-x-hidden'>
         <Outlet />
       </main>
 

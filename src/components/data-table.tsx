@@ -65,9 +65,10 @@ export function DataTable<T extends { id?: number | string }>({
   }
 
   return (
-    <div className='flex flex-col w-full flex-1 overflow-auto'>
+    <div className='flex flex-col w-full flex-1 overflow-y-auto overflow-x-hidden'>
 
       <div className='relative h-full'>
+        <div className='w-full overflow-x-auto'>
         <Table className='border-b'>
           <TableHeader className='sticky top-0 bg-neutral-50 z-10 border-b'>
             <TableRow className='bg-neutral-50'>
@@ -166,6 +167,7 @@ export function DataTable<T extends { id?: number | string }>({
             )}
           </TableBody>
         </Table>
+        </div>
 
         {!loading && data.length === 0 && emptySlot && (
           <div className='absolute inset-0 flex items-center justify-center p-4'>

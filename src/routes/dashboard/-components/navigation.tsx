@@ -65,6 +65,11 @@ export function Navigation() {
                     label: 'Contatos',
                     icon: <BookUser />,
                     href: '/dashboard/contacts',
+                },
+                {
+                    label: 'Clientes',
+                    icon: <BookUser />,
+                    href: '/dashboard/customers',
                 }
             ]
         },
