@@ -2,20 +2,23 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Topbar } from '../-components/topbar'
-import { privateInstance } from '@/lib/auth'
+import { publicInstance, privateInstance } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { RefreshCcw, Building2, Loader2, Save } from 'lucide-react'
+import { RefreshCcw, Building2, Loader2, Save, Edit } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { getAvatarAbbrev } from '@/lib/utils'
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ImageCrop, ImageCropContent, ImageCropApply, ImageCropReset } from '@/components/ui/shadcn-io/image-crop'
 
 export const Route = createFileRoute('/dashboard/company-profile/')({
   component: RouteComponent,
@@ -57,6 +60,8 @@ function RouteComponent() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [removedLogo, setRemovedLogo] = useState<boolean>(false)
+  const [cropOpen, setCropOpen] = useState<boolean>(false)
+  const originalFileRef = useRef<File | null>(null)
   // Removido o sheet; edição ocorre diretamente na página
 
   const formSchema = z.object({
@@ -87,8 +92,9 @@ function RouteComponent() {
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     queryKey: ['company-profile'],
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async () => {
-      const res = await privateInstance.get('https://x8ki-letl-twmt.n7.xano.io/api:kdrFy_tm/companies/single')
+      const res = await privateInstance.get('/api:kdrFy_tm/companies/single')
       if (res.status !== 200) {
         throw new Error(res?.data?.message ?? 'Erro ao carregar dados da empresa')
       }
@@ -108,16 +114,8 @@ function RouteComponent() {
         date_format: String(payload?.date_format ?? 'dd/mm/yyyy-HH:mm:ss'),
         currency: String(payload?.currency ?? 'BRL'),
         number_format: String(payload?.number_format ?? '0.000,00'),
-        image: payload?.image ?? {
-          access: 'public',
-          path: '/vault/_nCS6eiT/JrR6xcgBLfp6an1kGIYaQABaoEg/xGyogA../d-100x100+%281%29.png',
-          name: 'd-100x100 (1).png',
-          type: 'image',
-          size: 2084,
-          mime: 'image/png',
-          meta: { width: 100, height: 100 },
-          url: 'https://x8ki-letl-twmt.n7.xano.io/vault/_nCS6eiT/JrR6xcgBLfp6an1kGIYaQABaoEg/xGyogA../d-100x100+%281%29.png',
-        },
+        // Se a API retornar image como null, respeitamos e não aplicamos imagem padrão
+        image: payload?.image ?? null,
       }
       return normalized
     }
@@ -133,6 +131,13 @@ function RouteComponent() {
     if (!data) return
     setCompany(data)
     setPreviewUrl(data?.image?.url ?? null)
+    // Se o backend retorna image === null, limpamos qualquer seleção/preview local
+    if (data?.image === null) {
+      try {
+        setSelectedFile(null)
+        setRemovedLogo(false)
+      } catch {}
+    }
     // Preenche o formulário com os valores atuais
     form.reset({
       name: data?.name ?? '',
@@ -200,28 +205,44 @@ function RouteComponent() {
     const file = e.target.files?.[0]
     if (!file) return
     try {
-      // Validação semelhante ao cadastro de mídias (tamanho máximo 10MB)
       const MAX_SIZE = 10 * 1024 * 1024
       if (file.size > MAX_SIZE) {
         toast.error('Arquivo muito grande. Tamanho máximo permitido é 10MB.')
         return
       }
       setRemovedLogo(false)
-      const cropped = await cropImageToSquare(file, 256) // crop central para quadrado
-      const blobUrl = URL.createObjectURL(cropped)
-      setPreviewUrl(blobUrl)
-      setSelectedFile(cropped)
-      // Atualiza localStorage imediatamente para refletir no sidebar
+      originalFileRef.current = file
+      setCropOpen(true)
+    } catch {
+      toast.error('Falha ao carregar a imagem da logo')
+    }
+  }
+
+  // Handler para integrar o crop do shadcn-io
+  async function handleShadcnCrop(croppedDataUrl: string) {
+    try {
+      const resp = await fetch(croppedDataUrl)
+      const blob = await resp.blob()
+      const fileName = (originalFileRef.current?.name || 'logo').replace(/\.[^/.]+$/, '') + '-cropped.png'
+      const croppedFile = new File([blob], fileName, { type: 'image/png' })
+
+      // Pré-visualização e estado local
+      setPreviewUrl(croppedDataUrl)
+      setSelectedFile(croppedFile)
+
+      // Atualiza localStorage para refletir no sidebar
       const sub = getSubdomain()
       const raw = localStorage.getItem(`${sub}-kayla-company`)
       let localCompany: any = null
       try { localCompany = raw ? JSON.parse(raw) : null } catch { localCompany = null }
-      const nextCompany = { ...(localCompany ?? {}), image: { ...(localCompany?.image ?? {}), url: blobUrl } }
+      const nextCompany = { ...(localCompany ?? {}), image: { ...(localCompany?.image ?? {}), url: croppedDataUrl } }
       localStorage.setItem(`${sub}-kayla-company`, JSON.stringify(nextCompany))
       try { window.dispatchEvent(new CustomEvent('kayla:company-updated', { detail: nextCompany })) } catch {}
-      // Removido toast de atualização local conforme solicitado
+
+      setCropOpen(false)
     } catch {
-      toast.error('Falha ao carregar a imagem da logo')
+      toast.error('Falha ao aplicar recorte da imagem')
+      setCropOpen(false)
     }
   }
 
@@ -260,7 +281,7 @@ function RouteComponent() {
 
       // Alinhar configuração com cadastro de mídia: multipart/form-data explícito
       const res = await privateInstance.put(
-        'https://x8ki-letl-twmt.n7.xano.io/api:kdrFy_tm/companies',
+        '/api:kdrFy_tm/companies',
         fd,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       )
@@ -300,41 +321,48 @@ function RouteComponent() {
     <div className='flex flex-col w-full h-full'>
       <Topbar title="Perfil da Empresa" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard', isLast: false }, { label: 'Perfil da Empresa', href: '/dashboard/company-profile', isLast: true }]} />
 
-      <div className='flex flex-col w-full h-full flex-1 overflow-auto p-4 gap-4'>
+      <div className='flex flex-col w-full h-full flex-1 overflow-auto p-6 gap-6'>
+        <div className='w-full max-w-[1024px] mx-auto space-y-6'>
+
         {/* Cabeçalho simples */}
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-2'>
-            <Building2 className='h-5 w-5 text-muted-foreground' />
+            <Building2 className='h-10 w-10 p-2 text-white bg-neutral-800 rounded-lg' />
             <div className='flex flex-col'>
-              <span className='text-sm font-medium'>Detalhes da empresa</span>
-              <span className='text-xs text-muted-foreground'>Vamos configurar seus dados.</span>
+              <span className='text-md font-medium'>Detalhes da empresa</span>
+              <span className='text-sm text-muted-foreground'>Vamos configurar seus dados.</span>
             </div>
           </div>
-          <div className='flex items-center gap-2'>
-            <Button size='sm' type='submit' form='company-edit-form' disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? (
-                <span className='inline-flex items-center gap-2'>
-                  <Loader2 className='h-4 w-4 animate-spin' />
-                  Salvando...
-                </span>
-              ) : (
-                <span className='inline-flex items-center gap-2'>
-                  <Save className='h-4 w-4' />
-                  Salvar
-                </span>
-              )}
-            </Button>
-          </div>
+          
         </div>
 
         {isLoading ? (
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            {[1,2,3,4,5,6].map((i) => (
-              <div key={i} className='flex flex-col gap-2'>
-                <Skeleton className='h-4 w-24' />
-                <Skeleton className='h-9 w-full' />
+          <div className='flex flex-col gap-6'>
+            {/* Logo / Upload (skeleton) */}
+            <div className='grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center gap-4'>
+              <div className='text-xs font-medium text-muted-foreground'>
+                <Skeleton className='h-4 w-28' />
               </div>
-            ))}
+              <div className='flex items-center gap-3'>
+                <Skeleton className='h-14 w-14 rounded-2xl' />
+                <Skeleton className='h-9 w-28' />
+              </div>
+            </div>
+
+            {/* Informações principais (skeleton) */}
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className='flex flex-col gap-2'>
+                  <Skeleton className='h-4 w-24' />
+                  <Skeleton className='h-9 w-full' />
+                </div>
+              ))}
+            </div>
+
+            {/* Ações no final do conteúdo (skeleton) */}
+            <div className='flex w-full justify-end items-center'>
+              <Skeleton className='h-9 w-24' />
+            </div>
           </div>
         ) : company ? (
           <Form {...form}>
@@ -343,18 +371,27 @@ function RouteComponent() {
               <div className='grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center gap-4'>
                 <div className='text-xs font-medium text-muted-foreground'>Logo da empresa</div>
                 <div className='flex items-center gap-3'>
-                  <button type='button' className='cursor-pointer' onClick={handlePickLogo} title='Clique para escolher uma imagem' aria-label='Alterar logo'>
-                    <Avatar className='h-12 w-12 rounded-2xl'>
+                  <button
+                    type='button'
+                    className='group relative cursor-pointer'
+                    onClick={handlePickLogo}
+                    title='Clique para escolher uma imagem'
+                    aria-label='Alterar logo'
+                  >
+                    <Avatar className='h-14 w-14 rounded-2xl'>
                       <AvatarImage src={previewUrl || undefined} alt={company?.name || ''} />
                       <AvatarFallback className='rounded-2xl'>
-                        {(company?.name ?? 'Empresa').slice(0,2).toUpperCase()}
+                        {getAvatarAbbrev(company?.name ?? 'Empresa')}
                       </AvatarFallback>
                     </Avatar>
+                    {/* Overlay de edição ao passar o mouse */}
+                    <div className='absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center'>
+                      <Edit className='h-4 w-4 text-white' />
+                    </div>
                   </button>
                   <input ref={fileInputRef} type='file' accept='image/jpeg,image/png,image/webp' className='hidden' onChange={handleFileChange} />
-                  <Button variant='outline' size='sm' type='button' onClick={handlePickLogo}>Alterar logo</Button>
                   {(previewUrl || (company?.image?.url && !removedLogo)) && (
-                    <Button variant='ghost' size='sm' type='button' onClick={handleRemoveLogo}>Remover logo</Button>
+                    <Button variant='ghost' size='sm' type='button' className='text-xs font-light text-muted-foreground' onClick={handleRemoveLogo}>Remover logo</Button>
                   )}
                 </div>
               </div>
@@ -486,12 +523,59 @@ function RouteComponent() {
                   </FormItem>
                 )} />
               </div>
+
+              {/* Ações no final do conteúdo */}
+              <div className='flex w-full justify-end items-center'>
+                <Button size='sm' type='submit' disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? (
+                    <span className='inline-flex items-center gap-2'>
+                      <Loader2 className='h-4 w-4 animate-spin' />
+                      Salvando...
+                    </span>
+                  ) : (
+                    <span className='inline-flex items-center gap-2'>
+                      <Save className='h-4 w-4' />
+                      Salvar
+                    </span>
+                  )}
+                </Button>
+              </div>
             </form>
           </Form>
         ) : (
           <div className='text-sm text-muted-foreground'>Nenhum dado disponível</div>
         )}
+        </div>
       </div>
+
+      {/* Dialog de Crop da logo */}
+      <Dialog open={cropOpen} onOpenChange={setCropOpen}>
+        <DialogContent className='sm:max-w-[600px]'>
+          <DialogHeader>
+            <DialogTitle>Recortar logo</DialogTitle>
+          </DialogHeader>
+          {originalFileRef.current ? (
+            <ImageCrop file={originalFileRef.current} aspect={1} maxImageSize={1024 * 1024 * 5} onCrop={handleShadcnCrop}>
+              <div className='space-y-4'>
+                <ImageCropContent className='max-h-[300px]' />
+                <div className='flex justify-end gap-2'>
+                  <ImageCropReset asChild>
+                    <Button variant={'ghost'}>Resetar</Button>
+                  </ImageCropReset>
+                  <ImageCropApply asChild>
+                    <Button>Aplicar recorte</Button>
+                  </ImageCropApply>
+                </div>
+              </div>
+            </ImageCrop>
+          ) : (
+            <div className='text-sm text-muted-foreground'>Selecione uma imagem para recortar.</div>
+          )}
+          <DialogFooter>
+            <Button variant={'outline'} onClick={() => setCropOpen(false)}>Cancelar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

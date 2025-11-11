@@ -36,6 +36,7 @@ export function DerivationItemsSheet({ derivationId, derivationType }: { derivat
       return response.data
     },
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     enabled: open,
   })
 

@@ -55,6 +55,7 @@ function RouteComponent() {
 
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryKey: ['users_companies', currentPage, perPage],
     queryFn: async () => {
       const response = await privateInstance.get('/api:jO41sdEd/users_companies', {
@@ -211,7 +212,7 @@ function UserCompanyActionsCell({ uc, onChanged }: { uc: UserCompany, onChanged?
 
   const { isPending, mutateAsync } = useMutation({
     mutationFn: async (nextActive: boolean) => {
-      const url = `/api:jO41sdEd/users_companies/${uc.id}/status`
+    const url = `/api:jO41sdEd/users_companies/${uc.id}/status`
       const body = { user_company_id: uc.id, active: nextActive }
       const response = await privateInstance.put(url, body)
       if (response.status !== 200) throw new Error('Falha ao alterar status do usuário')

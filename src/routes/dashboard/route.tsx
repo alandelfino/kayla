@@ -11,7 +11,7 @@ export const Route = createFileRoute('/dashboard')({
 function RouteComponent() {
 
   useEffect(() => {
-    auth.userGuard()
+    auth.dashboardGuard()
   }, [])
 
   return (

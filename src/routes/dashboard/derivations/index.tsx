@@ -39,6 +39,7 @@ function RouteComponent() {
 
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryKey: ['derivations', currentPage, perPage],
     queryFn: async () => {
       // Ajuste os parâmetros conforme o Swagger do endpoint Derivations

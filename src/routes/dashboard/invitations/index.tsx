@@ -40,6 +40,7 @@ function RouteComponent() {
   // Ajuste os endpoints conforme a documentação de Convites da API
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryKey: ['invitations', currentPage, perPage, sortBy, orderBy],
     queryFn: async () => {
       // Busca convites usando GET com query params (inclui sort_by)

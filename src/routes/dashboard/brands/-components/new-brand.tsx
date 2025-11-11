@@ -32,7 +32,7 @@ export function NewBrandSheet({
 
     const { isPending, mutate } = useMutation({
         mutationFn: (values: z.infer<typeof formSchema>) => {
-            return privateInstance.post('/api:tc5G7www/brands', values)
+      return privateInstance.post('/api:tc5G7www/brands', values)
         },
         onSuccess: (response) => {
             if (response.status === 200 || response.status === 201) {

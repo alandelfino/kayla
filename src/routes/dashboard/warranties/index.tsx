@@ -56,6 +56,7 @@ function RouteComponent() {
 
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryKey: ['warranties', currentPage, perPage],
     queryFn: async () => {
       const response = await privateInstance.get(`/api:PcyOgAiT/warranties?page=${currentPage}&per_page=${perPage}`)

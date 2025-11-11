@@ -47,6 +47,7 @@ function RouteComponent() {
 
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryKey: ['units', currentPage, perPage],
     queryFn: async () => {
       const response = await privateInstance.get(`/api:-b71x_vk/unit_of_measurement?page=${currentPage}&per_page=${perPage}`)

@@ -49,9 +49,10 @@ function RouteComponent() {
 
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryKey: ['brands', currentPage, perPage],
     queryFn: async () => {
-      const response = await privateInstance.get(`api:tc5G7www/brands?page=${currentPage}&per_page=${perPage}`)
+      const response = await privateInstance.get(`/api:tc5G7www/brands?page=${currentPage}&per_page=${perPage}`)
       if (response.status !== 200) {
         throw new Error('Erro ao carregar marcas')
       }

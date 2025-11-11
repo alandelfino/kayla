@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Topbar } from '../-components/topbar'
 import { Button } from '@/components/ui/button'
-import { Edit, Funnel, RefreshCcw, Trash } from 'lucide-react'
+import { Edit, Funnel, RefreshCcw, Trash, Users, ArrowUpRight } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -11,6 +11,7 @@ import { DataTable, type ColumnDef } from '@/components/data-table'
 import { NewProfileSheet } from './-components/new-profile'
 import { EditProfileSheet } from './-components/edit-profile'
 import { DeleteProfile } from './-components/delete-profile'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 
 export const Route = createFileRoute('/dashboard/profiles/')({
   component: RouteComponent,
@@ -46,6 +47,7 @@ function RouteComponent() {
 
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryKey: ['profiles', currentPage, perPage],
     queryFn: async () => {
       const response = await privateInstance.get(`/api:BXIMsMQ7/user_profile?page=${currentPage}&per_page=${perPage}`)
@@ -198,6 +200,37 @@ function RouteComponent() {
           perPage={perPage}
           totalItems={totalItems}
           emptyMessage='Nenhum perfil encontrado'
+          emptySlot={(
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Users className='h-6 w-6' />
+                </EmptyMedia>
+                <EmptyTitle>Nenhum perfil ainda</EmptyTitle>
+                <EmptyDescription>
+                  Você ainda não criou nenhum perfil. Comece criando seu primeiro perfil.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <div className='flex gap-2'>
+                  <NewProfileSheet />
+                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedProfiles([]); refetch() }}>
+                    {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+                  </Button>
+                </div>
+              </EmptyContent>
+              <Button
+                variant='link'
+                asChild
+                className='text-muted-foreground'
+                size='sm'
+              >
+                <a href='#'>
+                  Saiba mais <ArrowUpRight className='inline-block ml-1 h-4 w-4' />
+                </a>
+              </Button>
+            </Empty>
+          )}
           onChange={({ page, perPage }) => {
             if (typeof page === 'number') setCurrentPage(page)
             if (typeof perPage === 'number') setPerPage(perPage)

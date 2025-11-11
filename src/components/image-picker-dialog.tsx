@@ -32,6 +32,7 @@ export function ImagePickerDialog({ open, onOpenChange, onInsert }: Props) {
     queryKey: ['medias-picker', page, perPage, open],
     enabled: open,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async () => {
       const res = await privateInstance.get(`/api:qSTOvw0A/medias?page=${page}&per_page=${perPage}`)
       if (res.status !== 200) throw new Error('Erro ao carregar mídias')

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { getAvatarAbbrev } from '@/lib/utils'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ImageCrop, ImageCropContent, ImageCropApply, ImageCropReset } from '@/components/ui/shadcn-io/image-crop'
 import { z } from 'zod'
@@ -98,7 +99,7 @@ function getSubdomain() {
           )
           if (!hasLocalImage) {
             try {
-              const res = await privateInstance.get('/api:eA5lqIuH/auth/me')
+  const res = await privateInstance.get('/api:eA5lqIuH/auth/me')
               if (res.status === 200) {
                 const data = Array.isArray(res.data) ? (res.data[0] ?? null) : res.data
                 if (data?.id) {
@@ -117,7 +118,7 @@ function getSubdomain() {
           }
         } else {
           // Fallback: consulta ao backend
-          const res = await privateInstance.get('/api:eA5lqIuH/auth/me')
+  const res = await privateInstance.get('/api:eA5lqIuH/auth/me')
           if (res.status === 200) {
             const data = Array.isArray(res.data) ? (res.data[0] ?? null) : res.data
             if (data?.id) {
@@ -168,7 +169,7 @@ function getSubdomain() {
 
       // Endpoint não precisa mais do {user_id}; backend infere pelo token
       // Alinha com new-media-dialog: define explicitamente multipart/form-data no cabeçalho
-      const res = await privateInstance.put(`/api:paM0Fhtw/users`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+  const res = await privateInstance.put('/api:paM0Fhtw/users', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
 
       if (res.status >= 200 && res.status < 300) {
         toast.success('Perfil atualizado!')
@@ -223,7 +224,7 @@ function getSubdomain() {
           if (!removeImage) {
             try {
               setTimeout(async () => {
-                const check = await privateInstance.get('/api:eA5lqIuH/auth/me')
+  const check = await privateInstance.get('/api:eA5lqIuH/auth/me')
                 const data2 = Array.isArray(check?.data) ? (check?.data[0] ?? null) : check?.data
                 const finalUrl: string | undefined = data2?.image?.url
                 if (finalUrl && typeof finalUrl === 'string' && !finalUrl.startsWith('blob:')) {
@@ -503,7 +504,7 @@ function getSubdomain() {
                       <Avatar className='h-24 w-24 rounded-2xl'>
                         <AvatarImage src={previewUrl || undefined} alt={me?.name || ''} />
                         <AvatarFallback className='rounded-2xl'>
-                          {getInitials(me?.name || form.getValues('name') || '') || 'AU'}
+                          {getAvatarAbbrev(me?.name || form.getValues('name') || '') || 'AU'}
                         </AvatarFallback>
                       </Avatar>
                     </button>
@@ -606,11 +607,4 @@ function getSubdomain() {
     </div>
   )
 }
-  // Função para gerar iniciais do usuário (fallback do avatar)
-  const getInitials = (name: string) => {
-    return (name || '')
-      .split(' ')
-      .map((w) => w.charAt(0).toUpperCase())
-      .slice(0, 2)
-      .join('')
-  }
+  // Removido getInitials em favor do utilitário compartilhado getAvatarAbbrev

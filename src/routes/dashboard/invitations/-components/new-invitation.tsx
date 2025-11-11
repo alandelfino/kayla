@@ -30,6 +30,7 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
     queryKey: ['teams'],
     enabled: open,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async () => {
       // GET /api:VPDORr9u/teams
       const response = await privateInstance.get('/api:VPDORr9u/teams')
@@ -43,6 +44,7 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
     queryKey: ['profiles', 'for-invitations'],
     enabled: open,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async () => {
       // GET /api:BXIMsMQ7/user_profile?per_page=100
       const response = await privateInstance.get('/api:BXIMsMQ7/user_profile?per_page=50')
@@ -54,13 +56,13 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
   const { isPending, mutate } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
       // Ajuste de acordo com a documentação da API:
-      // POST /api:eA5lqIuH/invitations { email, team_id, company_id }
+// POST /api:0jQElwax/invitations/invite { email, team_id, company_id }
       const payload: any = {
         email: values.email,
         team_id: Number(values.team_id),
         user_profile_id: Number(values.user_profile_id),
       }
-      const response = await privateInstance.post('/api:0jQElwax/invitations/invite', payload)
+  const response = await privateInstance.post('/api:0jQElwax/invitations/invite', payload)
       if (response.status !== 200 && response.status !== 201) throw new Error('Erro ao criar convite')
       return response
     },

@@ -32,6 +32,7 @@ function RouteComponent() {
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['medias', page, perPage],
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async () => {
       const res = await privateInstance.get(`/api:qSTOvw0A/medias?page=${page}&per_page=${perPage}`)
       if (res.status !== 200) throw new Error('Erro ao carregar mídias')

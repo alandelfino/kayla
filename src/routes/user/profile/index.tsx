@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { getAvatarAbbrev } from '@/lib/utils'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ImageCrop, ImageCropContent, ImageCropApply, ImageCropReset } from '@/components/ui/shadcn-io/image-crop'
 import { z } from 'zod'
@@ -75,7 +76,7 @@ function RouteComponent() {
     async function loadMe() {
       try {
         setLoadingMe(true)
-        const res = await privateInstance.get('https://x8ki-letl-twmt.n7.xano.io/api:paM0Fhtw/users/me')
+  const res = await privateInstance.get('/api:paM0Fhtw/users/me')
         if (res.status === 200) {
           const payload = res.data?.me ?? null
           if (payload?.id) {
@@ -124,7 +125,7 @@ function RouteComponent() {
       }
       if (removeImage) { fd.append('remove_file', 'true') }
 
-      const res = await privateInstance.put(`/api:paM0Fhtw/users`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+  const res = await privateInstance.put('/api:paM0Fhtw/users', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
 
       if (res.status >= 200 && res.status < 300) {
         toast.success('Perfil atualizado!')
@@ -169,7 +170,7 @@ function RouteComponent() {
           if (!removeImage) {
             try {
               setTimeout(async () => {
-                const check = await privateInstance.get('https://x8ki-letl-twmt.n7.xano.io/api:paM0Fhtw/users/me')
+  const check = await privateInstance.get('/api:paM0Fhtw/users/me')
                 const payload2 = check?.data?.me ?? null
                 const finalUrl: string | undefined = payload2?.image?.url
                 if (finalUrl && typeof finalUrl === 'string' && !finalUrl.startsWith('blob:')) {
@@ -384,7 +385,7 @@ function RouteComponent() {
                       <Avatar className='h-24 w-24 rounded-2xl'>
                         <AvatarImage src={previewUrl || undefined} alt={me?.name || ''} />
                         <AvatarFallback className='rounded-2xl'>
-                          {getInitials(me?.name || form.getValues('name') || '') || 'AU'}
+                          {getAvatarAbbrev(me?.name || form.getValues('name') || '') || 'AU'}
                         </AvatarFallback>
                       </Avatar>
                     </button>
@@ -469,10 +470,4 @@ function RouteComponent() {
   )
 }
 
-const getInitials = (name: string) => {
-  return (name || '')
-    .split(' ')
-    .map((w) => w.charAt(0).toUpperCase())
-    .slice(0, 2)
-    .join('')
-}
+// Removido getInitials em favor de utilitário compartilhado getAvatarAbbrev

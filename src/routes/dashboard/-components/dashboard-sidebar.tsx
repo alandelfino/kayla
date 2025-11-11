@@ -2,6 +2,7 @@ import * as React from "react"
 import { auth } from '@/lib/auth'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, SidebarMenuButton } from "@/components/ui/sidebar"
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { getAvatarAbbrev } from '@/lib/utils'
 import { Navigation } from "./navigation"
 
 
@@ -75,8 +76,8 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                     <div className='flex h-10 items-center gap-2'>
                         <Avatar className='h-8 w-8 rounded-md'>
                             <AvatarImage src={company?.image?.url ?? company?.logo_url ?? undefined} alt={companyName} />
-                            <AvatarFallback className='rounded-md'>
-                                {(companyName || 'Empresa').slice(0,2).toUpperCase()}
+                            <AvatarFallback className='rounded-md text-[10px] leading-none font-semibold'>
+                                {getAvatarAbbrev(companyName || 'Empresa')}
                             </AvatarFallback>
                         </Avatar>
                         <span className="flex flex-col data-[slot=sidebar-menu-button]:hidden">

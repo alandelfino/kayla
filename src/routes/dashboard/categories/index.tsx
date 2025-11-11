@@ -38,6 +38,7 @@ function RouteComponent() {
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['categories', currentPage, perPage],
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async () => {
       const res = await privateInstance.get('/api:ojk_IOB-/categories', {
         params: { page: currentPage, per_page: perPage }

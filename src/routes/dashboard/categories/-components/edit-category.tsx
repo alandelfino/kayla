@@ -34,6 +34,7 @@ export function EditCategorySheet({ categoryId, categories: categoriesProp = [] 
     queryKey: ['category', categoryId],
     enabled: !!categoryId,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async () => {
       const res = await privateInstance.get(`/api:ojk_IOB-/categories/${categoryId}`)
       if (res.status !== 200) throw new Error('Erro ao carregar categoria')

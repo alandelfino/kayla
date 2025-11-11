@@ -12,7 +12,7 @@ export function DeleteBrand({ brandId, disabled = false }: { brandId: number; di
 
     const { isPending, mutate } = useMutation({
         mutationFn: async () => {
-            return await privateInstance.delete(`/api:tc5G7www/brands/${brandId}`)
+      return await privateInstance.delete(`/api:tc5G7www/brands/${brandId}`)
         },
         onSuccess: (response) => {
             if (response.status === 200 || response.status === 204) {

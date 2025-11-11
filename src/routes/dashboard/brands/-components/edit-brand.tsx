@@ -42,7 +42,7 @@ export function EditBrandSheet({
     async function fetchBrand() {
         try {
             setBrandLoading(true)
-            const response = await privateInstance.get(`/api:tc5G7www/brands/${brandId}`)
+      const response = await privateInstance.get(`/api:tc5G7www/brands/${brandId}`)
             const brand = response?.data
             if (!brand) {
                 throw new Error('Resposta inválida ao buscar marca')
@@ -63,7 +63,7 @@ export function EditBrandSheet({
 
     const { isPending, mutate } = useMutation({
         mutationFn: (values: z.infer<typeof formSchema>) => {
-            return privateInstance.put(`/api:tc5G7www/brands/${brandId}`, values)
+    return privateInstance.put(`/api:tc5G7www/brands/${brandId}`, values)
         },
         onSuccess: (response) => {
             if (response.status === 200) {

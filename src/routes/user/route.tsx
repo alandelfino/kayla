@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { auth, privateInstance } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { getAvatarAbbrev } from '@/lib/utils'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from '@/components/ui/navigation-menu'
 import { ChevronsUpDown, LogOut, User as UserIcon, Building2, Mail } from 'lucide-react'
@@ -46,7 +47,7 @@ function UserLayout() {
   }, [])
 
   async function signOut() {
-    try { await privateInstance.post('/api:eA5lqIuH/auth/logout', {}) } catch {}
+  try { await privateInstance.post('/api:eA5lqIuH/auth/logout', {}) } catch {}
     try {
       const sub = getSubdomain()
       localStorage.removeItem(`${sub}-kayla-authToken`)
@@ -56,7 +57,7 @@ function UserLayout() {
     navigate({ to: '/sign-in' })
   }
 
-  const getInitials = (name: string) => (name || '').split(' ').map((w) => w.charAt(0).toUpperCase()).slice(0,2).join('')
+  // Utilitário compartilhado para gerar a abreviação do avatar
 
   const navItems = [
     { label: 'Meu Perfil', href: '/user/profile', icon: <UserIcon className='size-4' /> },
@@ -94,7 +95,7 @@ function UserLayout() {
               <Button variant='ghost' size='sm' className='h-11 rounded-md flex items-center gap-2'>
                 <Avatar className='h-8 w-8 rounded-lg'>
                   <AvatarImage src={user?.avatarUrl || undefined} alt={user?.name || ''} />
-                  <AvatarFallback className='rounded-lg'>{getInitials(user?.name || '')}</AvatarFallback>
+                  <AvatarFallback className='rounded-lg'>{getAvatarAbbrev(user?.name || '')}</AvatarFallback>
                 </Avatar>
                 <div className='hidden sm:grid text-left text-sm leading-tight'>
                   <span className='truncate font-medium max-w-[160px]'>{user?.name || ''}</span>

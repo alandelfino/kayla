@@ -27,24 +27,30 @@ export const Route = createFileRoute('/user/companies/')({
   component: UserCompaniesPage,
 })
 
-function getSubdomain() { return window.location.hostname.split('.')[0] }
+function getSubdomain() {
+  const host = window.location.hostname
+  if (host === 'localhost' || /^127(\.\d+){0,3}$/.test(host)) return 'localhost'
+  const parts = host.split('.')
+  return parts[0] ?? host
+}
 
 function UserCompaniesPage() {
   const navigate = useNavigate()
   const [loggingCompanyId, setLoggingCompanyId] = useState<number | null>(null)
 
   const { data, isLoading, isError, error } = useQuery({
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     queryKey: ['auth', 'companies'],
     queryFn: async () => {
+      // Listar empresas do usuário autenticado via endpoint de auth (escopo de /user)
       const res = await privateInstance.get('/api:eA5lqIuH/auth/companies')
       const rawItems = Array.isArray(res.data) ? res.data : (res.data?.items ?? [])
-      // Normalize to our UserCompany type, supporting the new model (prefer `id` over `company_id`)
       const normalized: UserCompany[] = rawItems
         .map((it: any) => {
           const rawId = Number(it.id)
           const rawCompanyId = typeof it.company_id === 'number' ? it.company_id : undefined
           return {
-            // Prefer the API's `id`; fall back to company_id only if id is invalid
             id: Number.isFinite(rawId) ? rawId : (rawCompanyId ?? rawId),
             company_id: rawCompanyId,
             created_at: Number(it.created_at) || Date.now(),
@@ -84,7 +90,7 @@ function UserCompaniesPage() {
       const user = res?.data?.user
       const company = res?.data?.company ?? { id: companyId, name: uc.name, alias: uc.alias }
       const sub = getSubdomain()
-      if (authToken) { localStorage.setItem(`${sub}-kayla-authToken`, authToken) }
+      if (authToken) { auth.normalizeTokenStorage(authToken) }
       if (user) {
         localStorage.setItem(`${sub}-kayla-user`, JSON.stringify(user))
         try {

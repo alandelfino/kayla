@@ -1,5 +1,6 @@
 import { Check, ChevronsUpDown, LogOut, Moon, User, Users, Building2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { getAvatarAbbrev } from '@/lib/utils'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
@@ -68,21 +69,14 @@ export function TopbarUser() {
     return () => window.removeEventListener('kayla:user-updated', handler as EventListener)
   }, [])
 
-  // Função para gerar iniciais do usuário
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase())
-      .slice(0, 2)
-      .join('')
-  }
+  // Utilitário compartilhado para gerar a abreviação do avatar
 
   const getSubdomain = () => window.location.hostname.split('.')[0]
 
   const { isPending: isLoggingOut, mutateAsync: doLogout } = useMutation({
     mutationFn: async () => {
       // Executa logout na API
-      const res = await privateInstance.post('/api:eA5lqIuH/auth/logout', {})
+    const res = await privateInstance.post('/api:eA5lqIuH/auth/logout', {})
       return res.data
     },
     onSettled: () => {
@@ -114,7 +108,7 @@ export function TopbarUser() {
         >
           <Avatar className="h-8 w-8 rounded-lg">
             <AvatarImage src={user?.avatarUrl || undefined} alt={user?.name || ''} />
-            <AvatarFallback className="rounded-lg">{getInitials(user?.name || '')}</AvatarFallback>
+            <AvatarFallback className="rounded-lg">{getAvatarAbbrev(user?.name || '')}</AvatarFallback>
           </Avatar>
           <div className="hidden sm:grid text-left text-sm leading-tight">
             <span className="truncate font-medium max-w-[160px]">{user?.name || ''}</span>

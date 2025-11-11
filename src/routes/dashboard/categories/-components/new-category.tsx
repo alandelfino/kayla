@@ -34,6 +34,7 @@ export function NewCategorySheet({
   const { data: categoriesResponse, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["categories"],
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async () => {
       const res = await privateInstance.get("/api:ojk_IOB-/categories?page=1&per_page=50")
       if (res.status !== 200) {
