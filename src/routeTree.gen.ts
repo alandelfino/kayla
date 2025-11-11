@@ -21,6 +21,7 @@ import { Route as DashboardUsersIndexRouteImport } from './routes/dashboard/user
 import { Route as DashboardUnitsIndexRouteImport } from './routes/dashboard/units/index'
 import { Route as DashboardProfilesIndexRouteImport } from './routes/dashboard/profiles/index'
 import { Route as DashboardProfileIndexRouteImport } from './routes/dashboard/profile/index'
+import { Route as DashboardProductsIndexRouteImport } from './routes/dashboard/products/index'
 import { Route as DashboardMediaIndexRouteImport } from './routes/dashboard/media/index'
 import { Route as DashboardInvitationsIndexRouteImport } from './routes/dashboard/invitations/index'
 import { Route as DashboardDerivationsIndexRouteImport } from './routes/dashboard/derivations/index'
@@ -90,6 +91,11 @@ const DashboardProfileIndexRoute = DashboardProfileIndexRouteImport.update({
   path: '/profile/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardProductsIndexRoute = DashboardProductsIndexRouteImport.update({
+  id: '/products/',
+  path: '/products/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardMediaIndexRoute = DashboardMediaIndexRouteImport.update({
   id: '/media/',
   path: '/media/',
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/derivations': typeof DashboardDerivationsIndexRoute
   '/dashboard/invitations': typeof DashboardInvitationsIndexRoute
   '/dashboard/media': typeof DashboardMediaIndexRoute
+  '/dashboard/products': typeof DashboardProductsIndexRoute
   '/dashboard/profile': typeof DashboardProfileIndexRoute
   '/dashboard/profiles': typeof DashboardProfilesIndexRoute
   '/dashboard/units': typeof DashboardUnitsIndexRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/dashboard/derivations': typeof DashboardDerivationsIndexRoute
   '/dashboard/invitations': typeof DashboardInvitationsIndexRoute
   '/dashboard/media': typeof DashboardMediaIndexRoute
+  '/dashboard/products': typeof DashboardProductsIndexRoute
   '/dashboard/profile': typeof DashboardProfileIndexRoute
   '/dashboard/profiles': typeof DashboardProfilesIndexRoute
   '/dashboard/units': typeof DashboardUnitsIndexRoute
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/dashboard/derivations/': typeof DashboardDerivationsIndexRoute
   '/dashboard/invitations/': typeof DashboardInvitationsIndexRoute
   '/dashboard/media/': typeof DashboardMediaIndexRoute
+  '/dashboard/products/': typeof DashboardProductsIndexRoute
   '/dashboard/profile/': typeof DashboardProfileIndexRoute
   '/dashboard/profiles/': typeof DashboardProfilesIndexRoute
   '/dashboard/units/': typeof DashboardUnitsIndexRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/dashboard/derivations'
     | '/dashboard/invitations'
     | '/dashboard/media'
+    | '/dashboard/products'
     | '/dashboard/profile'
     | '/dashboard/profiles'
     | '/dashboard/units'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/dashboard/derivations'
     | '/dashboard/invitations'
     | '/dashboard/media'
+    | '/dashboard/products'
     | '/dashboard/profile'
     | '/dashboard/profiles'
     | '/dashboard/units'
@@ -250,6 +261,7 @@ export interface FileRouteTypes {
     | '/dashboard/derivations/'
     | '/dashboard/invitations/'
     | '/dashboard/media/'
+    | '/dashboard/products/'
     | '/dashboard/profile/'
     | '/dashboard/profiles/'
     | '/dashboard/units/'
@@ -353,6 +365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardProfileIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/products/': {
+      id: '/dashboard/products/'
+      path: '/products'
+      fullPath: '/dashboard/products'
+      preLoaderRoute: typeof DashboardProductsIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/media/': {
       id: '/dashboard/media/'
       path: '/media'
@@ -413,6 +432,7 @@ interface DashboardRouteRouteChildren {
   DashboardDerivationsIndexRoute: typeof DashboardDerivationsIndexRoute
   DashboardInvitationsIndexRoute: typeof DashboardInvitationsIndexRoute
   DashboardMediaIndexRoute: typeof DashboardMediaIndexRoute
+  DashboardProductsIndexRoute: typeof DashboardProductsIndexRoute
   DashboardProfileIndexRoute: typeof DashboardProfileIndexRoute
   DashboardProfilesIndexRoute: typeof DashboardProfilesIndexRoute
   DashboardUnitsIndexRoute: typeof DashboardUnitsIndexRoute
@@ -428,6 +448,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardDerivationsIndexRoute: DashboardDerivationsIndexRoute,
   DashboardInvitationsIndexRoute: DashboardInvitationsIndexRoute,
   DashboardMediaIndexRoute: DashboardMediaIndexRoute,
+  DashboardProductsIndexRoute: DashboardProductsIndexRoute,
   DashboardProfileIndexRoute: DashboardProfileIndexRoute,
   DashboardProfilesIndexRoute: DashboardProfilesIndexRoute,
   DashboardUnitsIndexRoute: DashboardUnitsIndexRoute,

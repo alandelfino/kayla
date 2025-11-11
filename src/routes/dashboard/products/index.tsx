@@ -1,0 +1,215 @@
+import { createFileRoute } from '@tanstack/react-router'
+import { Topbar } from '../-components/topbar'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Edit, RefreshCcw, Trash, Package } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { privateInstance } from '@/lib/auth'
+import { DataTable } from '@/components/data-table'
+import type { ColumnDef } from '@/components/data-table'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
+import { NewProductSheet } from './-components/new-product'
+import { EditProductSheet } from './-components/edit-product'
+import { DeleteProductDialog } from './-components/delete-product'
+
+export const Route = createFileRoute('/dashboard/products/')({
+  component: RouteComponent,
+})
+
+type Product = {
+  id: number
+  created_at?: number
+  updated_at?: number
+  sku?: string
+  name?: string
+  description?: string
+  type?: 'simple' | 'with_derivations'
+  unit_id?: number
+  brand_id?: number
+  company_id?: number
+  active?: boolean
+  managed_inventory?: boolean
+  price?: number
+  promotional_price?: number
+  promotional_price_active?: boolean
+  stock?: number
+}
+
+type ProductsResponse = {
+  itemsReceived?: number
+  curPage?: number
+  nextPage?: number | null
+  prevPage?: number | null
+  offset?: number
+  perPage?: number
+  itemsTotal?: number
+  pageTotal?: number
+  items?: Product[]
+} | Product[]
+
+function normalizeResponse(data: ProductsResponse) {
+  if (Array.isArray(data)) {
+    return { items: data, itemsTotal: data.length, pageTotal: 1 }
+  }
+  const items = Array.isArray(data.items) ? data.items : []
+  const itemsTotal = typeof data.itemsTotal === 'number' ? data.itemsTotal : items.length
+  const pageTotal = typeof data.pageTotal === 'number' ? data.pageTotal : 1
+  return { items, itemsTotal, pageTotal }
+}
+
+function formatCurrencyBRL(value?: number) {
+  const n = typeof value === 'number' ? value : 0
+  try {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
+  } catch {
+    return `R$ ${n.toFixed(2)}`
+  }
+}
+
+function RouteComponent() {
+  const [currentPage, setCurrentPage] = useState(1)
+  const [perPage, setPerPage] = useState(20)
+  const [selected, setSelected] = useState<number[]>([])
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+
+  const { data, isLoading, isRefetching, isError, refetch } = useQuery({
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    queryKey: ['products', currentPage, perPage],
+    queryFn: async () => {
+      // Tenta paginação padrão page/per_page. Se a API não suportar, ainda funcionará com o retorno em array.
+      const url = `/api:c3X9fE5j/products?page=${currentPage}&per_page=${perPage}`
+      const response = await privateInstance.get(url)
+      if (response.status !== 200) {
+        throw new Error('Erro ao carregar produtos')
+      }
+      return response.data as ProductsResponse
+    }
+  })
+
+  const [items, setItems] = useState<Product[]>([])
+
+  const columns: ColumnDef<Product>[] = useMemo(() => [
+    {
+      id: 'select',
+      width: '60px',
+      header: () => (
+        <div className='flex justify-center items-center'>
+          <Checkbox
+            checked={items.length > 0 && selected.length === items.length}
+            onCheckedChange={toggleSelectAll}
+          />
+        </div>
+      ),
+      cell: (row) => (
+        <div className='flex justify-center items-center'>
+          <Checkbox
+            checked={selected.includes(row.id)}
+            onCheckedChange={() => toggleSelect(row.id)}
+          />
+        </div>
+      ),
+      headerClassName: 'w-[60px] min-w-[60px] border-r',
+      className: 'w-[60px] min-w-[60px] font-medium border-r p-2!'
+    },
+    { id: 'name', header: 'Nome', width: '280px', cell: (p) => p.name ?? '—', headerClassName: 'w-[280px] min-w-[280px] border-r', className: 'w-[280px] min-w-[280px] p-2!' },
+    { id: 'sku', header: 'SKU', width: '160px', cell: (p) => p.sku ?? '—', headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
+    { id: 'type', header: 'Tipo', width: '180px', cell: (p) => (p.type === 'with_derivations' ? 'Com variações' : 'Simples'), headerClassName: 'w-[180px] min-w-[180px] border-r', className: 'w-[180px] min-w-[180px] p-2!' },
+    { id: 'price', header: 'Preço', width: '160px', cell: (p) => formatCurrencyBRL(p.price), headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
+    { id: 'promotional_price', header: 'Preço Promocional', width: '180px', cell: (p) => p.promotional_price ? formatCurrencyBRL(p.promotional_price) : '—', headerClassName: 'w-[180px] min-w-[180px] border-r', className: 'w-[180px] min-w-[180px] p-2!' },
+    { id: 'stock', header: 'Estoque', width: '120px', cell: (p) => typeof p.stock === 'number' ? p.stock : '—', headerClassName: 'w-[120px] min-w-[120px] border-r', className: 'w-[120px] min-w-[120px] p-2!' },
+    { id: 'active', header: 'Ativo', width: '120px', cell: (p) => p.active ? 'Sim' : 'Não', headerClassName: 'w-[120px] min-w-[120px] border-r', className: 'w-[120px] min-w-[120px] p-2!' },
+    { id: 'promotional_price_active', header: 'Promoção ativa', width: '160px', cell: (p) => p.promotional_price_active ? 'Sim' : 'Não', headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
+  ], [items, selected])
+
+  useEffect(() => {
+    if (!data) return
+    const normalized = normalizeResponse(data)
+    const itemsArr = Array.isArray(normalized.items) ? normalized.items : []
+    setItems(itemsArr)
+    const itemsTotal = typeof normalized.itemsTotal === 'number' ? normalized.itemsTotal : itemsArr.length
+    setTotalItems(itemsTotal)
+    const pageTotal = typeof normalized.pageTotal === 'number' ? normalized.pageTotal : Math.max(1, Math.ceil(itemsTotal / perPage))
+    setTotalPages(pageTotal)
+  }, [data, perPage])
+
+  useEffect(() => { if (isError) toast.error('Erro ao carregar produtos') }, [isError])
+  useEffect(() => { setSelected([]) }, [currentPage, perPage])
+  useEffect(() => { if (isRefetching) setSelected([]) }, [isRefetching])
+  useEffect(() => { if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages) }, [totalPages, currentPage])
+
+  const toggleSelectAll = () => { if (selected.length === items.length) setSelected([]); else setSelected(items.map(i => i.id)) }
+  const toggleSelect = (id: number) => { if (selected.includes(id)) setSelected(selected.filter(s => s !== id)); else setSelected([...selected, id]) }
+
+  return (
+    <div className='flex flex-col w-full h-full overflow-x-hidden'>
+      <Topbar title="Produtos" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard', isLast: false }, { label: 'Produtos', href: '/dashboard/products', isLast: true }]} />
+      <div className='flex flex-col w-full h-full flex-1 overflow-hidden min-w-0'>
+        <div className='border-b flex w-full items-center p-2 gap-4 max-w-full overflow-x-hidden'>
+          <div className='flex items-center gap-2 flex-1'>
+            <Button variant={'outline'} size={'sm'}>
+              <Package /> Gerenciar
+            </Button>
+          </div>
+          <div className='flex items-center gap-2'>
+            <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
+              {(isLoading || isRefetching) ? (<><RefreshCcw className='animate-spin' /> Atualizando...</>) : (<><RefreshCcw /> Atualizar</>)}
+            </Button>
+
+            {selected.length === 1 ? (
+              <DeleteProductDialog productId={selected[0]} onDeleted={() => { setSelected([]); refetch() }} />
+            ) : (
+              <Button size={'sm'} variant={'ghost'} disabled>
+                <Trash /> Excluir
+              </Button>
+            )}
+
+            {selected.length === 1 ? (
+              <EditProductSheet productId={selected[0]} onSaved={() => { refetch() }} />
+            ) : (
+              <Button size={'sm'} variant={'ghost'} disabled>
+                <Edit /> Editar
+              </Button>
+            )}
+            <NewProductSheet onCreated={() => { refetch() }} />
+          </div>
+        </div>
+
+        <DataTable
+          columns={columns}
+          data={items}
+          loading={isLoading || isRefetching}
+          page={currentPage}
+          perPage={perPage}
+          totalItems={totalItems}
+          emptyMessage='Nenhum produto encontrado'
+          emptySlot={(
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Package className='h-6 w-6' />
+                </EmptyMedia>
+                <EmptyTitle>Nenhum produto ainda</EmptyTitle>
+                <EmptyDescription>
+                  Você ainda não cadastrou produtos. Comece criando seu primeiro produto.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <div className='flex gap-2'>
+                  <NewProductSheet onCreated={() => { refetch() }} />
+                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
+                    {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+                  </Button>
+                </div>
+              </EmptyContent>
+            </Empty>
+          )}
+          onChange={({ page, perPage }) => { if (typeof page === 'number') setCurrentPage(page); if (typeof perPage === 'number') setPerPage(perPage); refetch() }}
+        />
+      </div>
+    </div>
+  )
+}
