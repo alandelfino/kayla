@@ -69,25 +69,27 @@ function UserLayout() {
     <div className='flex flex-col w-full h-lvh'>
       {/* Top navigation only */}
       <div className='border-b h-16 w-full flex items-center px-4 bg-white dark:bg-neutral-900 sticky top-0 z-10 gap-4'>
-        <img src='/placeholder.svg' alt='logo' className='h-8 w-auto rounded-md' />
+        <img src='/directa-text-logo.png' alt='Directa' className='h-8 w-auto rounded-md' />
 
-        <NavigationMenu className='ml-1'>
-          <NavigationMenuList>
-            {navItems.map((item) => {
-              const isActive = router.location.pathname.startsWith(item.href)
-              return (
-                <NavigationMenuItem key={item.href}>
-                  <NavigationMenuLink asChild data-active={isActive}>
-                    <Link to={item.href} className='inline-flex flex-row items-center gap-2 rounded-md px-2 py-1.5 whitespace-nowrap'>
-                      {item.icon}
-                      <span className='hidden sm:inline'>{item.label}</span>
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              )
-            })}
-          </NavigationMenuList>
-        </NavigationMenu>
+        <div className='flex-1 flex justify-center'>
+          <NavigationMenu>
+            <NavigationMenuList>
+              {navItems.map((item) => {
+                const isActive = router.location.pathname.startsWith(item.href)
+                return (
+                  <NavigationMenuItem key={item.href}>
+                    <NavigationMenuLink asChild data-active={isActive}>
+                      <Link to={item.href} className='inline-flex flex-row items-center gap-2 rounded-md px-2 py-1.5 whitespace-nowrap'>
+                        {item.icon}
+                        <span className='hidden sm:inline'>{item.label}</span>
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                )
+              })}
+            </NavigationMenuList>
+          </NavigationMenu>
+        </div>
 
         <div className='ml-auto'>
           <DropdownMenu>
