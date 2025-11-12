@@ -9,7 +9,7 @@ import { ImageCrop, ImageCropContent, ImageCropApply, ImageCropReset } from '@/c
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { privateInstance } from '@/lib/auth'
 import { Loader, Mail, User, Lock, Trash, Save } from 'lucide-react'
@@ -50,14 +50,6 @@ function RouteComponent() {
   const [me, setMe] = useState<MeResponse | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [cropOpen, setCropOpen] = useState<boolean>(false)
-  const imageRef = useRef<HTMLImageElement | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null)
-  const [scale, setScale] = useState<number>(1)
-  const [offsetX, setOffsetX] = useState<number>(0)
-  const [offsetY, setOffsetY] = useState<number>(0)
-  const [dragging, setDragging] = useState<boolean>(false)
-  const lastPointRef = useRef<{ x: number; y: number } | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const lastBlobUrlRef = useRef<string | null>(null)
   const originalFileRef = useRef<File | null>(null)
@@ -210,136 +202,15 @@ function RouteComponent() {
     }
   }
 
-  const VIEWPORT = 300
-  const FINAL_SIZE = 512
-
-  const baseSquare = useMemo(() => {
-    if (!naturalSize) return null
-    const base = Math.min(naturalSize.w, naturalSize.h)
-    const baseX0 = Math.floor((naturalSize.w - base) / 2)
-    const baseY0 = Math.floor((naturalSize.h - base) / 2)
-    return { base, baseX0, baseY0 }
-  }, [naturalSize])
-
-  const maxOffset = useMemo(() => {
-    if (!baseSquare) return { x: 0, y: 0 }
-    const sourceSize = Math.max(32, Math.floor(baseSquare.base / Math.max(1, scale)))
-    const max = Math.max(0, baseSquare.base - sourceSize)
-    return { x: max, y: max }
-  }, [baseSquare, scale])
-
-  const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val))
-
-  useEffect(() => {
-    const img = imageRef.current
-    const canvas = canvasRef.current
-    if (!img || !canvas || !naturalSize || !baseSquare) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    canvas.width = VIEWPORT
-    canvas.height = VIEWPORT
-
-    const sourceSize = Math.max(32, Math.floor(baseSquare.base / Math.max(1, scale)))
-    const sx = baseSquare.baseX0 + clamp(offsetX, 0, maxOffset.x)
-    const sy = baseSquare.baseY0 + clamp(offsetY, 0, maxOffset.y)
-
-    ctx.clearRect(0, 0, VIEWPORT, VIEWPORT)
-    ctx.imageSmoothingEnabled = true
-    ctx.imageSmoothingQuality = 'high'
-    ctx.drawImage(img, sx, sy, sourceSize, sourceSize, 0, 0, VIEWPORT, VIEWPORT)
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)'
-    ctx.lineWidth = 1
-    const third = VIEWPORT / 3
-    for (let i = 1; i <= 2; i++) {
-      ctx.beginPath(); ctx.moveTo(i * third, 0); ctx.lineTo(i * third, VIEWPORT); ctx.stroke()
-      ctx.beginPath(); ctx.moveTo(0, i * third); ctx.lineTo(VIEWPORT, i * third); ctx.stroke()
-    }
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.9)'
-    ctx.lineWidth = 2
-    ctx.strokeRect(1, 1, VIEWPORT - 2, VIEWPORT - 2)
-  }, [scale, offsetX, offsetY, naturalSize, baseSquare])
-
+  // Simplified file change handler to use shadcn ImageCrop flow only
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files
     const file = files && files[0] ? files[0] : undefined
     if (!file) return
     originalFileRef.current = file
     setRemoveImage(false)
-    const url = URL.createObjectURL(file)
-    try { if (lastBlobUrlRef.current && lastBlobUrlRef.current.startsWith('blob:')) URL.revokeObjectURL(lastBlobUrlRef.current) } catch {}
-    lastBlobUrlRef.current = url
-    setPreviewUrl(url)
+    // Open crop dialog; final image will be set in handleShadcnCrop
     setCropOpen(true)
-    setScale(1)
-    setOffsetX(0)
-    setOffsetY(0)
-    const img = new Image()
-    img.onload = () => { imageRef.current = img; setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight }) }
-    img.src = url
-    form.setValue('image', file as any)
-  }
-
-  function onCanvasPointerDown(e: React.PointerEvent<HTMLCanvasElement>) { setDragging(true); lastPointRef.current = { x: e.clientX, y: e.clientY }; (e.currentTarget as HTMLCanvasElement).setPointerCapture(e.pointerId) }
-  function onCanvasPointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
-    if (!dragging || !lastPointRef.current) return
-    const dx = e.clientX - lastPointRef.current.x
-    const dy = e.clientY - lastPointRef.current.y
-    lastPointRef.current = { x: e.clientX, y: e.clientY }
-    const sourceSize = Math.max(32, Math.floor((baseSquare?.base ?? 0) / Math.max(1, scale)))
-    const ratio = sourceSize / VIEWPORT
-    setOffsetX((prev) => clamp(prev - Math.round(dx * ratio), 0, maxOffset.x))
-    setOffsetY((prev) => clamp(prev - Math.round(dy * ratio), 0, maxOffset.y))
-  }
-  function onCanvasPointerUp(e: React.PointerEvent<HTMLCanvasElement>) { setDragging(false); lastPointRef.current = null; try { (e.currentTarget as HTMLCanvasElement).releasePointerCapture(e.pointerId) } catch {} }
-  function onCanvasWheel(e: React.WheelEvent<HTMLCanvasElement>) { e.preventDefault(); const delta = -Math.sign(e.deltaY) * 0.1; setScale((prev) => clamp(Number((prev + delta).toFixed(2)), 1, 5)) }
-
-  async function confirmCrop() {
-    const img = imageRef.current
-    if (!img || !baseSquare) { setCropOpen(false); return }
-    const sourceSize = Math.max(32, Math.floor(baseSquare.base / Math.max(1, scale)))
-    const sx = baseSquare.baseX0 + clamp(offsetX, 0, maxOffset.x)
-    const sy = baseSquare.baseY0 + clamp(offsetY, 0, maxOffset.y)
-    const out = document.createElement('canvas'); out.width = FINAL_SIZE; out.height = FINAL_SIZE
-    const ctx = out.getContext('2d'); if (!ctx) { setCropOpen(false); return }
-    ctx.imageSmoothingEnabled = true
-    ctx.imageSmoothingQuality = 'high'
-    ctx.drawImage(img, sx, sy, sourceSize, sourceSize, 0, 0, FINAL_SIZE, FINAL_SIZE)
-    return new Promise<void>((resolve) => {
-      const allowed = ['image/jpeg', 'image/png', 'image/webp'] as const
-      const preferred = originalFileRef.current?.type ?? 'image/jpeg'
-      const outputMime = allowed.includes(preferred as any) ? preferred : 'image/jpeg'
-      const ext = outputMime === 'image/png' ? 'png' : outputMime === 'image/webp' ? 'webp' : 'jpg'
-      const quality = outputMime === 'image/jpeg' ? 0.92 : (outputMime === 'image/webp' ? 0.9 : undefined)
-      out.toBlob((blob) => {
-        if (blob) {
-          const file = new File([blob], `avatar.${ext}`, { type: outputMime })
-          form.setValue('image', file as any)
-          const nextUrl = URL.createObjectURL(blob)
-          try { if (lastBlobUrlRef.current && lastBlobUrlRef.current.startsWith('blob:')) URL.revokeObjectURL(lastBlobUrlRef.current) } catch {}
-          lastBlobUrlRef.current = nextUrl
-          setPreviewUrl(nextUrl)
-          setRemoveImage(false)
-          setCropOpen(false)
-          resolve()
-        } else {
-          out.toBlob((blob2) => {
-            if (blob2) {
-              const file = new File([blob2], 'avatar.jpg', { type: 'image/jpeg' })
-              form.setValue('image', file as any)
-              const nextUrl = URL.createObjectURL(blob2)
-              try { if (lastBlobUrlRef.current && lastBlobUrlRef.current.startsWith('blob:')) URL.revokeObjectURL(lastBlobUrlRef.current) } catch {}
-              lastBlobUrlRef.current = nextUrl
-              setPreviewUrl(nextUrl)
-              setRemoveImage(false)
-            }
-            setCropOpen(false)
-            resolve()
-          }, 'image/jpeg', 0.92)
-        }
-      }, outputMime, quality as any)
-    })
   }
 
   async function handleShadcnCrop(croppedDataUrl: string) {

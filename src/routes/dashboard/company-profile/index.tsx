@@ -2,12 +2,11 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Topbar } from '../-components/topbar'
-import { publicInstance, privateInstance } from '@/lib/auth'
+import { privateInstance } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
-import { RefreshCcw, Building2, Loader2, Save, Edit } from 'lucide-react'
+// Removed unused Label and Separator imports
+import { Building2, Loader2, Save, Edit } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -89,7 +88,7 @@ function RouteComponent() {
     },
   })
 
-  const { data, isLoading, isRefetching, isError, refetch } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['company-profile'],
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -162,44 +161,7 @@ function RouteComponent() {
     fileInputRef.current?.click()
   }
 
-  async function cropImageToSquare(file: File, targetSize?: number): Promise<File> {
-    return new Promise((resolve, reject) => {
-      const img = new Image()
-      const objectUrl = URL.createObjectURL(file)
-      img.onload = () => {
-        try {
-          const size = Math.min(img.width, img.height)
-          const sx = Math.floor((img.width - size) / 2)
-          const sy = Math.floor((img.height - size) / 2)
-          const canvas = document.createElement('canvas')
-          const finalSize = targetSize && targetSize > 0 ? targetSize : size
-          canvas.width = finalSize
-          canvas.height = finalSize
-          const ctx = canvas.getContext('2d')
-          if (!ctx) throw new Error('Canvas indisponível')
-          ctx.imageSmoothingQuality = 'high'
-          ctx.drawImage(img, sx, sy, size, size, 0, 0, finalSize, finalSize)
-          canvas.toBlob((blob) => {
-            try { URL.revokeObjectURL(objectUrl) } catch {}
-            if (!blob) {
-              reject(new Error('Falha ao processar imagem'))
-              return
-            }
-            const croppedFile = new File([blob], `${(file.name || 'logo').replace(/\.[^/.]+$/, '')}-cropped.png`, { type: 'image/png' })
-            resolve(croppedFile)
-          }, 'image/png', 0.92)
-        } catch (err) {
-          try { URL.revokeObjectURL(objectUrl) } catch {}
-          reject(err as any)
-        }
-      }
-      img.onerror = (err) => {
-        try { URL.revokeObjectURL(objectUrl) } catch {}
-        reject(err as any)
-      }
-      img.src = objectUrl
-    })
-  }
+  // Removed unused cropImageToSquare helper
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]

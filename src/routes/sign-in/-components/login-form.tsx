@@ -11,7 +11,6 @@ import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { auth, formSchema } from "@/lib/auth"
-import type { AxiosError } from "axios"
 
 export function LoginForm({
   className,
@@ -31,7 +30,7 @@ export function LoginForm({
         toast.error('Credenciais invalidas')
       }
     },
-    onError: (error: AxiosError) => {
+    onError: () => {
       toast.error('Credenciais invalidas')
     },
   })

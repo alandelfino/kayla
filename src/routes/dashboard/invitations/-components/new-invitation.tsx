@@ -26,7 +26,7 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
   })
 
   // Carregar equipes do backend (Xano Teams API)
-  const { data: teamsData, isLoading: isTeamsLoading, isError: isTeamsError } = useQuery({
+  const { data: teamsData, isLoading: isTeamsLoading } = useQuery({
     queryKey: ['teams'],
     enabled: open,
     refetchOnWindowFocus: false,
