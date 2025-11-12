@@ -74,7 +74,7 @@ function getSubdomain() {
         setLoadingMe(true)
         // Tenta primeiro do localStorage
         const subdomain = getSubdomain()
-        const raw = localStorage.getItem(`${subdomain}-kayla-user`)
+        const raw = localStorage.getItem(`${subdomain}-directa-user`)
         let localUser: any = null
         try { localUser = raw ? JSON.parse(raw) : null } catch { localUser = null }
 
@@ -102,7 +102,7 @@ function getSubdomain() {
                   // Atualiza localStorage com dados mais recentes, incluindo imagem
                   try {
                     const nextUser = { ...(localUser ?? {}), name: meData.name, email: meData.email, image: meData.image }
-                    localStorage.setItem(`${subdomain}-kayla-user`, JSON.stringify(nextUser))
+                    localStorage.setItem(`${subdomain}-directa-user`, JSON.stringify(nextUser))
                   } catch {}
                 }
               }
@@ -120,7 +120,7 @@ function getSubdomain() {
               setPreviewUrl(meData.image?.url ?? data?.avatar_url ?? null)
               // Persiste no localStorage para os próximos carregamentos
               try {
-                localStorage.setItem(`${subdomain}-kayla-user`, JSON.stringify({ id: meData.id, name: meData.name, email: meData.email, image: meData.image }))
+                localStorage.setItem(`${subdomain}-directa-user`, JSON.stringify({ id: meData.id, name: meData.name, email: meData.email, image: meData.image }))
               } catch {}
             }
           } else {
@@ -168,7 +168,7 @@ function getSubdomain() {
         // Atualiza localStorage e sidebar (avatar e nome)
         try {
           const subdomain = getSubdomain()
-          const raw = localStorage.getItem(`${subdomain}-kayla-user`)
+          const raw = localStorage.getItem(`${subdomain}-directa-user`)
           let localUser: any = null
           try { localUser = raw ? JSON.parse(raw) : null } catch { localUser = null }
 
@@ -186,7 +186,7 @@ function getSubdomain() {
             name: values.name,
             image: finalImage,
           }
-          localStorage.setItem(`${subdomain}-kayla-user`, JSON.stringify(nextUser))
+          localStorage.setItem(`${subdomain}-directa-user`, JSON.stringify(nextUser))
 
           // Atualiza estado local
           setMe((prev) => prev ? ({ ...prev, name: values.name, image: (removeImage ? null : (nextUser.image ?? prev.image)) }) : prev)
@@ -203,7 +203,7 @@ function getSubdomain() {
 
           // Notifica o sidebar/nav para atualizar imediatamente
           try {
-            window.dispatchEvent(new CustomEvent('kayla:user-updated', {
+            window.dispatchEvent(new CustomEvent('directa:user-updated', {
               detail: {
                 name: values.name,
                 email: nextUser?.email ?? undefined,
@@ -221,16 +221,16 @@ function getSubdomain() {
                 const finalUrl: string | undefined = data2?.image?.url
                 if (finalUrl && typeof finalUrl === 'string' && !finalUrl.startsWith('blob:')) {
                   // Atualiza localStorage e estado com a URL definitiva
-                  const raw2 = localStorage.getItem(`${subdomain}-kayla-user`)
+                  const raw2 = localStorage.getItem(`${subdomain}-directa-user`)
                   let localUser2: any = null
                   try { localUser2 = raw2 ? JSON.parse(raw2) : null } catch { localUser2 = null }
                   const nextUser2 = { ...(localUser2 ?? {}), image: { ...(localUser2?.image ?? {}), url: finalUrl } }
-                  localStorage.setItem(`${subdomain}-kayla-user`, JSON.stringify(nextUser2))
+                  localStorage.setItem(`${subdomain}-directa-user`, JSON.stringify(nextUser2))
                   setMe((prev) => prev ? ({ ...prev, image: nextUser2.image }) : prev)
                   setPreviewUrl(finalUrl)
                   // Notifica o sidebar
                   try {
-                    window.dispatchEvent(new CustomEvent('kayla:user-updated', { detail: { avatarUrl: finalUrl, name: nextUser2?.name, email: nextUser2?.email } }))
+                    window.dispatchEvent(new CustomEvent('directa:user-updated', { detail: { avatarUrl: finalUrl, name: nextUser2?.name, email: nextUser2?.email } }))
                   } catch {}
                 }
               }, 1500)
@@ -238,11 +238,11 @@ function getSubdomain() {
           } else {
             // Se removido, garante que localStorage e preview estejam limpos
             try {
-              const raw3 = localStorage.getItem(`${subdomain}-kayla-user`)
+              const raw3 = localStorage.getItem(`${subdomain}-directa-user`)
               let localUser3: any = null
               try { localUser3 = raw3 ? JSON.parse(raw3) : null } catch { localUser3 = null }
               const nextUser3 = { ...(localUser3 ?? {}), image: null }
-              localStorage.setItem(`${subdomain}-kayla-user`, JSON.stringify(nextUser3))
+              localStorage.setItem(`${subdomain}-directa-user`, JSON.stringify(nextUser3))
               setPreviewUrl(null)
             } catch {}
           }

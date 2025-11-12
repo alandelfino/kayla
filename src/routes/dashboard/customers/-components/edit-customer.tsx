@@ -123,7 +123,7 @@ export function EditCustomerSheet({ className, customerId, ...props }: React.Com
   useEffect(() => {
     const current = onlyDigits(form.getValues('cpf_or_cnpj'))
     const maxLen = personType === 'legal_entities' ? 14 : 11
-    form.setValue('cpf_or_cnpj', current.slice(0, maxLen), { shouldValidate: true })
+    form.setValue('cpf_or_cnpj', current.slice(0, maxLen))
   }, [personType])
 
   const { isPending, mutate } = useMutation({

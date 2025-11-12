@@ -151,9 +151,8 @@ function RouteComponent() {
     // Atualiza dados locais para uso em sidebar e outras áreas
     try {
       const sub = getSubdomain()
-      localStorage.setItem(`${sub}-kayla-company`, JSON.stringify(data))
-      // Opcional: notificar UI de atualização (caso algum componente escute)
-      try { window.dispatchEvent(new CustomEvent('kayla:company-updated', { detail: data })) } catch {}
+      localStorage.setItem(`${sub}-directa-company`, JSON.stringify(data))
+      try { window.dispatchEvent(new CustomEvent('directa:company-updated', { detail: data })) } catch {}
     } catch {}
   }, [data])
 
@@ -194,12 +193,12 @@ function RouteComponent() {
 
       // Atualiza localStorage para refletir no sidebar
       const sub = getSubdomain()
-      const raw = localStorage.getItem(`${sub}-kayla-company`)
+      const raw = localStorage.getItem(`${sub}-directa-company`)
       let localCompany: any = null
       try { localCompany = raw ? JSON.parse(raw) : null } catch { localCompany = null }
       const nextCompany = { ...(localCompany ?? {}), image: { ...(localCompany?.image ?? {}), url: croppedDataUrl } }
-      localStorage.setItem(`${sub}-kayla-company`, JSON.stringify(nextCompany))
-      try { window.dispatchEvent(new CustomEvent('kayla:company-updated', { detail: nextCompany })) } catch {}
+      localStorage.setItem(`${sub}-directa-company`, JSON.stringify(nextCompany))
+      try { window.dispatchEvent(new CustomEvent('directa:company-updated', { detail: nextCompany })) } catch {}
 
       setCropOpen(false)
     } catch {
@@ -214,12 +213,12 @@ function RouteComponent() {
       setSelectedFile(null)
       setPreviewUrl(null)
       const sub = getSubdomain()
-      const raw = localStorage.getItem(`${sub}-kayla-company`)
+      const raw = localStorage.getItem(`${sub}-directa-company`)
       let localCompany: any = null
       try { localCompany = raw ? JSON.parse(raw) : null } catch { localCompany = null }
       const nextCompany = { ...(localCompany ?? {}), image: { ...(localCompany?.image ?? {}), url: null } }
-      localStorage.setItem(`${sub}-kayla-company`, JSON.stringify(nextCompany))
-      try { window.dispatchEvent(new CustomEvent('kayla:company-updated', { detail: nextCompany })) } catch {}
+      localStorage.setItem(`${sub}-directa-company`, JSON.stringify(nextCompany))
+      try { window.dispatchEvent(new CustomEvent('directa:company-updated', { detail: nextCompany })) } catch {}
     } catch {}
   }
 
@@ -261,8 +260,8 @@ function RouteComponent() {
           const finalUrl = nextCompany?.image?.url ?? payload?.image?.url ?? null
           if (finalUrl) setPreviewUrl(finalUrl)
           setCompany(nextCompany)
-          localStorage.setItem(`${sub}-kayla-company`, JSON.stringify(nextCompany))
-          try { window.dispatchEvent(new CustomEvent('kayla:company-updated', { detail: nextCompany })) } catch {}
+          localStorage.setItem(`${sub}-directa-company`, JSON.stringify(nextCompany))
+          try { window.dispatchEvent(new CustomEvent('directa:company-updated', { detail: nextCompany })) } catch {}
         } catch {}
 
         toast.success('Dados da empresa atualizados!')

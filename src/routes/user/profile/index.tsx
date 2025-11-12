@@ -12,7 +12,7 @@ import { useForm } from 'react-hook-form'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { privateInstance } from '@/lib/auth'
-import { Loader, Mail, User, Lock, Trash, Save } from 'lucide-react'
+import { Loader, Mail, User, Lock, Save } from 'lucide-react'
 
 export const Route = createFileRoute('/user/profile/')({
   component: RouteComponent,
@@ -78,10 +78,10 @@ function RouteComponent() {
             setPreviewUrl(meData.image?.url ?? null)
             try {
               const subdomain = getSubdomain()
-              localStorage.setItem(`${subdomain}-kayla-user`, JSON.stringify({ id: meData.id, name: meData.name, email: meData.email, image: meData.image }))
+              localStorage.setItem(`${subdomain}-directa-user`, JSON.stringify({ id: meData.id, name: meData.name, email: meData.email, image: meData.image }))
             } catch {}
             try {
-              window.dispatchEvent(new CustomEvent('kayla:user-updated', {
+              window.dispatchEvent(new CustomEvent('directa:user-updated', {
                 detail: { name: meData.name, email: meData.email, avatarUrl: meData.image?.url ?? null }
               }))
             } catch {}
@@ -123,7 +123,7 @@ function RouteComponent() {
         toast.success('Perfil atualizado!')
         try {
           const subdomain = getSubdomain()
-          const raw = localStorage.getItem(`${subdomain}-kayla-user`)
+          const raw = localStorage.getItem(`${subdomain}-directa-user`)
           let localUser: any = null
           try { localUser = raw ? JSON.parse(raw) : null } catch { localUser = null }
 
@@ -139,7 +139,7 @@ function RouteComponent() {
             name: values.name,
             image: finalImage,
           }
-          localStorage.setItem(`${subdomain}-kayla-user`, JSON.stringify(nextUser))
+          localStorage.setItem(`${subdomain}-directa-user`, JSON.stringify(nextUser))
 
           setMe((prev) => prev ? ({ ...prev, name: values.name, image: (removeImage ? null : (nextUser.image ?? prev.image)) }) : prev)
           if (!removeImage && finalImage?.url && !String(finalImage.url).startsWith('blob:')) {
@@ -150,7 +150,7 @@ function RouteComponent() {
           if (removeImage) { setPreviewUrl(null) }
 
           try {
-            window.dispatchEvent(new CustomEvent('kayla:user-updated', {
+            window.dispatchEvent(new CustomEvent('directa:user-updated', {
               detail: {
                 name: values.name,
                 email: nextUser?.email ?? undefined,
@@ -166,24 +166,24 @@ function RouteComponent() {
                 const payload2 = check?.data?.me ?? null
                 const finalUrl: string | undefined = payload2?.image?.url
                 if (finalUrl && typeof finalUrl === 'string' && !finalUrl.startsWith('blob:')) {
-                  const raw2 = localStorage.getItem(`${subdomain}-kayla-user`)
+                  const raw2 = localStorage.getItem(`${subdomain}-directa-user`)
                   let localUser2: any = null
                   try { localUser2 = raw2 ? JSON.parse(raw2) : null } catch { localUser2 = null }
                   const nextUser2 = { ...(localUser2 ?? {}), image: { ...(localUser2?.image ?? {}), url: finalUrl } }
-                  localStorage.setItem(`${subdomain}-kayla-user`, JSON.stringify(nextUser2))
+                  localStorage.setItem(`${subdomain}-directa-user`, JSON.stringify(nextUser2))
                   setMe((prev) => prev ? ({ ...prev, image: nextUser2.image }) : prev)
                   setPreviewUrl(finalUrl)
-                  try { window.dispatchEvent(new CustomEvent('kayla:user-updated', { detail: { avatarUrl: finalUrl, name: nextUser2?.name, email: nextUser2?.email } })) } catch {}
+                  try { window.dispatchEvent(new CustomEvent('directa:user-updated', { detail: { avatarUrl: finalUrl, name: nextUser2?.name, email: nextUser2?.email } })) } catch {}
                 }
               }, 1500)
             } catch {}
           } else {
             try {
-              const raw3 = localStorage.getItem(`${subdomain}-kayla-user`)
+              const raw3 = localStorage.getItem(`${subdomain}-directa-user`)
               let localUser3: any = null
               try { localUser3 = raw3 ? JSON.parse(raw3) : null } catch { localUser3 = null }
               const nextUser3 = { ...(localUser3 ?? {}), image: null }
-              localStorage.setItem(`${subdomain}-kayla-user`, JSON.stringify(nextUser3))
+              localStorage.setItem(`${subdomain}-directa-user`, JSON.stringify(nextUser3))
               setPreviewUrl(null)
             } catch {}
           }
@@ -261,9 +261,8 @@ function RouteComponent() {
                       </Avatar>
                     </button>
                     <div>
-                      <Button type='button' variant={'outline'} size={'sm'} className='h-8 rounded-full px-3 text-xs gap-1.5 border-muted-foreground/20 text-muted-foreground hover:text-foreground' onClick={removeAvatar} disabled={!previewUrl && !me?.image?.url}>
-                        <Trash className='size-3.5' />
-                        Remover imagem
+                      <Button type='button' variant={'ghost'} size={'sm'} className='h-8 rounded-lg px-3 text-xs gap-1.5 border-muted-foreground/20 text-muted-foreground hover:text-foreground' onClick={removeAvatar} disabled={!previewUrl && !me?.image?.url}>
+                        Remover
                       </Button>
                     </div>
                   </div>
@@ -274,7 +273,7 @@ function RouteComponent() {
                       <FormControl>
                         <div className='relative'>
                           <User className='absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground' />
-                          <Input placeholder='Seu nome' className='h-12 rounded-xl pl-10' {...field} />
+                          <Input placeholder='Seu nome' className='h-9 rounded-lg pl-10' {...field} />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -286,7 +285,7 @@ function RouteComponent() {
                     <FormControl>
                       <div className='relative'>
                         <Mail className='absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground' />
-                        <Input placeholder='Seu email' value={me?.email ?? ''} readOnly disabled className='h-12 rounded-xl pl-10 pr-10' />
+                        <Input placeholder='Seu email' value={me?.email ?? ''} readOnly disabled className='h-9 rounded-lg pl-10 pr-10' />
                         <Lock className='absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground' />
                       </div>
                     </FormControl>
@@ -296,7 +295,7 @@ function RouteComponent() {
                 </div>
 
                 <div className='flex w-full justify-end items-center gap-2'>
-                  <Button type='submit' className='h-11 rounded-xl px-6' disabled={form.formState.isSubmitting}>
+                  <Button type='submit' className='h-9 rounded-lg px-6' disabled={form.formState.isSubmitting}>
                     {form.formState.isSubmitting ? (
                       <Loader className='w-4 h-4 mr-2 animate-spin' />
                     ) : (

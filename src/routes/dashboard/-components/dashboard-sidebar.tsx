@@ -21,7 +21,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
 
     React.useEffect(() => {
         const sub = window.location.hostname.split('.')[0]
-        const key = `${sub}-kayla-company`
+        const key = `${sub}-directa-company`
         const fromLocal = (() => {
             try {
                 const raw = localStorage.getItem(key)
@@ -40,7 +40,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
         }
 
         const handleStorage = (e: StorageEvent) => {
-            if (!e.key || !e.key.endsWith('-kayla-company')) return
+            if (!e.key || !e.key.endsWith('-directa-company')) return
             try {
                 const next = e.newValue ? JSON.parse(e.newValue) as CompanyInfo : null
                 setCompany(next)
@@ -57,10 +57,10 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                 }
             } catch {}
         }
-        window.addEventListener('kayla:company-updated', handleCompanyUpdated as EventListener)
+        window.addEventListener('directa:company-updated', handleCompanyUpdated as EventListener)
         return () => {
             window.removeEventListener('storage', handleStorage)
-            window.removeEventListener('kayla:company-updated', handleCompanyUpdated as EventListener)
+            window.removeEventListener('directa:company-updated', handleCompanyUpdated as EventListener)
         }
     }, [])
 

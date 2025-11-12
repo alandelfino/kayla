@@ -1,33 +1,32 @@
-import { createFileRoute, Link, Outlet, useRouterState, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, Outlet, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { auth, privateInstance } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { getAvatarAbbrev } from '@/lib/utils'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from '@/components/ui/navigation-menu'
-import { ChevronsUpDown, LogOut, User as UserIcon, Building2, Mail } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import InfoMenu from '@/components/info-menu'
+import NotificationMenu from '@/components/notification-menu'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { User as UserIcon, Building2, Mail } from 'lucide-react'
+import { ChevronsUpDown, LogOut } from 'lucide-react'
 
 export const Route = createFileRoute('/user')({
   component: UserLayout,
 })
 
 type UserT = { email: string, name: string, avatarUrl?: string | null }
-
 function getSubdomain() { return window.location.hostname.split('.')[0] }
 
 function UserLayout() {
   const navigate = useNavigate()
-  const router = useRouterState()
-
   const [user, setUser] = useState<UserT | null>(null)
 
   useEffect(() => {
     auth.userGuard()
-    // Carrega usuário básico do storage
     try {
       const sub = getSubdomain()
-      const raw = localStorage.getItem(`${sub}-kayla-user`)
+      const raw = localStorage.getItem(`${sub}-directa-user`)
       const parsed = raw ? JSON.parse(raw) : null
       const avatarUrl: string | null = parsed?.image?.url ?? parsed?.avatar_url ?? null
       setUser(parsed ? { email: parsed?.email ?? '', name: parsed?.name ?? '', avatarUrl } : null)
@@ -42,14 +41,17 @@ function UserLayout() {
         avatarUrl: d.avatarUrl ?? prev?.avatarUrl ?? null,
       }))
     }
-    window.addEventListener('kayla:user-updated', handler as EventListener)
-    return () => window.removeEventListener('kayla:user-updated', handler as EventListener)
+    window.addEventListener('directa:user-updated', handler as EventListener)
+    return () => window.removeEventListener('directa:user-updated', handler as EventListener)
   }, [])
 
   async function signOut() {
-  try { await privateInstance.post('/api:eA5lqIuH/auth/logout', {}) } catch {}
+    try { await privateInstance.post('/api:eA5lqIuH/auth/logout', {}) } catch {}
     try {
       const sub = getSubdomain()
+      localStorage.removeItem(`${sub}-directa-authToken`)
+      localStorage.removeItem(`${sub}-directa-user`)
+      localStorage.removeItem(`${sub}-directa-company`)
       localStorage.removeItem(`${sub}-kayla-authToken`)
       localStorage.removeItem(`${sub}-kayla-user`)
       localStorage.removeItem(`${sub}-kayla-company`)
@@ -57,71 +59,102 @@ function UserLayout() {
     navigate({ to: '/sign-in' })
   }
 
-  // Utilitário compartilhado para gerar a abreviação do avatar
-
-  const navItems = [
-    { label: 'Meu Perfil', href: '/user/profile', icon: <UserIcon className='size-4' /> },
-    { label: 'Minhas contas', href: '/user/companies', icon: <Building2 className='size-4' /> },
-    { label: 'Convites', href: '/user/invites', icon: <Mail className='size-4' /> },
+  const navigationLinks = [
+    { href: '/user/profile', label: 'Meu Perfil', icon: <UserIcon className='size-4' /> },
+    { href: '/user/companies', label: 'Minhas contas', icon: <Building2 className='size-4' /> },
+    { href: '/user/invites', label: 'Convites', icon: <Mail className='size-4' /> },
   ]
+  const navItems = navigationLinks
 
   return (
     <div className='flex flex-col w-full h-lvh'>
-      {/* Top navigation only */}
-      <div className='border-b h-16 w-full flex items-center px-4 bg-white dark:bg-neutral-900 sticky top-0 z-10 gap-4'>
-        <img src='/directa-text-logo.png' alt='Directa' className='h-8 w-auto rounded-md' />
-
-        <div className='flex-1 flex justify-center'>
-          <NavigationMenu>
-            <NavigationMenuList>
-              {navItems.map((item) => {
-                const isActive = router.location.pathname.startsWith(item.href)
-                return (
-                  <NavigationMenuItem key={item.href}>
-                    <NavigationMenuLink asChild data-active={isActive}>
-                      <Link to={item.href} className='inline-flex flex-row items-center gap-2 rounded-md px-2 py-1.5 whitespace-nowrap'>
-                        {item.icon}
-                        <span className='hidden sm:inline'>{item.label}</span>
-                      </Link>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                )
-              })}
-            </NavigationMenuList>
-          </NavigationMenu>
-        </div>
-
-        <div className='ml-auto'>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant='ghost' size='sm' className='h-11 rounded-md flex items-center gap-2'>
-                <Avatar className='h-8 w-8 rounded-lg'>
-                  <AvatarImage src={user?.avatarUrl || undefined} alt={user?.name || ''} />
-                  <AvatarFallback className='rounded-lg'>{getAvatarAbbrev(user?.name || '')}</AvatarFallback>
-                </Avatar>
-                <div className='hidden sm:grid text-left text-sm leading-tight'>
-                  <span className='truncate font-medium max-w-[160px]'>{user?.name || ''}</span>
-                  <span className='truncate text-xs max-w-[160px]'>{user?.email || ''}</span>
-                </div>
-                <ChevronsUpDown className='ml-auto size-4' />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className='min-w-56 rounded-lg' side={'bottom'} align='end' sideOffset={8}>
-              {navItems.map((item) => (
-                <DropdownMenuItem key={item.href} asChild>
-                  <Link to={item.href} className='w-full'>{item.icon} <span className='ml-2'>{item.label}</span></Link>
+      <header className='border-b px-4 md:px-6 sticky top-0 z-10 bg-white dark:bg-neutral-900'>
+        <div className='flex h-16 items-center justify-between gap-4'>
+          <div className='flex items-center gap-2'>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button className='group size-8 md:hidden' variant='ghost' size='icon'>
+                  <svg className='pointer-events-none' width={16} height={16} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' xmlns='http://www.w3.org/2000/svg'>
+                    <path d='M4 12L20 12' className='origin-center -translate-y-[7px] transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.1)] group-aria-expanded:translate-x-0 group-aria-expanded:translate-y-0 group-aria-expanded:rotate-[315deg]' />
+                    <path d='M4 12H20' className='origin-center transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.8)] group-aria-expanded:rotate-45' />
+                    <path d='M4 12H20' className='origin-center translate-y-[7px] transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.1)] group-aria-expanded:translate-y-0 group-aria-expanded:rotate-[135deg]' />
+                  </svg>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align='start' className='w-36 p-1 md:hidden'>
+                <NavigationMenu className='max-w-none *:w-full'>
+                  <NavigationMenuList className='flex-col items-start gap-0 md:gap-2'>
+                    {navigationLinks.map((link) => (
+                      <NavigationMenuItem key={link.href} className='w-full'>
+                        <NavigationMenuLink asChild>
+                          <Link to={link.href} className='py-1.5'>
+                            {link.label}
+                          </Link>
+                        </NavigationMenuLink>
+                      </NavigationMenuItem>
+                    ))}
+                  </NavigationMenuList>
+                </NavigationMenu>
+              </PopoverContent>
+            </Popover>
+            <div className='flex items-center gap-6'>
+              <a href='#' className='text-primary hover:text-primary/90'>
+                <img src='/directa-text-logo.png' alt='Directa' className='h-8 w-auto' />
+              </a>
+              <NavigationMenu className='max-md:hidden'>
+                <NavigationMenuList className='gap-2'>
+                  {navigationLinks.map((link) => (
+                    <NavigationMenuItem key={link.href}>
+                      <NavigationMenuLink asChild>
+                        <Link to={link.href} className='py-1.5 font-medium text-muted-foreground hover:text-primary'>
+                          {link.label}
+                        </Link>
+                      </NavigationMenuLink>
+                    </NavigationMenuItem>
+                  ))}
+                </NavigationMenuList>
+              </NavigationMenu>
+            </div>
+          </div>
+          <div className='flex items-center gap-4'>
+            <div className='flex items-center gap-2'>
+              <InfoMenu />
+              <NotificationMenu />
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='ghost' size='sm' className='h-11 rounded-md flex items-center gap-2'>
+                  <Avatar className='h-8 w-8 rounded-lg'>
+                    <AvatarImage src={user?.avatarUrl || undefined} alt={user?.name || ''} />
+                    <AvatarFallback className='rounded-lg'>{(user?.name || '').split(' ').map(p => p[0]).join('').slice(0,2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className='hidden sm:grid text-left text-sm leading-tight'>
+                    <span className='truncate font-medium max-w-[160px]'>{user?.name || ''}</span>
+                    <span className='truncate text-xs max-w-[160px]'>{user?.email || ''}</span>
+                  </div>
+                  <ChevronsUpDown className='ml-auto size-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className='min-w-56 rounded-lg' side={'bottom'} align='end' sideOffset={8}>
+                {navItems.map((item) => (
+                  <DropdownMenuItem key={item.href} asChild>
+                    <Link to={item.href} className='w-full'>
+                      {item.icon}
+                      <span className='ml-2'>{item.label}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut}>
+                  <LogOut className='size-4' />
+                  <span className='ml-2'>Sair</span>
                 </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut}>
-                <LogOut className='size-4' /> <span className='ml-2'>Sair</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Content */}
       <main className='flex-1 overflow-auto'>
         <Outlet />
       </main>

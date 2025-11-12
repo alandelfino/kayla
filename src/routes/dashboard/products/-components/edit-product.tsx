@@ -1,8 +1,9 @@
 import { Button } from '@/components/ui/button'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Edit, Loader } from 'lucide-react'
@@ -258,7 +259,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button size={'sm'} variant={'ghost'}>
+        <Button variant={'ghost'}>
           <Edit className='w-4 h-4' /> Editar
         </Button>
       </SheetTrigger>
@@ -276,213 +277,237 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
               </SheetDescription>
             </SheetHeader>
 
-            <div className='flex-1 grid auto-rows-min gap-6 px-4 py-4'>
-              <div className='grid grid-cols-1 md:grid-cols-[150px_1fr] gap-4'>
-                <FormField control={form.control} name='sku' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SKU</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='Código interno do produto'
-                        className='min-w-[120px] w-[150px] max-w-[150px]'
-                        {...field}
-                        disabled={loading || isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+            <div className='flex-1 px-4 py-4'>
+              <Tabs defaultValue='geral' className='flex-1'>
+                <TabsList>
+                  <TabsTrigger value='geral'>Geral</TabsTrigger>
+                  <TabsTrigger value='descricao'>Descrição</TabsTrigger>
+                </TabsList>
 
-                <FormField control={form.control} name='name' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome</FormLabel>
-                    <FormControl>
-                      <Input className='w-full' placeholder='Nome do produto' {...field} disabled={loading || isPending} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
+                <TabsContent value='geral'>
+                  <div className='grid auto-rows-min gap-6'>
+                    <div className='grid grid-cols-1 md:grid-cols-[150px_1fr] gap-4'>
+                      <FormField control={form.control} name='sku' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SKU</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder='Código interno do produto'
+                              className='min-w-[120px] w-[150px] max-w-[150px]'
+                              {...field}
+                              disabled={loading || isPending}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-              <FormField control={form.control} name='description' render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição</FormLabel>
-                  <FormControl>
-                    <Input placeholder='Opcional' {...field} disabled={loading || isPending} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+                      <FormField control={form.control} name='name' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome</FormLabel>
+                          <FormControl>
+                            <Input className='w-full' placeholder='Nome do produto' {...field} disabled={loading || isPending} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                <FormField control={form.control} name='type' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo</FormLabel>
-                    <FormControl>
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className='w-full'>
-                          <SelectValue placeholder='Selecione o tipo' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value='simple'>Simples</SelectItem>
-                            <SelectItem value='with_derivations'>Com variações</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                    <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                      <FormField control={form.control} name='type' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo</FormLabel>
+                          <FormControl>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger className='w-full'>
+                                <SelectValue placeholder='Selecione o tipo' />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  <SelectItem value='simple'>Simples</SelectItem>
+                                  <SelectItem value='with_derivations'>Com variações</SelectItem>
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-                <FormField control={form.control} name='price' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preço</FormLabel>
-                    <FormControl>
-                      <Input type='text' inputMode='numeric' placeholder='R$ 0,00' value={priceText}
-                        onChange={(e) => {
-                          const { text, value } = currencyMask(e.target.value)
-                          setPriceText(text)
-                          field.onChange(value)
-                        }}
-                        disabled={loading || isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                      <FormField control={form.control} name='price' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preço</FormLabel>
+                          <FormControl>
+                            <Input type='text' inputMode='numeric' placeholder='R$ 0,00' value={priceText}
+                              onChange={(e) => {
+                                const { text, value } = currencyMask(e.target.value)
+                                setPriceText(text)
+                                field.onChange(value)
+                              }}
+                              disabled={loading || isPending}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-                <FormField control={form.control} name='stock' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estoque</FormLabel>
-                    <FormControl>
-                      <Input type='text' inputMode='numeric' placeholder={unitType && /decimal/i.test(unitType) ? '0,00' : '0'} value={stockText}
-                        onChange={(e) => {
-                          const { text, value } = stockMask(e.target.value, unitType)
-                          setStockText(text)
-                          field.onChange(value)
-                        }}
-                        disabled={loading || isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
+                      <FormField control={form.control} name='stock' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estoque</FormLabel>
+                          <FormControl>
+                            <Input type='text' inputMode='numeric' placeholder={unitType && /decimal/i.test(unitType) ? '0,00' : '0'} value={stockText}
+                              onChange={(e) => {
+                                const { text, value } = stockMask(e.target.value, unitType)
+                                setStockText(text)
+                                field.onChange(value)
+                              }}
+                              disabled={loading || isPending}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                <FormField control={form.control} name='promotional_price' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preço promocional</FormLabel>
-                    <FormControl>
-                      <Input type='text' inputMode='numeric' placeholder='R$ 0,00' value={promoPriceText}
-                        onChange={(e) => {
-                          const { text, value } = currencyMask(e.target.value)
-                          setPromoPriceText(text)
-                          field.onChange(value)
-                        }}
-                        disabled={loading || isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                    <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                      <FormField control={form.control} name='promotional_price' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preço promocional</FormLabel>
+                          <FormControl>
+                            <Input type='text' inputMode='numeric' placeholder='R$ 0,00' value={promoPriceText}
+                              onChange={(e) => {
+                                const { text, value } = currencyMask(e.target.value)
+                                setPromoPriceText(text)
+                                field.onChange(value)
+                              }}
+                              disabled={loading || isPending}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-                <FormField control={form.control} name='unit_id' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Unidade</FormLabel>
-                    <FormControl>
-                      <Select value={field.value ? String(field.value) : ''} onValueChange={(v) => field.onChange(Number(v))} disabled={isUnitsLoading || loading}>
-                        <SelectTrigger className='w-full'>
-                          <SelectValue placeholder={isUnitsLoading ? 'Carregando unidades...' : 'Selecione a unidade'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {Array.isArray((unitsData as any)?.items)
-                              ? (unitsData as any).items.map((u: any) => (
-                                <SelectItem key={u.id} value={String(u.id)}>{u.name ?? `Unidade #${u.id}`}</SelectItem>
-                              ))
-                              : Array.isArray(unitsData)
-                                ? (unitsData as any).map((u: any) => (
-                                  <SelectItem key={u.id} value={String(u.id)}>{u.name ?? `Unidade #${u.id}`}</SelectItem>
-                                ))
-                                : null}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                      <FormField control={form.control} name='unit_id' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unidade</FormLabel>
+                          <FormControl>
+                            <Select value={field.value ? String(field.value) : ''} onValueChange={(v) => field.onChange(Number(v))} disabled={isUnitsLoading || loading}>
+                              <SelectTrigger className='w-full'>
+                                <SelectValue placeholder={isUnitsLoading ? 'Carregando unidades...' : 'Selecione a unidade'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  {Array.isArray((unitsData as any)?.items)
+                                    ? (unitsData as any).items.map((u: any) => (
+                                      <SelectItem key={u.id} value={String(u.id)}>{u.name ?? `Unidade #${u.id}`}</SelectItem>
+                                    ))
+                                    : Array.isArray(unitsData)
+                                      ? (unitsData as any).map((u: any) => (
+                                        <SelectItem key={u.id} value={String(u.id)}>{u.name ?? `Unidade #${u.id}`}</SelectItem>
+                                      ))
+                                      : null}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-                <FormField control={form.control} name='brand_id' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Marca</FormLabel>
-                    <FormControl>
-                      <Select value={field.value ? String(field.value) : ''} onValueChange={(v) => field.onChange(Number(v))} disabled={isBrandsLoading || loading}>
-                        <SelectTrigger className='w-full'>
-                          <SelectValue placeholder={isBrandsLoading ? 'Carregando marcas...' : 'Selecione a marca'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {Array.isArray((brandsData as any)?.items)
-                              ? (brandsData as any).items.map((b: any) => (
-                                <SelectItem key={b.id} value={String(b.id)}>{b.name ?? `Marca #${b.id}`}</SelectItem>
-                              ))
-                              : Array.isArray(brandsData)
-                                ? (brandsData as any).map((b: any) => (
-                                  <SelectItem key={b.id} value={String(b.id)}>{b.name ?? `Marca #${b.id}`}</SelectItem>
-                                ))
-                                : null}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
+                      <FormField control={form.control} name='brand_id' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Marca</FormLabel>
+                          <FormControl>
+                            <Select value={field.value ? String(field.value) : ''} onValueChange={(v) => field.onChange(Number(v))} disabled={isBrandsLoading || loading}>
+                              <SelectTrigger className='w-full'>
+                                <SelectValue placeholder={isBrandsLoading ? 'Carregando marcas...' : 'Selecione a marca'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  {Array.isArray((brandsData as any)?.items)
+                                    ? (brandsData as any).items.map((b: any) => (
+                                      <SelectItem key={b.id} value={String(b.id)}>{b.name ?? `Marca #${b.id}`}</SelectItem>
+                                    ))
+                                    : Array.isArray(brandsData)
+                                      ? (brandsData as any).map((b: any) => (
+                                        <SelectItem key={b.id} value={String(b.id)}>{b.name ?? `Marca #${b.id}`}</SelectItem>
+                                      ))
+                                      : null}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                <FormField control={form.control} name='active' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ativo</FormLabel>
-                    <FormControl>
-                      <div className='flex items-center gap-2'>
-                        <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={loading || isPending} />
-                        <span className='text-sm text-neutral-600 dark:text-neutral-300'>Produto ativo</span>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                    <div className='grid grid-cols-1 gap-4'>
+                      <FormField control={form.control} name='active' render={({ field }) => (
+                        <FormItem>
+                          <div className='flex items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
+                            <div className='flex flex-col gap-0.5'>
+                              <FormLabel>Ativo</FormLabel>
+                              <FormDescription className='leading-snug'>Quando habilitado, o produto aparece ativo no catálogo.</FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={loading || isPending} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-                <FormField control={form.control} name='promotional_price_active' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Promoção ativa</FormLabel>
-                    <FormControl>
-                      <div className='flex items-center gap-2'>
-                        <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={loading || isPending} />
-                        <span className='text-sm text-neutral-600 dark:text-neutral-300'>Aplicar preço promocional</span>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                      <FormField control={form.control} name='promotional_price_active' render={({ field }) => (
+                        <FormItem>
+                          <div className='flex items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
+                            <div className='flex flex-col gap-0.5'>
+                              <FormLabel>Promoção ativa</FormLabel>
+                              <FormDescription className='leading-snug'>Aplica o preço promocional quando disponível.</FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={loading || isPending} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-                <FormField control={form.control} name='managed_inventory' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gerenciar estoque</FormLabel>
-                    <FormControl>
-                      <div className='flex items-center gap-2'>
-                        <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={loading || isPending} />
-                        <span className='text-sm text-neutral-600 dark:text-neutral-300'>Habilitar controle de estoque</span>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
+                      <FormField control={form.control} name='managed_inventory' render={({ field }) => (
+                        <FormItem>
+                          <div className='flex items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
+                            <div className='flex flex-col gap-0.5'>
+                              <FormLabel>Gerenciar estoque</FormLabel>
+                              <FormDescription className='leading-snug'>Controla o estoque automaticamente para vendas e entradas.</FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={loading || isPending} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value='descricao'>
+                  <div className='grid auto-rows-min gap-6'>
+                    <FormField control={form.control} name='description' render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Descrição</FormLabel>
+                        <FormControl>
+                          <textarea placeholder='Opcional' {...field} disabled={loading || isPending}
+                            className='file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm h-28 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                </TabsContent>
+
+              </Tabs>
             </div>
 
             <div className='mt-auto border-t p-4'>

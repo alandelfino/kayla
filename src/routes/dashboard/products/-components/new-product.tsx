@@ -1,9 +1,10 @@
 import { Button } from '@/components/ui/button'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader, PackagePlus } from 'lucide-react'
@@ -12,7 +13,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { privateInstance } from '@/lib/auth'
 import { Switch } from '@/components/ui/switch'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 const formSchema = z.object({
   sku: z.string().min(1, { message: 'Campo obrigatório' }),
@@ -125,6 +126,8 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
       derivation_ids: [],
     }
   })
+
+  const derivationsTriggerRef = useRef<HTMLButtonElement>(null)
 
   const { isPending, mutate } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
@@ -256,11 +259,11 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button size={'sm'} variant={'default'}>
+        <Button variant={'default'}>
           <PackagePlus /> Novo produto
         </Button>
       </SheetTrigger>
-      <SheetContent className='sm:max-w-[620px]'>
+      <SheetContent className='sm:max-w-[800px] md:max-w-[700px] lg:max-w-[600px]'>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='flex flex-col h-full'>
             <SheetHeader>
@@ -268,267 +271,291 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
               <SheetDescription>Cadastre um novo produto no catálogo.</SheetDescription>
             </SheetHeader>
 
-            <div className='flex-1 grid auto-rows-min gap-6 px-4 py-4'>
-              <div className='grid grid-cols-1 md:grid-cols-[150px_1fr] gap-4'>
-                <FormField control={form.control} name='sku' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SKU</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='Código interno do produto'
-                        className='min-w-[120px] w-[150px] max-w-[150px]'
-                        {...field}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+            <div className='flex-1 px-4 py-4'>
+              <Tabs defaultValue='geral' className='flex-1'>
+                <TabsList>
+                  <TabsTrigger value='geral' className='px-4'>Geral</TabsTrigger>
+                  <TabsTrigger value='descricao' className='px-4'>Descrição</TabsTrigger>
+                </TabsList>
 
-                <FormField control={form.control} name='name' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome</FormLabel>
-                    <FormControl>
-                      <Input className='w-full' placeholder='Nome do produto' {...field} disabled={isPending} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
+                <TabsContent value='geral'>
+                  <div className='grid auto-rows-min gap-6'>
+                    <div className='grid grid-cols-1 md:grid-cols-[150px_1fr] gap-4'>
+                      <FormField control={form.control} name='sku' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SKU</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder='Código interno do produto'
+                              className='min-w-[120px] w-[150px] max-w-[150px]'
+                              {...field}
+                              disabled={isPending}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-              {form.watch('type') === 'with_derivations' && (
-                <FormField control={form.control} name='derivation_ids' render={({ field }) => {
-                  const selectedIds = field.value || []
-                  const derivations = Array.isArray((derivationsData as any)?.items)
-                    ? (derivationsData as any).items
-                    : Array.isArray(derivationsData)
-                      ? (derivationsData as any)
-                      : []
-                  return (
-                    <FormItem>
-                      <FormLabel>Derivações</FormLabel>
-                      <FormControl>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button type='button' variant='outline' disabled={isDerivationsLoading || isPending} className='justify-between'>
-                              {selectedIds.length > 0 ? `${selectedIds.length} selecionada(s)` : 'Selecione as derivações'}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className='min-w-[240px]'>
-                            <DropdownMenuLabel>Disponíveis</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {isDerivationsLoading && (
-                              <div className='px-2 py-1.5 text-sm text-muted-foreground'>Carregando...</div>
-                            )}
-                            {!isDerivationsLoading && derivations?.length === 0 && (
-                              <div className='px-2 py-1.5 text-sm text-muted-foreground'>Nenhuma derivação encontrada</div>
-                            )}
-                            {derivations?.map((d: any) => {
-                              const id = typeof d?.id === 'number' ? d.id : Number(d?.id)
-                              const name = d?.name ?? d?.title ?? `Derivação ${id}`
-                              const checked = selectedIds.includes(id)
-                              return (
-                                <DropdownMenuCheckboxItem key={id} checked={checked}
-                                  onCheckedChange={(next) => {
-                                    const current = new Set(selectedIds)
-                                    if (next) current.add(id)
-                                    else current.delete(id)
-                                    const nextArr = Array.from(current)
-                                    form.setValue('derivation_ids', nextArr, { shouldDirty: true, shouldValidate: true })
-                                  }}
-                                >
-                                  {name}
-                                </DropdownMenuCheckboxItem>
-                              )
-                            })}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )
-                }} />
-              )}
+                      <FormField control={form.control} name='name' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome</FormLabel>
+                          <FormControl>
+                            <Input className='w-full' placeholder='Nome do produto' {...field} disabled={isPending} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
 
-              <FormField control={form.control} name='description' render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição</FormLabel>
-                  <FormControl>
-                    <Input placeholder='Opcional' {...field} disabled={isPending} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+                    {form.watch('type') === 'with_derivations' && (
+                      <FormField control={form.control} name='derivation_ids' render={({ field }) => {
+                        const selectedIds = field.value || []
+                        const derivations = Array.isArray((derivationsData as any)?.items)
+                          ? (derivationsData as any).items
+                          : Array.isArray(derivationsData)
+                            ? (derivationsData as any)
+                            : []
+                        return (
+                          <FormItem>
+                            <FormLabel>Derivações</FormLabel>
+                            <FormControl>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button ref={derivationsTriggerRef} type='button' variant='outline' disabled={isDerivationsLoading || isPending} className='justify-between w-full'>
+                                    {selectedIds.length > 0 ? `${selectedIds.length} selecionada(s)` : 'Selecione as derivações'}
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent style={{ width: derivationsTriggerRef.current?.offsetWidth }}>
+                                  <DropdownMenuLabel>Disponíveis</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  {isDerivationsLoading && (
+                                    <div className='px-2 py-1.5 text-sm text-muted-foreground'>Carregando...</div>
+                                  )}
+                                  {!isDerivationsLoading && derivations?.length === 0 && (
+                                    <div className='px-2 py-1.5 text-sm text-muted-foreground'>Nenhuma derivação encontrada</div>
+                                  )}
+                                  {derivations?.map((d: any) => {
+                                    const id = typeof d?.id === 'number' ? d.id : Number(d?.id)
+                                    const name = d?.name ?? d?.title ?? `Derivação ${id}`
+                                    const checked = selectedIds.includes(id)
+                                    return (
+                                      <DropdownMenuCheckboxItem key={id} checked={checked}
+                                        onCheckedChange={(next) => {
+                                          const current = new Set(selectedIds)
+                                          if (next) current.add(id)
+                                          else current.delete(id)
+                                          const nextArr = Array.from(current)
+                                          form.setValue('derivation_ids', nextArr, { shouldDirty: true, shouldValidate: true })
+                                        }}
+                                      >
+                                        {name}
+                                      </DropdownMenuCheckboxItem>
+                                    )
+                                  })}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )
+                      }} />
+                    )}
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                <FormField control={form.control} name='type' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo</FormLabel>
-                    <FormControl>
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className='w-full'>
-                          <SelectValue placeholder='Selecione o tipo' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value='simple'>Simples</SelectItem>
-                            <SelectItem value='with_derivations'>Com variações</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                    <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                      <FormField control={form.control} name='type' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo</FormLabel>
+                          <FormControl>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger className='w-full'>
+                                <SelectValue placeholder='Selecione o tipo' />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  <SelectItem value='simple'>Simples</SelectItem>
+                                  <SelectItem value='with_derivations'>Com variações</SelectItem>
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-                <FormField control={form.control} name='price' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preço</FormLabel>
-                    <FormControl>
-                      <Input type='text' inputMode='numeric' placeholder='R$ 0,00' value={priceText}
-                        onChange={(e) => {
-                          const { text, value } = currencyMask(e.target.value)
-                          setPriceText(text)
-                          field.onChange(value)
-                        }}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                      <FormField control={form.control} name='price' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preço</FormLabel>
+                          <FormControl>
+                            <Input type='text' inputMode='numeric' placeholder='R$ 0,00' value={priceText}
+                              onChange={(e) => {
+                                const { text, value } = currencyMask(e.target.value)
+                                setPriceText(text)
+                                field.onChange(value)
+                              }}
+                              disabled={isPending}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-                <FormField control={form.control} name='stock' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estoque</FormLabel>
-                    <FormControl>
-                      <Input type='text' inputMode='numeric' placeholder={unitType && /decimal/i.test(unitType) ? '0,00' : '0'} value={stockText}
-                        onChange={(e) => {
-                          const { text, value } = stockMask(e.target.value, unitType)
-                          setStockText(text)
-                          field.onChange(value)
-                        }}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
+                      <FormField control={form.control} name='stock' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estoque</FormLabel>
+                          <FormControl>
+                            <Input type='text' inputMode='numeric' placeholder={unitType && /decimal/i.test(unitType) ? '0,00' : '0'} value={stockText}
+                              onChange={(e) => {
+                                const { text, value } = stockMask(e.target.value, unitType)
+                                setStockText(text)
+                                field.onChange(value)
+                              }}
+                              disabled={isPending}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                <FormField control={form.control} name='promotional_price' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preço promocional</FormLabel>
-                    <FormControl>
-                      <Input type='text' inputMode='numeric' placeholder='R$ 0,00' value={promoPriceText}
-                        onChange={(e) => {
-                          const { text, value } = currencyMask(e.target.value)
-                          setPromoPriceText(text)
-                          field.onChange(value)
-                        }}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                    <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                      <FormField control={form.control} name='promotional_price' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preço promocional</FormLabel>
+                          <FormControl>
+                            <Input type='text' inputMode='numeric' placeholder='R$ 0,00' value={promoPriceText}
+                              onChange={(e) => {
+                                const { text, value } = currencyMask(e.target.value)
+                                setPromoPriceText(text)
+                                field.onChange(value)
+                              }}
+                              disabled={isPending}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-                <FormField control={form.control} name='unit_id' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Unidade</FormLabel>
-                    <FormControl>
-                      <Select value={field.value ? String(field.value) : ''} onValueChange={(v) => field.onChange(Number(v))} disabled={isUnitsLoading}>
-                        <SelectTrigger className='w-full'>
-                          <SelectValue placeholder={isUnitsLoading ? 'Carregando unidades...' : 'Selecione a unidade'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {Array.isArray((unitsData as any)?.items)
-                              ? (unitsData as any).items.map((u: any) => (
-                                <SelectItem key={u.id} value={String(u.id)}>{u.name ?? `Unidade #${u.id}`}</SelectItem>
-                              ))
-                              : Array.isArray(unitsData)
-                                ? (unitsData as any).map((u: any) => (
-                                  <SelectItem key={u.id} value={String(u.id)}>{u.name ?? `Unidade #${u.id}`}</SelectItem>
-                                ))
-                                : null}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                      <FormField control={form.control} name='unit_id' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unidade</FormLabel>
+                          <FormControl>
+                            <Select value={field.value ? String(field.value) : ''} onValueChange={(v) => field.onChange(Number(v))} disabled={isUnitsLoading}>
+                              <SelectTrigger className='w-full'>
+                                <SelectValue placeholder={isUnitsLoading ? 'Carregando unidades...' : 'Selecione a unidade'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  {Array.isArray((unitsData as any)?.items)
+                                    ? (unitsData as any).items.map((u: any) => (
+                                      <SelectItem key={u.id} value={String(u.id)}>{u.name ?? `Unidade #${u.id}`}</SelectItem>
+                                    ))
+                                    : Array.isArray(unitsData)
+                                      ? (unitsData as any).map((u: any) => (
+                                        <SelectItem key={u.id} value={String(u.id)}>{u.name ?? `Unidade #${u.id}`}</SelectItem>
+                                      ))
+                                      : null}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-                <FormField control={form.control} name='brand_id' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Marca</FormLabel>
-                    <FormControl>
-                      <Select value={field.value ? String(field.value) : ''} onValueChange={(v) => field.onChange(Number(v))} disabled={isBrandsLoading}>
-                        <SelectTrigger className='w-full'>
-                          <SelectValue placeholder={isBrandsLoading ? 'Carregando marcas...' : 'Selecione a marca'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {Array.isArray((brandsData as any)?.items)
-                              ? (brandsData as any).items.map((b: any) => (
-                                <SelectItem key={b.id} value={String(b.id)}>{b.name ?? `Marca #${b.id}`}</SelectItem>
-                              ))
-                              : Array.isArray(brandsData)
-                                ? (brandsData as any).map((b: any) => (
-                                  <SelectItem key={b.id} value={String(b.id)}>{b.name ?? `Marca #${b.id}`}</SelectItem>
-                                ))
-                                : null}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
+                      <FormField control={form.control} name='brand_id' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Marca</FormLabel>
+                          <FormControl>
+                            <Select value={field.value ? String(field.value) : ''} onValueChange={(v) => field.onChange(Number(v))} disabled={isBrandsLoading}>
+                              <SelectTrigger className='w-full'>
+                                <SelectValue placeholder={isBrandsLoading ? 'Carregando marcas...' : 'Selecione a marca'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  {Array.isArray((brandsData as any)?.items)
+                                    ? (brandsData as any).items.map((b: any) => (
+                                      <SelectItem key={b.id} value={String(b.id)}>{b.name ?? `Marca #${b.id}`}</SelectItem>
+                                    ))
+                                    : Array.isArray(brandsData)
+                                      ? (brandsData as any).map((b: any) => (
+                                        <SelectItem key={b.id} value={String(b.id)}>{b.name ?? `Marca #${b.id}`}</SelectItem>
+                                      ))
+                                      : null}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                <FormField control={form.control} name='active' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ativo</FormLabel>
-                    <FormControl>
-                      <div className='flex items-center gap-2'>
-                        <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={isPending} />
-                        <span className='text-sm text-neutral-600 dark:text-neutral-300'>Produto ativo</span>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                    <div className='grid grid-cols-1 gap-4'>
+                      <FormField control={form.control} name='active' render={({ field }) => (
+                        <FormItem>
+                          <div className='flex items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
+                            <div className='flex flex-col gap-0.5'>
+                              <FormLabel>Ativo</FormLabel>
+                              <FormDescription className='leading-snug'>Quando habilitado, o produto aparece ativo no catálogo.</FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={isPending} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-                <FormField control={form.control} name='promotional_price_active' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Promoção ativa</FormLabel>
-                    <FormControl>
-                      <div className='flex items-center gap-2'>
-                        <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={isPending} />
-                        <span className='text-sm text-neutral-600 dark:text-neutral-300'>Aplicar preço promocional</span>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                      <FormField control={form.control} name='promotional_price_active' render={({ field }) => (
+                        <FormItem>
+                          <div className='flex items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
+                            <div className='flex flex-col gap-0.5'>
+                              <FormLabel>Promoção ativa</FormLabel>
+                              <FormDescription className='leading-snug'>Aplica o preço promocional quando disponível.</FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={isPending} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-                <FormField control={form.control} name='managed_inventory' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gerenciar estoque</FormLabel>
-                    <FormControl>
-                      <div className='flex items-center gap-2'>
-                        <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={isPending} />
-                        <span className='text-sm text-neutral-600 dark:text-neutral-300'>Habilitar controle de estoque</span>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
+                      <FormField control={form.control} name='managed_inventory' render={({ field }) => (
+                        <FormItem>
+                          <div className='flex items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
+                            <div className='flex flex-col gap-0.5'>
+                              <FormLabel>Gerenciar estoque</FormLabel>
+                              <FormDescription className='leading-snug'>Controla o estoque automaticamente para vendas e entradas.</FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={isPending} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value='descricao'>
+                  <div className='grid auto-rows-min gap-6'>
+                    <FormField control={form.control} name='description' render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Descrição</FormLabel>
+                        <FormControl>
+                          <textarea placeholder='Opcional' {...field} disabled={isPending}
+                            className='file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm h-28 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                </TabsContent>
+
+              </Tabs>
             </div>
 
             <div className='mt-auto border-t p-4'>

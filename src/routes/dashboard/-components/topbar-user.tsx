@@ -34,7 +34,7 @@ export function TopbarUser() {
   useEffect(() => {
     // Mesmo padrão de chave usado em lib/auth.ts (subdomínio + sufixo)
     const subdomain = window.location.hostname.split('.')[0]
-    const storageKey = `${subdomain}-kayla-user`
+    const storageKey = `${subdomain}-directa-user`
 
     const raw = localStorage.getItem(storageKey)
     let parsed: any = null
@@ -65,8 +65,8 @@ export function TopbarUser() {
         avatarUrl: detail.avatarUrl ?? prev?.avatarUrl ?? null,
       }))
     }
-    window.addEventListener('kayla:user-updated', handler as EventListener)
-    return () => window.removeEventListener('kayla:user-updated', handler as EventListener)
+    window.addEventListener('directa:user-updated', handler as EventListener)
+    return () => window.removeEventListener('directa:user-updated', handler as EventListener)
   }, [])
 
   // Utilitário compartilhado para gerar a abreviação do avatar
@@ -83,6 +83,8 @@ export function TopbarUser() {
       // Limpa storage e redireciona
       try {
         const sub = getSubdomain()
+        localStorage.removeItem(`${sub}-directa-authToken`)
+        localStorage.removeItem(`${sub}-directa-user`)
         localStorage.removeItem(`${sub}-kayla-authToken`)
         localStorage.removeItem(`${sub}-kayla-user`)
       } catch { }

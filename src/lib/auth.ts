@@ -21,6 +21,11 @@ const getSubdomain = () => {
 const getToken = () => {
     // Tenta chave preferencial e fallbacks (inclui 'local' para compatibilidade)
     const keys = [
+        `${getSubdomain()}-directa-authToken`,
+        'localhost-directa-authToken',
+        '127.0.0.1-directa-authToken',
+        'local-directa-authToken',
+        // Fallback para chaves antigas
         `${getSubdomain()}-kayla-authToken`,
         'localhost-kayla-authToken',
         '127.0.0.1-kayla-authToken',
@@ -54,13 +59,13 @@ loginInstance.interceptors.response.use((response) => {
         try {
             normalizeTokenStorage(authToken)
         } catch {
-            localStorage.setItem(`${getSubdomain()}-kayla-authToken`, authToken)
+            localStorage.setItem(`${getSubdomain()}-directa-authToken`, authToken)
         }
-        localStorage.setItem(`${getSubdomain()}-kayla-user`, JSON.stringify(response.data.user))
+        localStorage.setItem(`${getSubdomain()}-directa-user`, JSON.stringify(response.data.user))
         // Notifica UI (sidebar/nav) que o usuário foi carregado/atualizado
         try {
             const avatarUrl = response?.data?.user?.image?.url ?? response?.data?.user?.avatar_url ?? null
-            window.dispatchEvent(new CustomEvent('kayla:user-updated', {
+            window.dispatchEvent(new CustomEvent('directa:user-updated', {
                 detail: { name: response?.data?.user?.name, email: response?.data?.user?.email, avatarUrl }
             }))
         } catch { }
@@ -124,7 +129,7 @@ export const auth = {
         // Usar o servidor n7 para companies
         const response = await publicInstance.get(`/api:kdrFy_tm/companies/${getSubdomain()}`)
         if (response.status === 200) {
-            localStorage.setItem(`${getSubdomain()}-kayla-company`, JSON.stringify(response.data))
+            localStorage.setItem(`${getSubdomain()}-directa-company`, JSON.stringify(response.data))
             return { status: response.status, data: response.data }
         }
         return { status: response.status, data: null }
@@ -167,11 +172,11 @@ export const auth = {
             }
 
             try {
-                localStorage.setItem(`${getSubdomain()}-kayla-user`, JSON.stringify(user))
+                localStorage.setItem(`${getSubdomain()}-directa-user`, JSON.stringify(user))
             } catch { }
             try {
                 const avatarUrl = user?.image?.url ?? user?.avatar_url ?? null
-                window.dispatchEvent(new CustomEvent('kayla:user-updated', {
+                window.dispatchEvent(new CustomEvent('directa:user-updated', {
                     detail: { name: user?.name, email: user?.email, avatarUrl }
                 }))
             } catch { }
@@ -191,9 +196,9 @@ export { publicInstance, privateInstance }
 
 // Helpers privados
 function normalizeTokenStorage(token: string) {
-    const preferredKey = `${getSubdomain()}-kayla-authToken`
+    const preferredKey = `${getSubdomain()}-directa-authToken`
     localStorage.setItem(preferredKey, token)
-    // Remover chaves antigas de dev para evitar duplicidade
+    // Remove chaves antigas de desenvolvimento
     try { localStorage.removeItem('local-kayla-authToken') } catch {}
     try { localStorage.removeItem('127.0.0.1-kayla-authToken') } catch {}
 }

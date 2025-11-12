@@ -22,9 +22,8 @@ function InvitesPage() {
   const { data: invites, isLoading, isError, error } = useQuery({
     queryKey: ['auth', 'invites'],
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
     queryFn: async () => {
-  const res = await privateInstance.get('/api:eA5lqIuH/auth/invites')
+      const res = await privateInstance.get('/api:eA5lqIuH/auth/invites')
       const items: Invite[] = Array.isArray(res.data) ? res.data : (res.data?.items ?? [])
       return items.filter((inv: any) => inv && inv.company && typeof inv.company.id === 'number') as Invite[]
     },
@@ -53,7 +52,7 @@ function InvitesPage() {
                 <Skeleton className='h-5 w-48' />
                 <Skeleton className='h-5 w-20' />
               </div>
-              <Skeleton className='h-9 w-24' />
+              <Skeleton className='h-11 w-28' />
             </CardContent></Card>
           ))}
         </div>
