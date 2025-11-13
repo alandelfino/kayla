@@ -23,7 +23,7 @@ export function InvitationActionsCell({ invitation, onChanged }: { invitation: I
 
   const { isPending, mutateAsync } = useMutation({
     mutationFn: async (nextActive: boolean) => {
-  const url = `/api:0jQElwax/invitations/${invitation.id}/status`
+      const url = `/api:0jQElwax/invitations/${invitation.id}/status`
       const response = await privateInstance.put(url, { active: nextActive })
       if (response.status !== 200) throw new Error('Falha ao atualizar status do convite')
       return response.data
@@ -38,14 +38,13 @@ export function InvitationActionsCell({ invitation, onChanged }: { invitation: I
   })
 
   async function confirm() {
-    // Apenas desativar; nunca ativar novamente
     await mutateAsync(false)
     setOpen(false)
   }
 
   const { isPending: isCancelling, mutateAsync: cancelInvite } = useMutation({
     mutationFn: async () => {
-  const url = `/api:0jQElwax/invitations/${invitation.id}/cancel`
+      const url = `/api:0jQElwax/invitations/${invitation.id}/cancel`
       const response = await privateInstance.post(url, {})
       if (response.status < 200 || response.status >= 300) throw new Error('Falha ao cancelar convite')
       return response.data
@@ -64,7 +63,6 @@ export function InvitationActionsCell({ invitation, onChanged }: { invitation: I
     setOpenCancel(false)
   }
 
-  // Se o convite estiver cancelado, não renderiza ação
   if (isCanceled) {
     return null
   }
@@ -74,7 +72,7 @@ export function InvitationActionsCell({ invitation, onChanged }: { invitation: I
       {isActive && (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size={'sm'} variant={'destructive'} className='w-full' disabled={isPending}>
+            <Button variant={'destructive'} className='w-full' disabled={isPending}>
               {isPending ? <Loader className='animate-spin' /> : <Power />} Desativar
             </Button>
           </DialogTrigger>
@@ -100,7 +98,7 @@ export function InvitationActionsCell({ invitation, onChanged }: { invitation: I
       {rawStatus === 'pending' && (
         <Dialog open={openCancel} onOpenChange={setOpenCancel}>
           <DialogTrigger asChild>
-            <Button size={'sm'} variant={'destructive'} className='w-full' disabled={isCancelling}>
+            <Button variant={'destructive'} className='w-full' disabled={isCancelling}>
               {isCancelling ? <Loader className='animate-spin' /> : <XCircle />} Cancelar
             </Button>
           </DialogTrigger>

@@ -1,6 +1,6 @@
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeftRight, BadgeDollarSign, BanknoteArrowDown, BetweenHorizonalStart, BookOpen, BookUser, Contact, Copyright, FileBadge, FileClock, GitFork, Images, Kanban, ListChecks, Mail, Package, Ruler, TextCursorInput, Users } from "lucide-react";
+import { ArrowLeftRight, BadgeDollarSign, BanknoteArrowDown, BetweenHorizonalStart, BookOpen, BookUser, Contact, Copyright, FileBadge, FileClock, GitFork, Images, Kanban, ListChecks, Mail, Package, Ruler, TextCursorInput, Users, Settings } from "lucide-react";
 import { useRouterState } from "@tanstack/react-router";
 
 export function Navigation() {
@@ -127,19 +127,34 @@ export function Navigation() {
             groupName: 'Equipe',
             items: [
                 {
+                    label: 'Equipes',
+                    icon: <Users />,
+                    href: '/dashboard/settings/teams',
+                },
+                {
                     label: 'Convites',
                     icon: <Mail />,
-                    href: '/dashboard/invitations',
+                    href: '/dashboard/settings/invitations',
                 },
                 {
                     label: 'Usuários',
                     icon: <Users />,
-                    href: '/dashboard/users',
+                    href: '/dashboard/settings/users',
                 },
                 {
                     label: 'Perfis',
                     icon: <Contact />,
-                    href: '/dashboard/profiles',
+                    href: '/dashboard/settings/profiles',
+                },
+            ]
+        },
+        {
+            groupName: 'Sistema',
+            items: [
+                {
+                    label: 'Configurações',
+                    icon: <Settings />,
+                    href: '/dashboard/settings',
                 },
             ]
         },

@@ -39,14 +39,14 @@ const getToken = () => {
 }
 
 const publicInstance = axios.create({
-    baseURL: "https://xffb-vyer-qj5v.b2.xano.io/",
+    baseURL: "https://server.directacrm.com.br",
     headers: {
         "Content-Type": "application/json",
     },
 })
 
 const loginInstance = axios.create({
-    baseURL: "https://xffb-vyer-qj5v.b2.xano.io/",
+    baseURL: "https://server.directacrm.com.br",
     headers: {
         "Content-Type": "application/json",
     },
@@ -74,7 +74,7 @@ loginInstance.interceptors.response.use((response) => {
 })
 
 const privateInstance = axios.create({
-    baseURL: "https://xffb-vyer-qj5v.b2.xano.io/",
+    baseURL: "https:server.directacrm.com.br",
 })
 
 privateInstance.interceptors.request.use((config) => {
@@ -102,18 +102,8 @@ privateInstance.interceptors.response.use(
             try {
                 window.location.href = '/sign-in'
             } catch {}
-        } else if (status === 403) {
-            // Mostra toast com a mensagem retornada pelo backend
-            const data = error?.response?.data
-            const backendMessage = (
-                data?.message ??
-                data?.error?.message ??
-                data?.error ??
-                error?.message ??
-                'Acesso negado.'
-            )
-            try { toast.error(String(backendMessage)) } catch {}
         }
+        
         return Promise.reject(error)
     }
 )

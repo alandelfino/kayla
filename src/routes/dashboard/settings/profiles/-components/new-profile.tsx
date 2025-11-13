@@ -87,8 +87,6 @@ export function NewProfileSheet({
                   </FormItem>
                 )}
               />
-
-              {/* Campo de ID da empresa removido conforme solicitado */}
             </div>
             <div className="mt-auto border-t p-4">
               <div className="grid grid-cols-2 gap-4">

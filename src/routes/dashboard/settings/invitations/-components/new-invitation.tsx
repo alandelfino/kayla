@@ -25,28 +25,24 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
     defaultValues: { email: '', team_id: '', user_profile_id: '' },
   })
 
-  // Carregar equipes do backend (Xano Teams API)
   const { data: teamsData, isLoading: isTeamsLoading } = useQuery({
     queryKey: ['teams'],
     enabled: open,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     queryFn: async () => {
-      // GET /api:VPDORr9u/teams
       const response = await privateInstance.get('/api:VPDORr9u/teams')
       if (response.status !== 200) throw new Error('Erro ao carregar equipes')
       return response.data as any
     }
   })
 
-  // Carregar perfis do backend
   const { data: profilesData, isLoading: isProfilesLoading } = useQuery({
     queryKey: ['profiles', 'for-invitations'],
     enabled: open,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     queryFn: async () => {
-      // GET /api:BXIMsMQ7/user_profile?per_page=100
       const response = await privateInstance.get('/api:BXIMsMQ7/user_profile?per_page=50')
       if (response.status !== 200) throw new Error('Erro ao carregar perfis')
       return response.data as any
@@ -55,14 +51,12 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
 
   const { isPending, mutate } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      // Ajuste de acordo com a documentação da API:
-// POST /api:0jQElwax/invitations/invite { email, team_id, company_id }
       const payload: any = {
         email: values.email,
         team_id: Number(values.team_id),
         user_profile_id: Number(values.user_profile_id),
       }
-  const response = await privateInstance.post('/api:0jQElwax/invitations/invite', payload)
+      const response = await privateInstance.post('/api:0jQElwax/invitations/invite', payload)
       if (response.status !== 200 && response.status !== 201) throw new Error('Erro ao criar convite')
       return response
     },
@@ -84,7 +78,7 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button size={'sm'} variant={'default'}>
+        <Button variant={'default'}>
           <Users /> Novo convite
         </Button>
       </SheetTrigger>

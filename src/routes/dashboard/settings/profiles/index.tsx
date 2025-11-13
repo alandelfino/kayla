@@ -1,5 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Topbar } from '../-components/topbar'
 import { Button } from '@/components/ui/button'
 import { Edit, Funnel, RefreshCcw, Trash, Users, ArrowUpRight } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -13,7 +12,7 @@ import { EditProfileSheet } from './-components/edit-profile'
 import { DeleteProfile } from './-components/delete-profile'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 
-export const Route = createFileRoute('/dashboard/profiles/')({
+export const Route = createFileRoute('/dashboard/settings/profiles/')({
   component: RouteComponent,
 })
 
@@ -22,7 +21,6 @@ type Profile = {
   created_at?: number
   updated_at?: number
   name: string
-  // O backend pode retornar `users` como número, array ou objeto relacionado
   users?: number | any
 }
 
@@ -93,12 +91,10 @@ function RouteComponent() {
         if (typeof users === 'number') return users
         if (Array.isArray(users)) return users.length
         if (users && typeof users === 'object') {
-          // Tenta inferir quantidade em estruturas comuns
           const items = (users as any).items
           const total = (users as any).total ?? (users as any).count ?? (users as any).itemsTotal
           if (Array.isArray(items)) return items.length
           if (typeof total === 'number') return total
-          // Caso seja um objeto não padronizado, exibe '-' para evitar erros
           return '-'
         }
         return '-'
@@ -153,29 +149,22 @@ function RouteComponent() {
 
   return (
     <div className='flex flex-col w-full h-full'>
-
-      <Topbar title="Perfis" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard', isLast: false }, { label: 'Perfis', href: '/dashboard/profiles', isLast: true }]} />
-
       <div className='flex flex-col w-full h-full flex-1 overflow-hidden'>
         <div className='border-b flex w-full items-center p-2 gap-4'>
           <div className='flex items-center gap-2 flex-1'>
-            <Button variant={'outline'} size={'sm'}>
+            <Button variant={'outline'}>
               <Funnel /> Filtros
             </Button>
           </div>
           <div className='flex items-center gap-2'>
-            <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedProfiles([]); refetch() }}>
-              {
-                (isLoading || isRefetching)
-                  ? <><RefreshCcw className='animate-spin' /> Atualizando...</>
-                  : <><RefreshCcw /> Atualizar</>
-              }
+            <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedProfiles([]); refetch() }}>
+              {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
             </Button>
 
             {selectedProfiles.length === 1 ? (
               <DeleteProfile profileId={selectedProfiles[0]} />
             ) : (
-              <Button size={'sm'} variant={'ghost'} disabled>
+              <Button variant={'ghost'} disabled>
                 <Trash /> Excluir
               </Button>
             )}
@@ -183,7 +172,7 @@ function RouteComponent() {
             {selectedProfiles.length === 1 ? (
               <EditProfileSheet profileId={selectedProfiles[0]} />
             ) : (
-              <Button size={'sm'} variant={'ghost'} disabled>
+              <Button variant={'ghost'} disabled>
                 <Edit /> Editar
               </Button>
             )}
@@ -214,7 +203,7 @@ function RouteComponent() {
               <EmptyContent>
                 <div className='flex gap-2'>
                   <NewProfileSheet />
-                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedProfiles([]); refetch() }}>
+                  <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedProfiles([]); refetch() }}>
                     {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
                   </Button>
                 </div>
@@ -223,7 +212,6 @@ function RouteComponent() {
                 variant='link'
                 asChild
                 className='text-muted-foreground'
-                size='sm'
               >
                 <a href='#'>
                   Saiba mais <ArrowUpRight className='inline-block ml-1 h-4 w-4' />

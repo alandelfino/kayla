@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown, LogOut, Moon, User, Users, Building2 } from "lucide-react"
+import { Check, ChevronsUpDown, LogOut, Moon, User, Users, Settings } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getAvatarAbbrev } from '@/lib/utils'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -114,7 +114,7 @@ export function TopbarUser() {
           </Avatar>
           <div className="hidden sm:grid text-left text-sm leading-tight">
             <span className="truncate font-medium max-w-[160px]">{user?.name || ''}</span>
-            <span className="truncate text-xs max-w-[160px]">{user?.email || ''}</span>
+            <span className="truncate text-xs max-w-[160px] text-muted-foreground">{user?.email || ''}</span>
           </div>
           <ChevronsUpDown className="ml-auto size-4" />
         </Button>
@@ -127,23 +127,23 @@ export function TopbarUser() {
       >
 
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => navigate({ to: '/user/profile' })}> <User /> Meu Perfil </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate({ to: '/user/companies' })}> <Users /> Minhas Contas </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate({ to: '/user/profile' })}> <User className="size-4" /> Meu Perfil </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate({ to: '/user/companies' })}> <Users className="size-4" /> Minhas Contas </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setDarkMode(!darkMode)}>
-            <Moon /><span className="w-full">Dark mode</span> {darkMode && <Check />}
+            <Moon className="size-4" /><span className="w-full">Dark mode</span> {darkMode && <Check className="size-4" />}
           </DropdownMenuItem>
         </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={() => navigate({ to: '/dashboard/company-profile' })}>
-          <Building2 /> Conta
+        <DropdownMenuItem onClick={() => navigate({ to: '/dashboard/settings' })}>
+          <Settings className="size-4" /> Configurações
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
         <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
-          <LogOut /> {isLoggingOut ? 'Saindo...' : 'Sair'}
+          <LogOut className="size-4" /> {isLoggingOut ? 'Saindo...' : 'Sair'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

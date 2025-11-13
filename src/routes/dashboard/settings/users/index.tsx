@@ -1,17 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { privateInstance } from '@/lib/auth'
-import { Topbar } from '../-components/topbar'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
-import { RefreshCcw, Loader, Power } from 'lucide-react'
+import { RefreshCcw, Loader, Power, CircleAlert } from 'lucide-react'
 import { toast } from 'sonner'
-import { useMutation } from '@tanstack/react-query'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
 
-export const Route = createFileRoute('/dashboard/users/')({
+export const Route = createFileRoute('/dashboard/settings/users/')({
   component: RouteComponent,
 })
 
@@ -42,7 +40,6 @@ type UsersCompaniesResponse = {
 }
 
 function clampPerPage(value: number) {
-  // O endpoint exige per_page mínimo de 20 e máximo de 50
   return Math.min(50, Math.max(20, value))
 }
 
@@ -71,7 +68,6 @@ function RouteComponent() {
   useEffect(() => {
     if (!data) return
     const items = Array.isArray(data.items) ? data.items : []
-    // Normaliza o campo `active` vindo do backend para booleano
     const normalized = items.map((it) => {
       const raw = (it as any)?.active ?? (it as any)?.user?.active ?? (it as any)?.status ?? (it as any)?.user?.status
       const isActive = raw === true || raw === 1 || raw === '1' || raw === 'true' || raw === 'active'
@@ -171,23 +167,19 @@ function RouteComponent() {
 
   return (
     <div className='flex flex-col w-full h-full'>
-
-      <Topbar title='Usuários' breadcrumbs={[{ label: 'Dashboard', href: '/dashboard', isLast: false }, { label: 'Usuários', href: '/dashboard/users', isLast: true }]} />
-
-      <div className='flex flex-col w-full h-full flex-1 overflow-hidden'>
-        {/* Actions */}
-        <div className='border-b flex w-full items-center p-2 gap-4'>
-          <div className='flex items-center gap-2 flex-1'>
-            {/* Espaço para filtros futuros */}
-          </div>
-          <div className='flex items-center gap-2'>
-            <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
-              {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
-            </Button>
-          </div>
+      <div className='flex items-center justify-between p-4'>
+        <div className='flex flex-col'>
+          <h2 className='text-lg font-semibold'>Usuários</h2>
+          <p className='text-sm text-muted-foreground'>Gerencie usuários vinculados à sua conta.</p>
         </div>
-
-        {/* Table */}
+        <div className='flex items-center gap-2'>
+          <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
+            {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+          </Button>
+        </div>
+      </div>
+      <div className='flex flex-col w-full h-full flex-1 overflow-hidden border-t'>
+        
         <DataTable
           columns={columns}
           data={usersCompanies}
@@ -212,7 +204,7 @@ function UserCompanyActionsCell({ uc, onChanged }: { uc: UserCompany, onChanged?
 
   const { isPending, mutateAsync } = useMutation({
     mutationFn: async (nextActive: boolean) => {
-    const url = `/api:jO41sdEd/users_companies/${uc.id}/status`
+      const url = `/api:jO41sdEd/users_companies/${uc.id}/status`
       const body = { user_company_id: uc.id, active: nextActive }
       const response = await privateInstance.put(url, body)
       if (response.status !== 200) throw new Error('Falha ao alterar status do usuário')
@@ -223,7 +215,10 @@ function UserCompanyActionsCell({ uc, onChanged }: { uc: UserCompany, onChanged?
       onChanged?.()
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message ?? 'Erro ao atualizar usuário')
+      toast.error('Não permitido', {
+        icon: <CircleAlert className='h-4 w-4' />,
+        description: error?.response?.data?.message ?? 'Erro ao atualizar usuário'
+      })
     }
   })
 
@@ -235,11 +230,11 @@ function UserCompanyActionsCell({ uc, onChanged }: { uc: UserCompany, onChanged?
     <Dialog>
       <DialogTrigger asChild>
         {isActive ? (
-          <Button size={'sm'} variant={'destructive'} disabled={isPending}>
+          <Button variant={'destructive'} disabled={isPending}>
             {isPending ? <Loader className='animate-spin' /> : <Power />} Desativar
           </Button>
         ) : (
-          <Button size={'sm'} variant={'default'} disabled={isPending}>
+          <Button variant={'default'} disabled={isPending}>
             {isPending ? <Loader className='animate-spin' /> : <Power />} Ativar
           </Button>
         )}

@@ -40,14 +40,13 @@ export function DeleteProfile({ profileId }: { profileId: number }) {
       await mutateAsync()
       setOpen(false)
     } catch {
-      // Mantém o diálogo aberto para permitir nova tentativa ou cancelamento
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size={'sm'} variant={'ghost'} disabled={isPending}>
+        <Button variant={'ghost'} disabled={isPending}>
           <Trash /> Excluir
         </Button>
       </DialogTrigger>

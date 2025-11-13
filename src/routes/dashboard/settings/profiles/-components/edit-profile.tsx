@@ -66,7 +66,6 @@ export function EditProfileSheet({
     onSuccess: (response) => {
       if (response.status === 200) {
         toast.success("Perfil atualizado com sucesso!")
-        // Atualiza o cache localmente para todas as queries que começam com ['profiles']
         const updatedProfile = response?.data
         const nextName = updatedProfile?.name ?? form.getValues('name')
 
@@ -78,7 +77,6 @@ export function EditProfileSheet({
             return { ...oldData, items: updatedItems }
           })
         } catch (e) {
-          // Se algo falhar ao atualizar o cache, não interrompe o fluxo
         }
 
         closeSheet()
@@ -129,7 +127,6 @@ export function EditProfileSheet({
                   </FormItem>
                 )}
               />
-              {/* Campo de ID da empresa removido conforme solicitado */}
             </div>
             <div className="mt-auto border-t p-4">
               <div className="grid grid-cols-2 gap-4">

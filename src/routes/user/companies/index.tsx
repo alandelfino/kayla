@@ -98,7 +98,7 @@ function UserCompaniesPage() {
       const res = await privateInstance.post('/api:eA5lqIuH/auth/login-company', { company_id: companyId })
       const authToken: string | undefined = res?.data?.authToken
       const user = res?.data?.user
-      const company = res?.data?.company ?? { id: companyId, name: uc.name, alias: uc.alias }
+      const company = res?.data?.company ?? { id: companyId, name: uc.name, alias: uc.alias, image: uc.image ?? null }
       const sub = getSubdomain()
       if (authToken) { auth.normalizeTokenStorage(authToken) }
       if (user) {
@@ -108,7 +108,8 @@ function UserCompaniesPage() {
           window.dispatchEvent(new CustomEvent('directa:user-updated', { detail: { name: user?.name, email: user?.email, avatarUrl } }))
         } catch { }
       }
-      localStorage.setItem(`${sub}-directa-company`, JSON.stringify({ id: company?.id, name: company?.name, alias: company?.alias }))
+      localStorage.setItem(`${sub}-directa-company`, JSON.stringify(company))
+      window.dispatchEvent(new CustomEvent('directa:company-updated', { detail: company }))
       navigate({ to: '/dashboard' })
     } catch (err) {
       console.error('Falha ao autenticar na empresa:', err)
@@ -159,9 +160,9 @@ function UserCompaniesPage() {
                         {getAvatarAbbrev(uc.name || 'Empresa')}
                       </AvatarFallback>
                     </Avatar>
-                    <span className='font-medium leading-none'>{uc.name}</span>
+                    <span className='font-medium leading-none text-lg'>{uc.name}</span>
                     {uc.is_me ? (
-                      <Badge variant={'default'} className='text-xs'>proprietário</Badge>
+                      <Badge variant={'default'} className='text-xs bg-blue-50 text-blue-500'>proprietário</Badge>
                     ) : null}
                   </div>
                 </AccordionTrigger>

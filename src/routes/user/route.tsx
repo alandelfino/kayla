@@ -99,7 +99,7 @@ function UserLayout() {
             </Popover>
             <div className='flex items-center gap-6'>
               <a href='#' className='text-primary hover:text-primary/90'>
-                <img src='/directa-text-logo.png' alt='Directa' className='h-8 w-auto' />
+                <img src='/directa-crm-logo.png' alt='Directa' className='h-8 w-auto' />
               </a>
               <NavigationMenu className='max-md:hidden'>
                 <NavigationMenuList className='gap-2'>
@@ -130,7 +130,7 @@ function UserLayout() {
                   </Avatar>
                   <div className='hidden sm:grid text-left text-sm leading-tight'>
                     <span className='truncate font-medium max-w-[160px]'>{user?.name || ''}</span>
-                    <span className='truncate text-xs max-w-[160px]'>{user?.email || ''}</span>
+                    <span className='truncate text-xs max-w-[160px] text-muted-foreground'>{user?.email || ''}</span>
                   </div>
                   <ChevronsUpDown className='ml-auto size-4' />
                 </Button>

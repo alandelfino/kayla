@@ -13,22 +13,28 @@ import { Route as UserRouteRouteImport } from './routes/user/route'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
+import { Route as DashboardSettingsRouteRouteImport } from './routes/dashboard/settings/route'
 import { Route as UserProfileIndexRouteImport } from './routes/user/profile/index'
 import { Route as UserInvitesIndexRouteImport } from './routes/user/invites/index'
 import { Route as UserCompaniesIndexRouteImport } from './routes/user/companies/index'
 import { Route as DashboardWarrantiesIndexRouteImport } from './routes/dashboard/warranties/index'
-import { Route as DashboardUsersIndexRouteImport } from './routes/dashboard/users/index'
 import { Route as DashboardUnitsIndexRouteImport } from './routes/dashboard/units/index'
-import { Route as DashboardProfilesIndexRouteImport } from './routes/dashboard/profiles/index'
+import { Route as DashboardSettingsIndexRouteImport } from './routes/dashboard/settings/index'
 import { Route as DashboardProfileIndexRouteImport } from './routes/dashboard/profile/index'
 import { Route as DashboardProductsIndexRouteImport } from './routes/dashboard/products/index'
 import { Route as DashboardMediaIndexRouteImport } from './routes/dashboard/media/index'
-import { Route as DashboardInvitationsIndexRouteImport } from './routes/dashboard/invitations/index'
 import { Route as DashboardDerivationsIndexRouteImport } from './routes/dashboard/derivations/index'
 import { Route as DashboardCustomersIndexRouteImport } from './routes/dashboard/customers/index'
-import { Route as DashboardCompanyProfileIndexRouteImport } from './routes/dashboard/company-profile/index'
 import { Route as DashboardCategoriesIndexRouteImport } from './routes/dashboard/categories/index'
 import { Route as DashboardBrandsIndexRouteImport } from './routes/dashboard/brands/index'
+import { Route as DashboardSettingsWebhooksIndexRouteImport } from './routes/dashboard/settings/webhooks/index'
+import { Route as DashboardSettingsUsersIndexRouteImport } from './routes/dashboard/settings/users/index'
+import { Route as DashboardSettingsTeamsIndexRouteImport } from './routes/dashboard/settings/teams/index'
+import { Route as DashboardSettingsProfilesIndexRouteImport } from './routes/dashboard/settings/profiles/index'
+import { Route as DashboardSettingsInvitationsIndexRouteImport } from './routes/dashboard/settings/invitations/index'
+import { Route as DashboardSettingsIntegrationsIndexRouteImport } from './routes/dashboard/settings/integrations/index'
+import { Route as DashboardSettingsFinanceIndexRouteImport } from './routes/dashboard/settings/finance/index'
+import { Route as DashboardSettingsAccountIndexRouteImport } from './routes/dashboard/settings/account/index'
 
 const UserRouteRoute = UserRouteRouteImport.update({
   id: '/user',
@@ -49,6 +55,11 @@ const SignInIndexRoute = SignInIndexRouteImport.update({
   id: '/sign-in/',
   path: '/sign-in/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardSettingsRouteRoute = DashboardSettingsRouteRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 const UserProfileIndexRoute = UserProfileIndexRouteImport.update({
   id: '/profile/',
@@ -71,20 +82,15 @@ const DashboardWarrantiesIndexRoute =
     path: '/warranties/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
-const DashboardUsersIndexRoute = DashboardUsersIndexRouteImport.update({
-  id: '/users/',
-  path: '/users/',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
 const DashboardUnitsIndexRoute = DashboardUnitsIndexRouteImport.update({
   id: '/units/',
   path: '/units/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
-const DashboardProfilesIndexRoute = DashboardProfilesIndexRouteImport.update({
-  id: '/profiles/',
-  path: '/profiles/',
-  getParentRoute: () => DashboardRouteRoute,
+const DashboardSettingsIndexRoute = DashboardSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardSettingsRouteRoute,
 } as any)
 const DashboardProfileIndexRoute = DashboardProfileIndexRouteImport.update({
   id: '/profile/',
@@ -101,12 +107,6 @@ const DashboardMediaIndexRoute = DashboardMediaIndexRouteImport.update({
   path: '/media/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
-const DashboardInvitationsIndexRoute =
-  DashboardInvitationsIndexRouteImport.update({
-    id: '/invitations/',
-    path: '/invitations/',
-    getParentRoute: () => DashboardRouteRoute,
-  } as any)
 const DashboardDerivationsIndexRoute =
   DashboardDerivationsIndexRouteImport.update({
     id: '/derivations/',
@@ -118,12 +118,6 @@ const DashboardCustomersIndexRoute = DashboardCustomersIndexRouteImport.update({
   path: '/customers/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
-const DashboardCompanyProfileIndexRoute =
-  DashboardCompanyProfileIndexRouteImport.update({
-    id: '/company-profile/',
-    path: '/company-profile/',
-    getParentRoute: () => DashboardRouteRoute,
-  } as any)
 const DashboardCategoriesIndexRoute =
   DashboardCategoriesIndexRouteImport.update({
     id: '/categories/',
@@ -135,28 +129,82 @@ const DashboardBrandsIndexRoute = DashboardBrandsIndexRouteImport.update({
   path: '/brands/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardSettingsWebhooksIndexRoute =
+  DashboardSettingsWebhooksIndexRouteImport.update({
+    id: '/webhooks/',
+    path: '/webhooks/',
+    getParentRoute: () => DashboardSettingsRouteRoute,
+  } as any)
+const DashboardSettingsUsersIndexRoute =
+  DashboardSettingsUsersIndexRouteImport.update({
+    id: '/users/',
+    path: '/users/',
+    getParentRoute: () => DashboardSettingsRouteRoute,
+  } as any)
+const DashboardSettingsTeamsIndexRoute =
+  DashboardSettingsTeamsIndexRouteImport.update({
+    id: '/teams/',
+    path: '/teams/',
+    getParentRoute: () => DashboardSettingsRouteRoute,
+  } as any)
+const DashboardSettingsProfilesIndexRoute =
+  DashboardSettingsProfilesIndexRouteImport.update({
+    id: '/profiles/',
+    path: '/profiles/',
+    getParentRoute: () => DashboardSettingsRouteRoute,
+  } as any)
+const DashboardSettingsInvitationsIndexRoute =
+  DashboardSettingsInvitationsIndexRouteImport.update({
+    id: '/invitations/',
+    path: '/invitations/',
+    getParentRoute: () => DashboardSettingsRouteRoute,
+  } as any)
+const DashboardSettingsIntegrationsIndexRoute =
+  DashboardSettingsIntegrationsIndexRouteImport.update({
+    id: '/integrations/',
+    path: '/integrations/',
+    getParentRoute: () => DashboardSettingsRouteRoute,
+  } as any)
+const DashboardSettingsFinanceIndexRoute =
+  DashboardSettingsFinanceIndexRouteImport.update({
+    id: '/finance/',
+    path: '/finance/',
+    getParentRoute: () => DashboardSettingsRouteRoute,
+  } as any)
+const DashboardSettingsAccountIndexRoute =
+  DashboardSettingsAccountIndexRouteImport.update({
+    id: '/account/',
+    path: '/account/',
+    getParentRoute: () => DashboardSettingsRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/user': typeof UserRouteRouteWithChildren
+  '/dashboard/settings': typeof DashboardSettingsRouteRouteWithChildren
   '/sign-in': typeof SignInIndexRoute
   '/dashboard/brands': typeof DashboardBrandsIndexRoute
   '/dashboard/categories': typeof DashboardCategoriesIndexRoute
-  '/dashboard/company-profile': typeof DashboardCompanyProfileIndexRoute
   '/dashboard/customers': typeof DashboardCustomersIndexRoute
   '/dashboard/derivations': typeof DashboardDerivationsIndexRoute
-  '/dashboard/invitations': typeof DashboardInvitationsIndexRoute
   '/dashboard/media': typeof DashboardMediaIndexRoute
   '/dashboard/products': typeof DashboardProductsIndexRoute
   '/dashboard/profile': typeof DashboardProfileIndexRoute
-  '/dashboard/profiles': typeof DashboardProfilesIndexRoute
+  '/dashboard/settings/': typeof DashboardSettingsIndexRoute
   '/dashboard/units': typeof DashboardUnitsIndexRoute
-  '/dashboard/users': typeof DashboardUsersIndexRoute
   '/dashboard/warranties': typeof DashboardWarrantiesIndexRoute
   '/user/companies': typeof UserCompaniesIndexRoute
   '/user/invites': typeof UserInvitesIndexRoute
   '/user/profile': typeof UserProfileIndexRoute
+  '/dashboard/settings/account': typeof DashboardSettingsAccountIndexRoute
+  '/dashboard/settings/finance': typeof DashboardSettingsFinanceIndexRoute
+  '/dashboard/settings/integrations': typeof DashboardSettingsIntegrationsIndexRoute
+  '/dashboard/settings/invitations': typeof DashboardSettingsInvitationsIndexRoute
+  '/dashboard/settings/profiles': typeof DashboardSettingsProfilesIndexRoute
+  '/dashboard/settings/teams': typeof DashboardSettingsTeamsIndexRoute
+  '/dashboard/settings/users': typeof DashboardSettingsUsersIndexRoute
+  '/dashboard/settings/webhooks': typeof DashboardSettingsWebhooksIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -165,43 +213,54 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInIndexRoute
   '/dashboard/brands': typeof DashboardBrandsIndexRoute
   '/dashboard/categories': typeof DashboardCategoriesIndexRoute
-  '/dashboard/company-profile': typeof DashboardCompanyProfileIndexRoute
   '/dashboard/customers': typeof DashboardCustomersIndexRoute
   '/dashboard/derivations': typeof DashboardDerivationsIndexRoute
-  '/dashboard/invitations': typeof DashboardInvitationsIndexRoute
   '/dashboard/media': typeof DashboardMediaIndexRoute
   '/dashboard/products': typeof DashboardProductsIndexRoute
   '/dashboard/profile': typeof DashboardProfileIndexRoute
-  '/dashboard/profiles': typeof DashboardProfilesIndexRoute
+  '/dashboard/settings': typeof DashboardSettingsIndexRoute
   '/dashboard/units': typeof DashboardUnitsIndexRoute
-  '/dashboard/users': typeof DashboardUsersIndexRoute
   '/dashboard/warranties': typeof DashboardWarrantiesIndexRoute
   '/user/companies': typeof UserCompaniesIndexRoute
   '/user/invites': typeof UserInvitesIndexRoute
   '/user/profile': typeof UserProfileIndexRoute
+  '/dashboard/settings/account': typeof DashboardSettingsAccountIndexRoute
+  '/dashboard/settings/finance': typeof DashboardSettingsFinanceIndexRoute
+  '/dashboard/settings/integrations': typeof DashboardSettingsIntegrationsIndexRoute
+  '/dashboard/settings/invitations': typeof DashboardSettingsInvitationsIndexRoute
+  '/dashboard/settings/profiles': typeof DashboardSettingsProfilesIndexRoute
+  '/dashboard/settings/teams': typeof DashboardSettingsTeamsIndexRoute
+  '/dashboard/settings/users': typeof DashboardSettingsUsersIndexRoute
+  '/dashboard/settings/webhooks': typeof DashboardSettingsWebhooksIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/user': typeof UserRouteRouteWithChildren
+  '/dashboard/settings': typeof DashboardSettingsRouteRouteWithChildren
   '/sign-in/': typeof SignInIndexRoute
   '/dashboard/brands/': typeof DashboardBrandsIndexRoute
   '/dashboard/categories/': typeof DashboardCategoriesIndexRoute
-  '/dashboard/company-profile/': typeof DashboardCompanyProfileIndexRoute
   '/dashboard/customers/': typeof DashboardCustomersIndexRoute
   '/dashboard/derivations/': typeof DashboardDerivationsIndexRoute
-  '/dashboard/invitations/': typeof DashboardInvitationsIndexRoute
   '/dashboard/media/': typeof DashboardMediaIndexRoute
   '/dashboard/products/': typeof DashboardProductsIndexRoute
   '/dashboard/profile/': typeof DashboardProfileIndexRoute
-  '/dashboard/profiles/': typeof DashboardProfilesIndexRoute
+  '/dashboard/settings/': typeof DashboardSettingsIndexRoute
   '/dashboard/units/': typeof DashboardUnitsIndexRoute
-  '/dashboard/users/': typeof DashboardUsersIndexRoute
   '/dashboard/warranties/': typeof DashboardWarrantiesIndexRoute
   '/user/companies/': typeof UserCompaniesIndexRoute
   '/user/invites/': typeof UserInvitesIndexRoute
   '/user/profile/': typeof UserProfileIndexRoute
+  '/dashboard/settings/account/': typeof DashboardSettingsAccountIndexRoute
+  '/dashboard/settings/finance/': typeof DashboardSettingsFinanceIndexRoute
+  '/dashboard/settings/integrations/': typeof DashboardSettingsIntegrationsIndexRoute
+  '/dashboard/settings/invitations/': typeof DashboardSettingsInvitationsIndexRoute
+  '/dashboard/settings/profiles/': typeof DashboardSettingsProfilesIndexRoute
+  '/dashboard/settings/teams/': typeof DashboardSettingsTeamsIndexRoute
+  '/dashboard/settings/users/': typeof DashboardSettingsUsersIndexRoute
+  '/dashboard/settings/webhooks/': typeof DashboardSettingsWebhooksIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -209,23 +268,29 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/user'
+    | '/dashboard/settings'
     | '/sign-in'
     | '/dashboard/brands'
     | '/dashboard/categories'
-    | '/dashboard/company-profile'
     | '/dashboard/customers'
     | '/dashboard/derivations'
-    | '/dashboard/invitations'
     | '/dashboard/media'
     | '/dashboard/products'
     | '/dashboard/profile'
-    | '/dashboard/profiles'
+    | '/dashboard/settings/'
     | '/dashboard/units'
-    | '/dashboard/users'
     | '/dashboard/warranties'
     | '/user/companies'
     | '/user/invites'
     | '/user/profile'
+    | '/dashboard/settings/account'
+    | '/dashboard/settings/finance'
+    | '/dashboard/settings/integrations'
+    | '/dashboard/settings/invitations'
+    | '/dashboard/settings/profiles'
+    | '/dashboard/settings/teams'
+    | '/dashboard/settings/users'
+    | '/dashboard/settings/webhooks'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -234,42 +299,53 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/dashboard/brands'
     | '/dashboard/categories'
-    | '/dashboard/company-profile'
     | '/dashboard/customers'
     | '/dashboard/derivations'
-    | '/dashboard/invitations'
     | '/dashboard/media'
     | '/dashboard/products'
     | '/dashboard/profile'
-    | '/dashboard/profiles'
+    | '/dashboard/settings'
     | '/dashboard/units'
-    | '/dashboard/users'
     | '/dashboard/warranties'
     | '/user/companies'
     | '/user/invites'
     | '/user/profile'
+    | '/dashboard/settings/account'
+    | '/dashboard/settings/finance'
+    | '/dashboard/settings/integrations'
+    | '/dashboard/settings/invitations'
+    | '/dashboard/settings/profiles'
+    | '/dashboard/settings/teams'
+    | '/dashboard/settings/users'
+    | '/dashboard/settings/webhooks'
   id:
     | '__root__'
     | '/'
     | '/dashboard'
     | '/user'
+    | '/dashboard/settings'
     | '/sign-in/'
     | '/dashboard/brands/'
     | '/dashboard/categories/'
-    | '/dashboard/company-profile/'
     | '/dashboard/customers/'
     | '/dashboard/derivations/'
-    | '/dashboard/invitations/'
     | '/dashboard/media/'
     | '/dashboard/products/'
     | '/dashboard/profile/'
-    | '/dashboard/profiles/'
+    | '/dashboard/settings/'
     | '/dashboard/units/'
-    | '/dashboard/users/'
     | '/dashboard/warranties/'
     | '/user/companies/'
     | '/user/invites/'
     | '/user/profile/'
+    | '/dashboard/settings/account/'
+    | '/dashboard/settings/finance/'
+    | '/dashboard/settings/integrations/'
+    | '/dashboard/settings/invitations/'
+    | '/dashboard/settings/profiles/'
+    | '/dashboard/settings/teams/'
+    | '/dashboard/settings/users/'
+    | '/dashboard/settings/webhooks/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -309,6 +385,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/settings': {
+      id: '/dashboard/settings'
+      path: '/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof DashboardSettingsRouteRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/user/profile/': {
       id: '/user/profile/'
       path: '/profile'
@@ -337,13 +420,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardWarrantiesIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/users/': {
-      id: '/dashboard/users/'
-      path: '/users'
-      fullPath: '/dashboard/users'
-      preLoaderRoute: typeof DashboardUsersIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
     '/dashboard/units/': {
       id: '/dashboard/units/'
       path: '/units'
@@ -351,12 +427,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardUnitsIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/profiles/': {
-      id: '/dashboard/profiles/'
-      path: '/profiles'
-      fullPath: '/dashboard/profiles'
-      preLoaderRoute: typeof DashboardProfilesIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
+    '/dashboard/settings/': {
+      id: '/dashboard/settings/'
+      path: '/'
+      fullPath: '/dashboard/settings/'
+      preLoaderRoute: typeof DashboardSettingsIndexRouteImport
+      parentRoute: typeof DashboardSettingsRouteRoute
     }
     '/dashboard/profile/': {
       id: '/dashboard/profile/'
@@ -379,13 +455,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardMediaIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/invitations/': {
-      id: '/dashboard/invitations/'
-      path: '/invitations'
-      fullPath: '/dashboard/invitations'
-      preLoaderRoute: typeof DashboardInvitationsIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
     '/dashboard/derivations/': {
       id: '/dashboard/derivations/'
       path: '/derivations'
@@ -398,13 +467,6 @@ declare module '@tanstack/react-router' {
       path: '/customers'
       fullPath: '/dashboard/customers'
       preLoaderRoute: typeof DashboardCustomersIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
-    '/dashboard/company-profile/': {
-      id: '/dashboard/company-profile/'
-      path: '/company-profile'
-      fullPath: '/dashboard/company-profile'
-      preLoaderRoute: typeof DashboardCompanyProfileIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/categories/': {
@@ -421,38 +483,120 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBrandsIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/settings/webhooks/': {
+      id: '/dashboard/settings/webhooks/'
+      path: '/webhooks'
+      fullPath: '/dashboard/settings/webhooks'
+      preLoaderRoute: typeof DashboardSettingsWebhooksIndexRouteImport
+      parentRoute: typeof DashboardSettingsRouteRoute
+    }
+    '/dashboard/settings/users/': {
+      id: '/dashboard/settings/users/'
+      path: '/users'
+      fullPath: '/dashboard/settings/users'
+      preLoaderRoute: typeof DashboardSettingsUsersIndexRouteImport
+      parentRoute: typeof DashboardSettingsRouteRoute
+    }
+    '/dashboard/settings/teams/': {
+      id: '/dashboard/settings/teams/'
+      path: '/teams'
+      fullPath: '/dashboard/settings/teams'
+      preLoaderRoute: typeof DashboardSettingsTeamsIndexRouteImport
+      parentRoute: typeof DashboardSettingsRouteRoute
+    }
+    '/dashboard/settings/profiles/': {
+      id: '/dashboard/settings/profiles/'
+      path: '/profiles'
+      fullPath: '/dashboard/settings/profiles'
+      preLoaderRoute: typeof DashboardSettingsProfilesIndexRouteImport
+      parentRoute: typeof DashboardSettingsRouteRoute
+    }
+    '/dashboard/settings/invitations/': {
+      id: '/dashboard/settings/invitations/'
+      path: '/invitations'
+      fullPath: '/dashboard/settings/invitations'
+      preLoaderRoute: typeof DashboardSettingsInvitationsIndexRouteImport
+      parentRoute: typeof DashboardSettingsRouteRoute
+    }
+    '/dashboard/settings/integrations/': {
+      id: '/dashboard/settings/integrations/'
+      path: '/integrations'
+      fullPath: '/dashboard/settings/integrations'
+      preLoaderRoute: typeof DashboardSettingsIntegrationsIndexRouteImport
+      parentRoute: typeof DashboardSettingsRouteRoute
+    }
+    '/dashboard/settings/finance/': {
+      id: '/dashboard/settings/finance/'
+      path: '/finance'
+      fullPath: '/dashboard/settings/finance'
+      preLoaderRoute: typeof DashboardSettingsFinanceIndexRouteImport
+      parentRoute: typeof DashboardSettingsRouteRoute
+    }
+    '/dashboard/settings/account/': {
+      id: '/dashboard/settings/account/'
+      path: '/account'
+      fullPath: '/dashboard/settings/account'
+      preLoaderRoute: typeof DashboardSettingsAccountIndexRouteImport
+      parentRoute: typeof DashboardSettingsRouteRoute
+    }
   }
 }
 
+interface DashboardSettingsRouteRouteChildren {
+  DashboardSettingsIndexRoute: typeof DashboardSettingsIndexRoute
+  DashboardSettingsAccountIndexRoute: typeof DashboardSettingsAccountIndexRoute
+  DashboardSettingsFinanceIndexRoute: typeof DashboardSettingsFinanceIndexRoute
+  DashboardSettingsIntegrationsIndexRoute: typeof DashboardSettingsIntegrationsIndexRoute
+  DashboardSettingsInvitationsIndexRoute: typeof DashboardSettingsInvitationsIndexRoute
+  DashboardSettingsProfilesIndexRoute: typeof DashboardSettingsProfilesIndexRoute
+  DashboardSettingsTeamsIndexRoute: typeof DashboardSettingsTeamsIndexRoute
+  DashboardSettingsUsersIndexRoute: typeof DashboardSettingsUsersIndexRoute
+  DashboardSettingsWebhooksIndexRoute: typeof DashboardSettingsWebhooksIndexRoute
+}
+
+const DashboardSettingsRouteRouteChildren: DashboardSettingsRouteRouteChildren =
+  {
+    DashboardSettingsIndexRoute: DashboardSettingsIndexRoute,
+    DashboardSettingsAccountIndexRoute: DashboardSettingsAccountIndexRoute,
+    DashboardSettingsFinanceIndexRoute: DashboardSettingsFinanceIndexRoute,
+    DashboardSettingsIntegrationsIndexRoute:
+      DashboardSettingsIntegrationsIndexRoute,
+    DashboardSettingsInvitationsIndexRoute:
+      DashboardSettingsInvitationsIndexRoute,
+    DashboardSettingsProfilesIndexRoute: DashboardSettingsProfilesIndexRoute,
+    DashboardSettingsTeamsIndexRoute: DashboardSettingsTeamsIndexRoute,
+    DashboardSettingsUsersIndexRoute: DashboardSettingsUsersIndexRoute,
+    DashboardSettingsWebhooksIndexRoute: DashboardSettingsWebhooksIndexRoute,
+  }
+
+const DashboardSettingsRouteRouteWithChildren =
+  DashboardSettingsRouteRoute._addFileChildren(
+    DashboardSettingsRouteRouteChildren,
+  )
+
 interface DashboardRouteRouteChildren {
+  DashboardSettingsRouteRoute: typeof DashboardSettingsRouteRouteWithChildren
   DashboardBrandsIndexRoute: typeof DashboardBrandsIndexRoute
   DashboardCategoriesIndexRoute: typeof DashboardCategoriesIndexRoute
-  DashboardCompanyProfileIndexRoute: typeof DashboardCompanyProfileIndexRoute
   DashboardCustomersIndexRoute: typeof DashboardCustomersIndexRoute
   DashboardDerivationsIndexRoute: typeof DashboardDerivationsIndexRoute
-  DashboardInvitationsIndexRoute: typeof DashboardInvitationsIndexRoute
   DashboardMediaIndexRoute: typeof DashboardMediaIndexRoute
   DashboardProductsIndexRoute: typeof DashboardProductsIndexRoute
   DashboardProfileIndexRoute: typeof DashboardProfileIndexRoute
-  DashboardProfilesIndexRoute: typeof DashboardProfilesIndexRoute
   DashboardUnitsIndexRoute: typeof DashboardUnitsIndexRoute
-  DashboardUsersIndexRoute: typeof DashboardUsersIndexRoute
   DashboardWarrantiesIndexRoute: typeof DashboardWarrantiesIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+  DashboardSettingsRouteRoute: DashboardSettingsRouteRouteWithChildren,
   DashboardBrandsIndexRoute: DashboardBrandsIndexRoute,
   DashboardCategoriesIndexRoute: DashboardCategoriesIndexRoute,
-  DashboardCompanyProfileIndexRoute: DashboardCompanyProfileIndexRoute,
   DashboardCustomersIndexRoute: DashboardCustomersIndexRoute,
   DashboardDerivationsIndexRoute: DashboardDerivationsIndexRoute,
-  DashboardInvitationsIndexRoute: DashboardInvitationsIndexRoute,
   DashboardMediaIndexRoute: DashboardMediaIndexRoute,
   DashboardProductsIndexRoute: DashboardProductsIndexRoute,
   DashboardProfileIndexRoute: DashboardProfileIndexRoute,
-  DashboardProfilesIndexRoute: DashboardProfilesIndexRoute,
   DashboardUnitsIndexRoute: DashboardUnitsIndexRoute,
-  DashboardUsersIndexRoute: DashboardUsersIndexRoute,
   DashboardWarrantiesIndexRoute: DashboardWarrantiesIndexRoute,
 }
 
