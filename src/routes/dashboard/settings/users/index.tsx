@@ -120,6 +120,8 @@ function RouteComponent() {
     }
   }, [isError])
 
+  const selectedUc = selectedUsers.length === 1 ? usersCompanies.find((it) => it.user?.id === selectedUsers[0]) : undefined
+
   const columns: ColumnDef<UserCompany>[] = [
     {
       id: 'select',
@@ -208,10 +210,7 @@ function RouteComponent() {
       header: 'Ações',
       width: 'fit-content',
       cell: (uc) => (
-        <div className='flex items-center gap-2'>
-          <UserCompanyActionsCell uc={uc} onChanged={() => refetch()} />
-          <EditUserCompanySheet uc={uc} onSaved={() => refetch()} />
-        </div>
+        <UserCompanyActionsCell uc={uc} onChanged={() => refetch()} />
       ),
       headerClassName: 'border-r',
       className: 'border-r whitespace-nowrap'
@@ -224,11 +223,16 @@ function RouteComponent() {
         <div className='flex flex-col'>
           <h2 className='text-lg font-semibold'>Usuários</h2>
           <p className='text-sm text-muted-foreground'>Gerencie usuários vinculados à sua conta.</p>
-        </div>
+      </div>
         <div className='flex items-center gap-2'>
           <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
             {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
           </Button>
+          {selectedUc ? (
+            <EditUserCompanySheet uc={selectedUc} onSaved={() => refetch()} />
+          ) : (
+            <Button variant={'ghost'} disabled title='Editar usuário'>Editar</Button>
+          )}
         </div>
       </div>
       <div className='flex flex-col w-full h-full flex-1 overflow-hidden border-t'>

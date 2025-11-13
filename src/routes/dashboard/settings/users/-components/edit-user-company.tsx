@@ -113,8 +113,8 @@ export function EditUserCompanySheet({ uc, onSaved }: { uc: UserCompany, onSaved
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant={'ghost'} size={'icon'} title={'Editar usuário'} aria-label={'Editar usuário'}>
-          <Edit className='h-4 w-4' />
+        <Button variant={'ghost'} title={'Editar usuário'} aria-label={'Editar usuário'}>
+          <Edit className='h-4 w-4' /> Editar
         </Button>
       </SheetTrigger>
       <SheetContent className='sm:max-w-[520px]'>
