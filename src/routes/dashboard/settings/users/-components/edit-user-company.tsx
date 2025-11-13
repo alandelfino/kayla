@@ -1,110 +1,130 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Form, FormField, FormItem, FormLabel, FormMessage, FormControl } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { privateInstance } from '@/lib/auth'
 import { toast } from 'sonner'
-import { Loader, Send } from 'lucide-react'
+import { Edit, Loader } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
+type NamedItem = { id: number, name: string }
+type UserCompany = {
+  id: number
+  user_profile?: { id: number, name: string } | null
+  team?: { id: number, name: string } | null
+}
+
 const formSchema = z.object({
-  email: z.string().email({ message: 'Informe um e-mail válido' }),
   team_id: z.string().min(1, { message: 'Selecione a equipe' }),
-  user_profile_id: z.string().min(1, { message: 'Selecione o perfil' }),
+  profile_id: z.string().min(1, { message: 'Selecione o perfil' }),
 })
 
-export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
+export function EditUserCompanySheet({ uc, onSaved }: { uc: UserCompany, onSaved?: () => void }) {
   const [open, setOpen] = useState(false)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { email: '', team_id: '', user_profile_id: '' },
+    defaultValues: {
+      team_id: uc.team?.id ? String(uc.team.id) : '',
+      profile_id: uc.user_profile?.id ? String(uc.user_profile.id) : '',
+    },
   })
 
+  useEffect(() => {
+    if (!open) return
+    form.reset({
+      team_id: uc.team?.id ? String(uc.team.id) : '',
+      profile_id: uc.user_profile?.id ? String(uc.user_profile.id) : '',
+    })
+  }, [open, form, uc.team?.id, uc.user_profile?.id])
+
   const { data: teamsData, isLoading: isTeamsLoading } = useQuery({
-    queryKey: ['teams'],
+    queryKey: ['teams', 'for-user-edit'],
     enabled: open,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     queryFn: async () => {
-      const response = await privateInstance.get('/api:VPDORr9u/teams')
+      const response = await privateInstance.get('/api:VPDORr9u/teams?per_page=50')
       if (response.status !== 200) throw new Error('Erro ao carregar equipes')
-      return response.data as any
-    }
+      return response.data as unknown
+    },
   })
 
   const { data: profilesData, isLoading: isProfilesLoading } = useQuery({
-    queryKey: ['profiles', 'for-invitations'],
+    queryKey: ['profiles', 'for-user-edit'],
     enabled: open,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     queryFn: async () => {
       const response = await privateInstance.get('/api:BXIMsMQ7/user_profile?per_page=50')
       if (response.status !== 200) throw new Error('Erro ao carregar perfis')
-      return response.data as any
-    }
+      return response.data as unknown
+    },
   })
 
-  const { isPending, mutate } = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const payload: any = {
-        email: values.email,
-        team_id: Number(values.team_id),
-        user_profile_id: Number(values.user_profile_id),
+  function isRecord(v: unknown): v is Record<string, unknown> {
+    return typeof v === 'object' && v !== null
+  }
+  function asNamedList(raw: unknown): NamedItem[] {
+    if (Array.isArray(raw)) {
+      return raw.filter((v): v is NamedItem => isRecord(v) && typeof v.id === 'number' && typeof v.name === 'string')
+    }
+    if (isRecord(raw)) {
+      const items = (raw as { items?: unknown }).items
+      if (Array.isArray(items)) {
+        return items.filter((v): v is NamedItem => isRecord(v) && typeof v.id === 'number' && typeof v.name === 'string')
       }
-      const response = await privateInstance.post('/api:0jQElwax/invitations/invite', payload)
-      if (response.status !== 200 && response.status !== 201) throw new Error('Erro ao criar convite')
-      return response
+    }
+    return []
+  }
+
+  const { isPending, mutateAsync } = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      const payload = {
+        team_id: Number(values.team_id),
+        profile_id: Number(values.profile_id),
+      }
+      const response = await privateInstance.put(`/api:jO41sdEd/users_companies/${uc.id}`, payload)
+      if (response.status !== 200) throw new Error('Erro ao atualizar usuário')
+      return response.data
     },
     onSuccess: () => {
-      toast.success('Convite criado com sucesso!')
+      toast.success('Usuário atualizado com sucesso!')
       setOpen(false)
-      onCreated?.()
-      form.reset({ email: '', team_id: '', user_profile_id: '' })
+      onSaved?.()
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message ?? 'Erro ao criar convite')
-    }
+    onError: (error: unknown) => {
+      let message = 'Erro ao atualizar usuário'
+      if (typeof error === 'object' && error !== null) {
+        const e = error as { response?: { data?: { message?: string } } }
+        message = e.response?.data?.message ?? message
+      }
+      toast.error(message)
+    },
   })
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    mutate(values)
+    return mutateAsync(values)
   }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant={'default'}>
-          <Send /> Novo convite
+        <Button variant={'ghost'} size={'icon'} title={'Editar usuário'} aria-label={'Editar usuário'}>
+          <Edit className='h-4 w-4' />
         </Button>
       </SheetTrigger>
       <SheetContent className='sm:max-w-[520px]'>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='flex flex-col h-full'>
             <SheetHeader>
-              <SheetTitle>Novo convite</SheetTitle>
-              <SheetDescription>Envie um convite para um usuário participar do workspace.</SheetDescription>
+              <SheetTitle>Editar usuário</SheetTitle>
+              <SheetDescription>Atualize equipe e perfil do usuário.</SheetDescription>
             </SheetHeader>
-
             <div className='flex-1 grid auto-rows-min gap-6 px-4 py-4'>
-              <FormField
-                control={form.control}
-                name='email'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>E-mail</FormLabel>
-                    <FormControl>
-                      <Input type='email' placeholder='usuario@empresa.com' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <FormField
                 control={form.control}
                 name='team_id'
@@ -118,15 +138,9 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            {Array.isArray((teamsData as any)?.items)
-                              ? (teamsData as any).items.map((t: any) => (
-                                <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
-                              ))
-                              : Array.isArray(teamsData)
-                                ? (teamsData as any).map((t: any) => (
-                                  <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
-                                ))
-                                : null}
+                            {asNamedList(teamsData).map((t) => (
+                              <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                            ))}
                           </SelectGroup>
                         </SelectContent>
                       </Select>
@@ -135,10 +149,9 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
-                name='user_profile_id'
+                name='profile_id'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Perfil</FormLabel>
@@ -149,15 +162,9 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            {Array.isArray((profilesData as any)?.items)
-                              ? (profilesData as any).items.map((p: any) => (
-                                <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                              ))
-                              : Array.isArray(profilesData)
-                                ? (profilesData as any).map((p: any) => (
-                                  <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                                ))
-                                : null}
+                            {asNamedList(profilesData).map((p) => (
+                              <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                            ))}
                           </SelectGroup>
                         </SelectContent>
                       </Select>
@@ -167,14 +174,13 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
                 )}
               />
             </div>
-
             <div className='mt-auto border-t p-4'>
               <div className='grid grid-cols-2 gap-4'>
                 <SheetClose asChild>
                   <Button variant='outline' className='w-full'>Cancelar</Button>
                 </SheetClose>
                 <Button type='submit' disabled={isPending} className='w-full'>
-                  {isPending ? <Loader className='animate-spin' /> : 'Enviar convite'}
+                  {isPending ? <Loader className='animate-spin' /> : 'Salvar alterações'}
                 </Button>
               </div>
             </div>

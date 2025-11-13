@@ -23,9 +23,18 @@ type Invitation = {
   accepted?: boolean
   company_id?: number
   workspace_id?: number
+  team_id?: number
+  user_profile_id?: number
   token?: string
   created_at?: string
   expires_at?: string
+}
+
+type InvitationsResponse = {
+  items: Invitation[]
+  itemsTotal?: number
+  page?: number
+  per_page?: number
 }
 
 function RouteComponent() {
@@ -40,15 +49,60 @@ function RouteComponent() {
     refetchOnMount: false,
     queryKey: ['invitations', currentPage, perPage, sortBy, orderBy],
     queryFn: async () => {
-      const response = await privateInstance.get(`/api:0jQElwax/invitations?page=${currentPage}&per_page=${perPage}&sort_by=${sortBy ?? 'created_at'}&order_by=${orderBy}`)
+      const response = await privateInstance.get<InvitationsResponse>(`/api:0jQElwax/invitations?page=${currentPage}&per_page=${perPage}&sort_by=${sortBy ?? 'created_at'}&order_by=${orderBy}`)
       if (response.status !== 200) {
         throw new Error('Erro ao carregar convites')
       }
-      return response.data as any
+      return response.data
     }
   })
 
   const [invitations, setInvitations] = useState<Invitation[]>([])
+
+  const { data: teamsData } = useQuery({
+    queryKey: ['teams', 'for-invitations'],
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    queryFn: async () => {
+      const response = await privateInstance.get('/api:VPDORr9u/teams?per_page=50')
+      if (response.status !== 200) throw new Error('Erro ao carregar equipes')
+      return response.data as unknown
+    }
+  })
+
+  const { data: profilesData } = useQuery({
+    queryKey: ['profiles', 'for-invitations'],
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    queryFn: async () => {
+      const response = await privateInstance.get('/api:BXIMsMQ7/user_profile?per_page=50')
+      if (response.status !== 200) throw new Error('Erro ao carregar perfis')
+      return response.data as unknown
+    }
+  })
+
+  type NamedItem = { id: number, name: string }
+  function isRecord(v: unknown): v is Record<string, unknown> {
+    return typeof v === 'object' && v !== null
+  }
+  function asNamedList(raw: unknown): NamedItem[] {
+    if (Array.isArray(raw)) {
+      return raw.filter((v): v is NamedItem => isRecord(v) && typeof v.id === 'number' && typeof v.name === 'string')
+    }
+    if (isRecord(raw)) {
+      const items = (raw as { items?: unknown }).items
+      if (Array.isArray(items)) {
+        return items.filter((v): v is NamedItem => isRecord(v) && typeof v.id === 'number' && typeof v.name === 'string')
+      }
+    }
+    return []
+  }
+  function findNameById(id: number | undefined, source: unknown): string {
+    if (!id || typeof id !== 'number') return '-'
+    const list = asNamedList(source)
+    const found = list.find((i) => i.id === id)
+    return found?.name ?? `#${id}`
+  }
 
   const columns: ColumnDef<Invitation>[] = [
     {
@@ -58,11 +112,25 @@ function RouteComponent() {
       className: 'border-r'
     },
     {
+      id: 'team',
+      header: 'Equipe',
+      cell: (i) => findNameById(i.team_id, teamsData),
+      headerClassName: 'w-[160px] border-r',
+      className: 'w-[160px]'
+    },
+    {
+      id: 'profile',
+      header: 'Perfil',
+      cell: (i) => findNameById(i.user_profile_id, profilesData),
+      headerClassName: 'w-[160px] border-r',
+      className: 'w-[160px]'
+    },
+    {
       id: 'status',
       header: 'Status',
       cell: (i) => {
-        const raw = (i.status ?? (i as any).status ?? '') as string
-        const normalized = raw.toString().trim().toLowerCase()
+        const raw = String(i.status ?? '')
+        const normalized = raw.trim().toLowerCase()
         const isAccepted = i.accepted === true || normalized === 'accepted'
         const isCanceled = normalized === 'canceled' || normalized === 'cancelled'
         const status = isAccepted ? 'accepted' : isCanceled ? 'canceled' : 'pending'
@@ -106,16 +174,16 @@ function RouteComponent() {
       cell: (i) => (
         <InvitationActionsCell invitation={i} onChanged={() => refetch()} />
       ),
-      headerClassName: 'w-[160px] border-r',
-      className: 'w-[160px]'
+      headerClassName: 'w-[80px] min-w-[80px] border-r',
+      className: 'w-[80px] min-w-[80px]'
     },
   ]
 
   useEffect(() => {
     if (!data) return
-    const items = Array.isArray((data as any).items) ? (data as any).items : Array.isArray(data) ? data : []
+    const items = Array.isArray(data.items) ? data.items : []
     setInvitations(items)
-    const itemsTotal = typeof (data as any).itemsTotal === 'number' ? (data as any).itemsTotal : items.length
+    const itemsTotal = typeof data.itemsTotal === 'number' ? data.itemsTotal : items.length
     setTotalItems(itemsTotal)
   }, [data, perPage])
 
@@ -132,7 +200,28 @@ function RouteComponent() {
           <h2 className='text-lg font-semibold'>Convites</h2>
           <p className='text-sm text-muted-foreground'>Envie e gerencie convites para novos usuários.</p>
         </div>
-        <div className='flex items-center gap-2'>
+        <div className='flex items-center gap-3'>
+          <span className='text-sm text-neutral-600 dark:text-neutral-300 w-fit min-w-fit'>Ordenar por</span>
+          <Select value={sortBy} onValueChange={(v) => { setSortBy(v as 'email' | 'status' | 'created_at'); refetch() }}>
+            <SelectTrigger className='w-[180px]'>
+              <SelectValue placeholder='Selecione' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value='email'>E-mail</SelectItem>
+                <SelectItem value='status'>Status</SelectItem>
+                <SelectItem value='created_at'>Data de criação</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <Button
+            variant={'ghost'}
+            title={orderBy === 'asc' ? 'Ascendente' : 'Descendente'}
+            aria-label={orderBy === 'asc' ? 'Ordenação ascendente' : 'Ordenação descendente'}
+            onClick={() => { setOrderBy(orderBy === 'asc' ? 'desc' : 'asc'); refetch() }}
+          >
+            {orderBy === 'asc' ? <SortAsc /> : <SortDesc />}
+          </Button>
           <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
             {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
           </Button>
@@ -141,33 +230,6 @@ function RouteComponent() {
       </div>
 
       <div className='flex flex-col w-full h-full flex-1 overflow-hidden border-t'>
-        <div className='border-b flex w-full items-center p-2 gap-4'>
-          <div className='flex items-center gap-4 flex-1'>
-            <div className='flex items-center gap-2'>
-              <span className='text-sm text-neutral-600 dark:text-neutral-300'>Ordenar por</span>
-              <Select value={sortBy} onValueChange={(v) => { setSortBy(v as any); refetch() }}>
-                <SelectTrigger className='w-[180px]'>
-                  <SelectValue placeholder='Selecione' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value='email'>E-mail</SelectItem>
-                    <SelectItem value='status'>Status</SelectItem>
-                    <SelectItem value='created_at'>Data de criação</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <Button
-                variant={'ghost'}
-                title={orderBy === 'asc' ? 'Ascendente' : 'Descendente'}
-                aria-label={orderBy === 'asc' ? 'Ordenação ascendente' : 'Ordenação descendente'}
-                onClick={() => { setOrderBy(orderBy === 'asc' ? 'desc' : 'asc'); refetch() }}
-              >
-                {orderBy === 'asc' ? <SortAsc /> : <SortDesc />}
-              </Button>
-            </div>
-          </div>
-        </div>
 
         <DataTable
           columns={columns}

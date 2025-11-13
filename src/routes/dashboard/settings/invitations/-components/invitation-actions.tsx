@@ -98,8 +98,8 @@ export function InvitationActionsCell({ invitation, onChanged }: { invitation: I
       {rawStatus === 'pending' && (
         <Dialog open={openCancel} onOpenChange={setOpenCancel}>
           <DialogTrigger asChild>
-            <Button variant={'destructive'} className='w-full' disabled={isCancelling}>
-              {isCancelling ? <Loader className='animate-spin' /> : <XCircle />} Cancelar
+            <Button variant={'destructive'} className='w-full' disabled={isCancelling} title={'Cancelar'} aria-label={'Cancelar'}>
+              {isCancelling ? <Loader className='animate-spin' /> : <XCircle />}
             </Button>
           </DialogTrigger>
           <DialogContent>

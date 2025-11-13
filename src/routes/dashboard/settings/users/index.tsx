@@ -5,9 +5,11 @@ import { privateInstance } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
-import { RefreshCcw, Loader, Power, CircleAlert } from 'lucide-react'
+import { RefreshCcw, CircleAlert } from 'lucide-react'
 import { toast } from 'sonner'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { EditUserCompanySheet } from './-components/edit-user-company'
 
 export const Route = createFileRoute('/dashboard/settings/users/')({
   component: RouteComponent,
@@ -25,6 +27,20 @@ type UserCompany = {
     name: string
     email: string
   }
+  user_profile?: {
+    id: number
+    name: string
+    created_at?: number
+    updated_at?: number
+    company_id?: number
+  }
+  team?: {
+    id: number
+    name: string
+    created_at?: number
+    updated_at?: number | null
+    company_id?: number
+  } | null
 }
 
 type UsersCompaniesResponse = {
@@ -65,13 +81,33 @@ function RouteComponent() {
     }
   })
 
+  function getProp(obj: unknown, key: string): unknown {
+    if (typeof obj === 'object' && obj !== null) {
+      return (obj as Record<string, unknown>)[key]
+    }
+    return undefined
+  }
+  function coerceActive(v: unknown): boolean | undefined {
+    if (v === true) return true
+    if (v === false) return false
+    if (v === 1 || v === '1') return true
+    if (v === 0 || v === '0') return false
+    if (v === 'true' || v === 'active') return true
+    if (v === 'false' || v === 'inactive') return false
+    return undefined
+  }
   useEffect(() => {
     if (!data) return
     const items = Array.isArray(data.items) ? data.items : []
     const normalized = items.map((it) => {
-      const raw = (it as any)?.active ?? (it as any)?.user?.active ?? (it as any)?.status ?? (it as any)?.user?.status
-      const isActive = raw === true || raw === 1 || raw === '1' || raw === 'true' || raw === 'active'
-      return { ...it, active: isActive }
+      const candidates: unknown[] = [
+        it.active,
+        getProp(it.user, 'active'),
+        getProp(it, 'status'),
+        getProp(it.user, 'status'),
+      ]
+      const active = candidates.map(coerceActive).find((v) => typeof v === 'boolean')
+      return { ...it, active: active ?? it.active }
     })
     setUsersCompanies(normalized)
     const itemsTotal = typeof data.itemsTotal === 'number' ? data.itemsTotal : items.length
@@ -117,6 +153,20 @@ function RouteComponent() {
       className: 'border-r'
     },
     {
+      id: 'user_profile',
+      header: 'Perfil',
+      cell: (uc) => uc.user_profile?.name ?? '-',
+      headerClassName: 'w-[160px] border-r',
+      className: 'w-[160px]'
+    },
+    {
+      id: 'team',
+      header: 'Equipe',
+      cell: (uc) => uc.team?.name ?? '-',
+      headerClassName: 'w-[160px] border-r',
+      className: 'w-[160px]'
+    },
+    {
       id: 'created_at',
       header: 'Criado em',
       cell: (uc) => {
@@ -141,8 +191,8 @@ function RouteComponent() {
           <span
             className={
               active
-                ? 'inline-flex items-center gap-1 px-2 py-1 rounded-full border border-green-200 bg-green-100 text-green-700'
-                : 'inline-flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200 bg-gray-100 text-gray-700'
+                ? 'inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-green-50 text-green-600'
+                : 'inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-100 text-gray-700'
             }
           >
             <span className={active ? 'h-1.5 w-1.5 rounded-full bg-green-600' : 'h-1.5 w-1.5 rounded-full bg-gray-500'} />
@@ -158,7 +208,10 @@ function RouteComponent() {
       header: 'Ações',
       width: 'fit-content',
       cell: (uc) => (
-        <UserCompanyActionsCell uc={uc} onChanged={() => refetch()} />
+        <div className='flex items-center gap-2'>
+          <UserCompanyActionsCell uc={uc} onChanged={() => refetch()} />
+          <EditUserCompanySheet uc={uc} onSaved={() => refetch()} />
+        </div>
       ),
       headerClassName: 'border-r',
       className: 'border-r whitespace-nowrap'
@@ -201,6 +254,8 @@ function RouteComponent() {
 
 function UserCompanyActionsCell({ uc, onChanged }: { uc: UserCompany, onChanged?: () => void }) {
   const isActive = uc.active === true
+  const [open, setOpen] = useState(false)
+  const [nextActive, setNextActive] = useState<boolean | null>(null)
 
   const { isPending, mutateAsync } = useMutation({
     mutationFn: async (nextActive: boolean) => {
@@ -214,10 +269,15 @@ function UserCompanyActionsCell({ uc, onChanged }: { uc: UserCompany, onChanged?
       toast.success('Status do usuário atualizado')
       onChanged?.()
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      let description: string | undefined
+      if (typeof error === 'object' && error !== null) {
+        const e = error as { response?: { data?: { message?: string } } }
+        description = e.response?.data?.message
+      }
       toast.error('Não permitido', {
         icon: <CircleAlert className='h-4 w-4' />,
-        description: error?.response?.data?.message ?? 'Erro ao atualizar usuário'
+        description: description ?? 'Erro ao atualizar usuário'
       })
     }
   })
@@ -227,35 +287,32 @@ function UserCompanyActionsCell({ uc, onChanged }: { uc: UserCompany, onChanged?
   }
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        {isActive ? (
-          <Button variant={'destructive'} disabled={isPending}>
-            {isPending ? <Loader className='animate-spin' /> : <Power />} Desativar
-          </Button>
-        ) : (
-          <Button variant={'default'} disabled={isPending}>
-            {isPending ? <Loader className='animate-spin' /> : <Power />} Ativar
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{isActive ? 'Desativar usuário' : 'Ativar usuário'}</DialogTitle>
-          <DialogDescription>
-            {isActive
-              ? 'Tem certeza que deseja desativar este usuário no workspace? Ele perderá acesso até ser reativado.'
-              : 'Tem certeza que deseja ativar este usuário no workspace? Ele terá acesso ao workspace.'}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className='flex gap-2'>
-          <Button variant={'outline'}>Cancelar</Button>
-          <Button onClick={() => confirm(!isActive)} disabled={isPending} variant={isActive ? 'destructive' : 'default'}>
-            {isPending ? <Loader className='animate-spin' /> : null}
-            {isActive ? 'Desativar' : 'Ativar'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Switch
+        checked={isActive}
+        onCheckedChange={(value) => { setNextActive(!!value); setOpen(true) }}
+        disabled={isPending}
+        aria-label={'Alternar status do usuário'}
+        title={isActive ? 'Desativar usuário' : 'Ativar usuário'}
+      />
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{nextActive ? 'Ativar usuário' : 'Desativar usuário'}</DialogTitle>
+            <DialogDescription>
+              {nextActive
+                ? 'Tem certeza que deseja ativar este usuário no workspace? Ele terá acesso ao workspace.'
+                : 'Tem certeza que deseja desativar este usuário no workspace? Ele perderá acesso até ser reativado.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className='flex gap-2'>
+            <Button variant={'outline'} onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={() => { if (nextActive != null) confirm(nextActive); setOpen(false) }} disabled={isPending} variant={nextActive ? 'default' : 'destructive'}>
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
