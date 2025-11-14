@@ -113,7 +113,9 @@ export function EditUserCompanySheet({ uc, onSaved }: { uc: UserCompany, onSaved
         const e = error as { response?: { data?: { message?: string } } }
         message = e.response?.data?.message ?? message
       }
-      toast.error(message)
+      toast.error("Não permitido!", {
+        description: message,
+      })
     },
   })
 
@@ -125,7 +127,7 @@ export function EditUserCompanySheet({ uc, onSaved }: { uc: UserCompany, onSaved
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant={'outline'} title={'Editar usuário'} aria-label={'Editar usuário'}>
-          <Edit className='h-4 w-4' /> <span className='hidden xl:inline'>Editar</span>
+          <Edit className='h-4 w-4' /> <span>Editar</span>
         </Button>
       </SheetTrigger>
       <SheetContent className='sm:max-w-[520px]'>

@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { RefreshCw, Edit } from 'lucide-react'
- 
- 
+
+
 import { EditUserCompanySheet } from './-components/edit-user-company'
 
 export const Route = createFileRoute('/dashboard/settings/users/')({
@@ -64,7 +64,7 @@ function RouteComponent() {
   const [usersCompanies, setUsersCompanies] = useState<UserCompany[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [selectedUsers, setSelectedUsers] = useState<Array<number | string>>([])
-  
+
 
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
@@ -121,9 +121,9 @@ function RouteComponent() {
 
   const selectedUc = selectedUsers.length === 1 ? usersCompanies.find((it) => it.user?.id === selectedUsers[0]) : undefined
 
-  
 
-  
+
+
 
   const columns: ColumnDef<UserCompany>[] = [
     {
@@ -145,7 +145,7 @@ function RouteComponent() {
       headerClassName: 'min-w-[60px] w-[60px] border-r',
       className: 'w-[60px] min-w-[60px] font-medium border-r p-2!'
     },
-    
+
     {
       id: 'name',
       header: 'Nome',
@@ -221,24 +221,24 @@ function RouteComponent() {
           <p className='text-sm text-muted-foreground'>Gerencie usuários vinculados à sua conta.</p>
         </div>
         <div className='flex items-center gap-2 ml-auto'>
-          <Button 
-          variant={'ghost'} 
-          title='Atualizar lista de usuários'
-          aria-label='Atualizar lista de usuários'
-          disabled={isLoading || isRefetching} 
-          onClick={() => { refetch() }}>
+          <Button
+            variant={'ghost'}
+            title='Atualizar lista de usuários'
+            aria-label='Atualizar lista de usuários'
+            disabled={isLoading || isRefetching}
+            onClick={() => { refetch() }}>
             {(isLoading || isRefetching) ? <RefreshCw className='animate-spin w-4 h-4' /> : <RefreshCw className='w-4 h-4' />}
           </Button>
           {selectedUc ? (
             <EditUserCompanySheet uc={selectedUc} onSaved={() => refetch()} />
           ) : (
-            <Button 
-            variant={'outline'} 
-            disabled 
-            title='Editar usuário'
-            aria-label='Editar usuário'
+            <Button
+              variant={'outline'}
+              disabled
+              title='Editar usuário'
+              aria-label='Editar usuário'
             >
-              <Edit className='w-4 h-4' /> <span className='hidden xl:inline'>Editar</span>
+              <Edit className='w-4 h-4' /> <span>Editar</span>
             </Button>
           )}
         </div>
