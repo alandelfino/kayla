@@ -5,7 +5,7 @@ import { privateInstance } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
-import { RefreshCcw, CircleAlert } from 'lucide-react'
+import { RefreshCw, CircleAlert, Edit } from 'lucide-react'
 import { toast } from 'sonner'
 import { Switch } from '@/components/ui/switch'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
@@ -139,34 +139,46 @@ function RouteComponent() {
           />
         </div>
       ),
-      headerClassName: 'w-[60px] border-r',
-      className: 'font-medium border-r p-2!'
+      headerClassName: 'min-w-[60px] w-[60px] border-r',
+      className: 'w-[60px] min-w-[60px] font-medium border-r p-2!'
+    },
+    {
+      id: 'active',
+      header: 'Ativo',
+      width: '100px',
+      cell: (uc) => (
+        <UserCompanyActionsCell uc={uc} onChanged={() => refetch()} />
+      ),
+      headerClassName: 'w-[70px] min-w-[70px] border-r',
+      className: 'w-[70px] min-w-[70px] border-r whitespace-nowrap'
     },
     {
       id: 'name',
       header: 'Nome',
       cell: (uc) => uc.user?.name ?? '-',
-      className: 'border-r'
+      headerClassName: 'min-w-[240px] border-r',
+      className: 'min-w-[240px] border-r'
     },
     {
       id: 'email',
       header: 'E-mail',
       cell: (uc) => uc.user?.email ?? '-',
-      className: 'border-r'
+      headerClassName: 'min-w-[280px] border-r',
+      className: 'min-w-[280px] border-r'
     },
     {
       id: 'user_profile',
       header: 'Perfil',
       cell: (uc) => uc.user_profile?.name ?? '-',
-      headerClassName: 'w-[160px] border-r',
-      className: 'w-[160px]'
+      headerClassName: 'w-[150px] min-w-[150px] border-r',
+      className: 'w-[150px] min-w-[150px]'
     },
     {
       id: 'team',
       header: 'Equipe',
       cell: (uc) => uc.team?.name ?? '-',
-      headerClassName: 'w-[160px] border-r',
-      className: 'w-[160px]'
+      headerClassName: 'w-[150px] min-w-[150px] border-r',
+      className: 'w-[150px] min-w-[150px]'
     },
     {
       id: 'created_at',
@@ -181,8 +193,8 @@ function RouteComponent() {
           return String(ts)
         }
       },
-      headerClassName: 'w-[200px] border-r',
-      className: 'w-[200px]'
+      headerClassName: 'w-[200px] min-w-[200px] border-r',
+      className: 'w-[200px] min-w-[200px]'
     },
     {
       id: 'status',
@@ -202,18 +214,8 @@ function RouteComponent() {
           </span>
         )
       },
-      headerClassName: 'w-[140px] border-r',
-      className: 'w-[140px]'
-    },
-    {
-      id: 'actions',
-      header: 'Ações',
-      width: 'fit-content',
-      cell: (uc) => (
-        <UserCompanyActionsCell uc={uc} onChanged={() => refetch()} />
-      ),
-      headerClassName: 'border-r',
-      className: 'border-r whitespace-nowrap'
+      headerClassName: 'w-[100px] min-w-[100px] border-r',
+      className: 'w-[100px] min-w-[100px]'
     },
   ]
 
@@ -223,34 +225,41 @@ function RouteComponent() {
         <div className='flex flex-col'>
           <h2 className='text-lg font-semibold'>Usuários</h2>
           <p className='text-sm text-muted-foreground'>Gerencie usuários vinculados à sua conta.</p>
-      </div>
+        </div>
         <div className='flex items-center gap-2'>
-          <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
-            {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+          <Button variant={'outline'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
+            {(isLoading || isRefetching) ? <RefreshCw className='animate-spin w-4 h-4' /> : <RefreshCw className='w-4 h-4' />}
           </Button>
           {selectedUc ? (
             <EditUserCompanySheet uc={selectedUc} onSaved={() => refetch()} />
           ) : (
-            <Button variant={'ghost'} disabled title='Editar usuário'>Editar</Button>
+            <Button variant={'ghost'} disabled title='Editar usuário'>
+              <Edit className='w-4 h-4' /> Editar
+            </Button>
           )}
         </div>
       </div>
-      <div className='flex flex-col w-full h-full flex-1 overflow-hidden border-t'>
-        
-        <DataTable
-          columns={columns}
-          data={usersCompanies}
-          loading={isLoading || isRefetching}
-          skeletonCount={3}
-          page={currentPage}
-          perPage={perPage}
-          totalItems={totalItems}
-          onChange={(next) => {
-            if (typeof next.page === 'number') setCurrentPage(next.page)
-            if (typeof next.perPage === 'number') setPerPage(clampPerPage(next.perPage))
-          }}
-          emptyMessage='Nenhum usuário encontrado'
-        />
+      <div className='flex flex-col w-full h-full flex-1 overflow-hidden p-4'>
+
+        <div className='border rounded-lg overflow-hidden h-full flex flex-col flex-1'>
+
+          <DataTable
+            columns={columns}
+            data={usersCompanies}
+            loading={isLoading || isRefetching}
+            skeletonCount={3}
+            page={currentPage}
+            perPage={perPage}
+            totalItems={totalItems}
+            onChange={(next) => {
+              if (typeof next.page === 'number') setCurrentPage(next.page)
+              if (typeof next.perPage === 'number') setPerPage(clampPerPage(next.perPage))
+            }}
+            emptyMessage='Nenhum usuário encontrado'
+          />
+
+        </div>
+
       </div>
     </div>
   )

@@ -1,12 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { privateInstance } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
-import { RefreshCcw, Users, ArrowUpRight } from 'lucide-react'
+import { Users, ArrowUpRight, Trash, Edit, RefreshCw } from 'lucide-react'
 import { NewTeamSheet } from './-components/new-team'
 import { EditTeamSheet } from './-components/edit-team'
 import { DeleteTeam } from './-components/delete-team'
@@ -61,6 +61,43 @@ function RouteComponent() {
     }
   })
 
+  type UsersCompaniesResponse = {
+    items: Array<{ team?: { id?: number | null } | null }>
+    pageTotal?: number
+  }
+  const { data: usersCompaniesAll } = useQuery({
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    queryKey: ['users_companies', 'for-teams-count'],
+    queryFn: async () => {
+      const first = await privateInstance.get<UsersCompaniesResponse>('/api:jO41sdEd/users_companies', {
+        params: { page: 1, per_page: 50 },
+      })
+      if (first.status !== 200) throw new Error('Erro ao carregar usuários')
+      const items: UsersCompaniesResponse['items'] = Array.isArray(first.data.items) ? first.data.items : []
+      const pageTotal = typeof first.data.pageTotal === 'number' ? first.data.pageTotal : 1
+      for (let p = 2; p <= pageTotal; p++) {
+        const res = await privateInstance.get<UsersCompaniesResponse>('/api:jO41sdEd/users_companies', { params: { page: p, per_page: 50 } })
+        if (res.status === 200) {
+          const more = Array.isArray(res.data.items) ? res.data.items : []
+          items.push(...more)
+        }
+      }
+      return items
+    },
+  })
+
+  const usersCountByTeam = useMemo(() => {
+    const list = Array.isArray(usersCompaniesAll) ? usersCompaniesAll : []
+    const map = new Map<number, number>()
+    for (const it of list) {
+      const tIdRaw = it?.team?.id
+      const tId = typeof tIdRaw === 'number' ? tIdRaw : undefined
+      if (tId != null) map.set(tId, (map.get(tId) ?? 0) + 1)
+    }
+    return map
+  }, [usersCompaniesAll])
+
   const columns: ColumnDef<Team>[] = [
     {
       id: 'select',
@@ -77,14 +114,26 @@ function RouteComponent() {
           />
         </div>
       ),
-      headerClassName: 'w-[60px] border-r',
-      className: 'border-r'
+      headerClassName: 'min-w-[60px] w-[60px] border-r',
+      className: 'w-[60px] min-w-[60px] border-r'
     },
     {
       id: 'name',
       header: 'Nome',
       cell: (team) => team.name,
-      className: 'border-r'
+      headerClassName: 'min-w-[240px] border-r',
+      className: 'min-w-[240px] border-r'
+    },
+    {
+      id: 'users',
+      header: 'Usuários',
+      width: '100px',
+      cell: (team) => {
+        const count = usersCountByTeam.get(team.id) ?? 0
+        return count
+      },
+      headerClassName: 'w-[100px] min-w-[100px] border-r',
+      className: 'w-[100px] min-w-[100px] border-r'
     },
     {
       id: 'created_at',
@@ -99,8 +148,8 @@ function RouteComponent() {
           return String(ts)
         }
       },
-      headerClassName: 'w-[200px] border-r',
-      className: 'w-[200px]'
+      headerClassName: 'w-[200px] min-w-[200px] border-r',
+      className: 'w-[200px] min-w-[200px]'
     },
   ]
 
@@ -126,8 +175,8 @@ function RouteComponent() {
           <p className='text-sm text-muted-foreground'>Gerencie suas equipes e permissões.</p>
         </div>
         <div className='flex items-center gap-2'>
-          <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
-            {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+          <Button variant={'outline'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
+            {(isLoading || isRefetching) ? <RefreshCw className='animate-spin' /> : <RefreshCw />}
           </Button>
           {selectedTeams.length === 1 ? (
             <>
@@ -136,53 +185,55 @@ function RouteComponent() {
             </>
           ) : (
             <>
-              <Button variant={'ghost'} disabled>Excluir</Button>
-              <Button variant={'ghost'} disabled>Editar</Button>
+              <Button variant={'ghost'} disabled> <Trash className='w-4 h-4' /> Excluir</Button>
+              <Button variant={'ghost'} disabled> <Edit className='w-4 h-4' /> Editar</Button>
             </>
           )}
           <NewTeamSheet onCreated={() => { refetch() }} />
         </div>
       </div>
 
-      <div className='flex flex-col w-full h-full flex-1 overflow-hidden border-t'>
-        <DataTable
-          columns={columns}
-          data={teams}
-          loading={isLoading || isRefetching}
-          page={currentPage}
-          perPage={perPage}
-          totalItems={totalItems}
-          onChange={(next) => {
-            if (typeof next.page === 'number') setCurrentPage(next.page)
-            if (typeof next.perPage === 'number') setPerPage(clampPerPage(next.perPage))
-          }}
-          emptyMessage='Nenhuma equipe encontrada'
-          emptySlot={(
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant='icon'>
-                  <Users className='h-6 w-6' />
-                </EmptyMedia>
-                <EmptyTitle>Nenhuma equipe ainda</EmptyTitle>
-                <EmptyDescription>Crie equipes para organizar sua equipe de trabalho.</EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <div className='flex gap-2'>
-                  <NewTeamSheet onCreated={() => { refetch() }} />
-                  <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
-                    {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
-                  </Button>
-                </div>
-              </EmptyContent>
-              <Button variant='link' asChild className='text-muted-foreground'>
-                <a href='#'>Saiba mais <ArrowUpRight className='inline-block ml-1 h-4 w-4' /></a>
-              </Button>
-            </Empty>
-          )}
-        />
+      <div className='flex flex-col w-full h-full flex-1 overflow-hidden p-4'>
+        <div className='border rounded-lg overflow-hidden h-full flex flex-col flex-1'>
+          <DataTable
+            columns={columns}
+            data={teams}
+            loading={isLoading || isRefetching}
+            rowClassName='h-14'
+            skeletonCount={3}
+            page={currentPage}
+            perPage={perPage}
+            totalItems={totalItems}
+            onChange={(next) => {
+              if (typeof next.page === 'number') setCurrentPage(next.page)
+              if (typeof next.perPage === 'number') setPerPage(clampPerPage(next.perPage))
+            }}
+            emptyMessage='Nenhuma equipe encontrada'
+            emptySlot={(
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant='icon'>
+                    <Users className='h-6 w-6' />
+                  </EmptyMedia>
+                  <EmptyTitle>Nenhuma equipe ainda</EmptyTitle>
+                  <EmptyDescription>Crie equipes para organizar sua equipe de trabalho.</EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <div className='flex gap-2'>
+                    <NewTeamSheet onCreated={() => { refetch() }} />
+                    <Button variant={'outline'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
+                      {(isLoading || isRefetching) ? <RefreshCw className='animate-spin w-4 h-4' /> : <RefreshCw className='w-4 h-4' />}
+                    </Button>
+                  </div>
+                </EmptyContent>
+                <Button variant='link' asChild className='text-muted-foreground'>
+                  <a href='#'>Saiba mais <ArrowUpRight className='inline-block ml-1 h-4 w-4' /></a>
+                </Button>
+              </Empty>
+            )}
+          />
+        </div>
       </div>
-
-      
     </div>
   )
 }

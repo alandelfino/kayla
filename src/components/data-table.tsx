@@ -26,6 +26,7 @@ type DataTableProps<T> = {
   totalItems: number
   onChange: (next: { page?: number; perPage?: number }) => void
   skeletonCount?: number
+  rowClassName?: string
 }
 
 export function DataTable<T extends { id?: number | string }>({
@@ -39,6 +40,7 @@ export function DataTable<T extends { id?: number | string }>({
   totalItems,
   onChange,
   skeletonCount,
+  rowClassName,
 }: DataTableProps<T>) {
   const totalPages = Math.max(1, Math.ceil(totalItems / Math.max(perPage, 1)))
   const startIndex = (page - 1) * perPage
@@ -88,18 +90,15 @@ export function DataTable<T extends { id?: number | string }>({
             {loading && (
               <>
                 {Array.from({ length: (typeof skeletonCount === 'number' ? Math.max(0, skeletonCount) : 3) }).map((_, rIdx) => (
-                  <TableRow key={`skeleton-row-${rIdx}`} className={`h-10 ${rIdx % 2 === 1 ? 'bg-neutral-50' : ''}`}>
+                  <TableRow key={`skeleton-row-${rIdx}`} className={`${rowClassName ?? 'h-10'} ${rIdx % 2 === 1 ? 'bg-neutral-50' : ''}`}>
                     {columns.map((col, cIdx) => {
-                      // Fixed widths for specific columns in derivations list
-                      const fixedCellWidthPx = col.id === 'select' ? 60 : col.id === 'items' ? 100 : col.id === 'type' ? 120 : undefined
+                      const fixedCellWidthPx = col.id === 'select' ? 60 : undefined
 
-                      // Dynamic width for other columns
                       const pxMatch = (col.width ?? '').match(/(\d+)/)
                       const base = pxMatch ? Math.min(parseInt(pxMatch[1]), 220) : 160
-                      const variance = 0.6 + ((rIdx + cIdx) % 5) * 0.08 // 60% to ~92%
+                      const variance = 0.6 + ((rIdx + cIdx) % 5) * 0.08
                       const dynamicWidth = Math.round(base * variance)
 
-                      // Choose skeleton content per column
                       let cellContent: React.ReactNode
                       if (col.id === 'select') {
                         cellContent = (
@@ -107,16 +106,47 @@ export function DataTable<T extends { id?: number | string }>({
                             <Skeleton className='h-4 w-4 rounded-[4px]' />
                           </div>
                         )
-                      } else if (col.id === 'items') {
+                      } else if (col.id === 'active') {
                         cellContent = (
-                          <div className='flex items-center'>
-                            <Skeleton className='h-4 w-10' />
+                          <div className='flex items-center justify-start'>
+                            <Skeleton className='h-5 w-9 rounded-full' />
                           </div>
                         )
-                      } else if (col.id === 'type') {
+                      } else if (col.id === 'name') {
+                        cellContent = (
+                          <div className='flex items-center gap-2'>
+                            <Skeleton className='h-6 w-6 rounded-full' />
+                            <Skeleton className='h-4 w-32' />
+                          </div>
+                        )
+                      } else if (col.id === 'email') {
                         cellContent = (
                           <div className='flex items-center'>
-                            <Skeleton className='h-4 w-20' />
+                            <Skeleton className='h-4 w-40' />
+                          </div>
+                        )
+                      } else if (col.id === 'user_profile' || col.id === 'team') {
+                        cellContent = (
+                          <div className='flex items-center'>
+                            <Skeleton className='h-4 w-[120px]' />
+                          </div>
+                        )
+                      } else if (col.id === 'created_at') {
+                        cellContent = (
+                          <div className='flex items-center'>
+                            <Skeleton className='h-4 w-32' />
+                          </div>
+                        )
+                      } else if (col.id === 'status') {
+                        cellContent = (
+                          <div className='flex items-center'>
+                            <Skeleton className='h-6 w-[100px] rounded-lg' />
+                          </div>
+                        )
+                      } else if (col.id === 'actions') {
+                        cellContent = (
+                          <div className='flex items-center justify-center'>
+                            <Skeleton className='h-5 w-5 rounded-full' />
                           </div>
                         )
                       } else {
@@ -145,7 +175,7 @@ export function DataTable<T extends { id?: number | string }>({
             {!loading && data.length > 0 && (
               <>
                 {data.map((item, index) => (
-                  <TableRow key={(item as any).id ?? index} className={`h-10 ${index % 2 === 0 ? '' : 'bg-neutral-50'}`}>
+                  <TableRow key={(item as any).id ?? index} className={`${rowClassName ?? 'h-10'} ${index % 2 === 0 ? '' : 'bg-neutral-50'}`}>
                     {columns.map((col) => (
                       <TableCell key={col.id} className={`border-r !px-4 ${col.className ?? ''}`} style={col.width ? { width: col.width } : undefined}>
                         {col.cell(item)}

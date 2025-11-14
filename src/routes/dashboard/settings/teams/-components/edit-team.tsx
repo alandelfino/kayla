@@ -69,7 +69,7 @@ export function EditTeamSheet({ teamId, onSaved }: { teamId: number, onSaved?: (
           Editar
         </Button>
       </SheetTrigger>
-      <SheetContent className='sm:max-w-[520px]'>
+      <SheetContent className='sm:max-w-sm'>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='flex flex-col h-full'>
             <SheetHeader>

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { privateInstance } from '@/lib/auth'
 import { toast } from 'sonner'
-import { Users, Loader } from 'lucide-react'
+import { Loader, Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
@@ -52,10 +52,10 @@ export function NewTeamSheet({ onCreated }: { onCreated?: () => void }) {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant={'default'}>
-          <Users /> Nova equipe
+          <Plus /> Nova equipe
         </Button>
       </SheetTrigger>
-      <SheetContent className='sm:max-w-[520px]'>
+      <SheetContent className='sm:max-w-sm'>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='flex flex-col h-full'>
             <SheetHeader>

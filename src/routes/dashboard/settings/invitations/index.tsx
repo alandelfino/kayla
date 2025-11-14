@@ -1,14 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { privateInstance } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { DataTable, type ColumnDef } from '@/components/data-table'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
-import { Users, RefreshCcw, ArrowUpRight, SortAsc, SortDesc } from 'lucide-react'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Users, RefreshCw, ArrowUpRight, SortAsc, SortDesc, Loader, CircleX } from 'lucide-react'
 import { NewInvitationSheet } from './-components/new-invitation'
-import { InvitationActionsCell } from './-components/invitation-actions'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/dashboard/settings/invitations/')({
   component: RouteComponent,
@@ -43,6 +45,27 @@ function RouteComponent() {
   const [totalItems, setTotalItems] = useState(0)
   const [sortBy, setSortBy] = useState<'email' | 'status' | 'created_at'>('created_at')
   const [orderBy, setOrderBy] = useState<'asc' | 'desc'>('desc')
+  const [selectedInvites, setSelectedInvites] = useState<number[]>([])
+  const [openCancelDialog, setOpenCancelDialog] = useState(false)
+
+  const { isPending: isCancelling, mutateAsync: cancelSelectedInvite } = useMutation({
+    mutationFn: async () => {
+      const id = selectedInvites[0]
+      const url = `/api:0jQElwax/invitations/${id}/cancel`
+      const response = await privateInstance.post(url, {})
+      if (response.status < 200 || response.status >= 300) throw new Error('Falha ao cancelar convite')
+      return response.data
+    },
+    onSuccess: () => {
+      toast.success('Convite cancelado')
+      setOpenCancelDialog(false)
+      setSelectedInvites([])
+      refetch()
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message ?? 'Erro ao cancelar convite')
+    }
+  })
 
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
@@ -106,24 +129,49 @@ function RouteComponent() {
 
   const columns: ColumnDef<Invitation>[] = [
     {
+      id: 'select',
+      width: '70px',
+      header: () => (<div className='flex justify-center items-center' />),
+      cell: (i) => (
+        <div className='flex justify-center items-center'>
+          <Checkbox
+            aria-label='Selecionar convite'
+            checked={selectedInvites.includes(i.id)}
+            onCheckedChange={(checked) => {
+              const id = i.id
+              setSelectedInvites((prev) => {
+                const exists = prev.includes(id)
+                if (checked && !exists) return [...prev, id]
+                if (!checked && exists) return prev.filter((x) => x !== id)
+                return prev
+              })
+            }}
+          />
+        </div>
+      ),
+      headerClassName: 'w-[70px] min-w-[70px] border-r',
+      className: 'w-[70px] min-w-[70px] border-r !px-2'
+    },
+    {
       id: 'email',
       header: 'E-mail',
       cell: (i) => i.email,
-      className: 'border-r'
+      headerClassName: 'min-w-[280px] border-r',
+      className: 'min-w-[280px] border-r'
     },
     {
       id: 'team',
       header: 'Equipe',
       cell: (i) => findNameById(i.team_id, teamsData),
-      headerClassName: 'w-[160px] border-r',
-      className: 'w-[160px]'
+      headerClassName: 'w-[160px] min-w-[160px] border-r',
+      className: 'w-[160px] min-w-[160px]'
     },
     {
       id: 'profile',
       header: 'Perfil',
       cell: (i) => findNameById(i.user_profile_id, profilesData),
-      headerClassName: 'w-[160px] border-r',
-      className: 'w-[160px]'
+      headerClassName: 'w-[160px] min-w-[160px] border-r',
+      className: 'w-[160px] min-w-[160px]'
     },
     {
       id: 'status',
@@ -150,8 +198,8 @@ function RouteComponent() {
           </span>
         )
       },
-      headerClassName: 'w-[120px] border-r',
-      className: 'w-[120px]'
+      headerClassName: 'w-[120px] min-w-[120px] border-r',
+      className: 'w-[120px] min-w-[120px]'
     },
     {
       id: 'created_at',
@@ -165,17 +213,8 @@ function RouteComponent() {
           return i.created_at
         }
       },
-      headerClassName: 'w-[200px] border-r',
-      className: 'w-[200px]'
-    },
-    {
-      id: 'actions',
-      header: 'Ações',
-      cell: (i) => (
-        <InvitationActionsCell invitation={i} onChanged={() => refetch()} />
-      ),
-      headerClassName: 'w-[80px] min-w-[80px] border-r',
-      className: 'w-[80px] min-w-[80px]'
+      headerClassName: 'w-[200px] min-w-[200px] border-r',
+      className: 'w-[200px] min-w-[200px]'
     },
   ]
 
@@ -198,7 +237,7 @@ function RouteComponent() {
       <div className='flex items-center justify-between p-4'>
         <div className='flex flex-col'>
           <h2 className='text-lg font-semibold'>Convites</h2>
-          <p className='text-sm text-muted-foreground'>Envie e gerencie convites para novos usuários.</p>
+          <p className='text-sm text-muted-foreground'>Convites para novos usuários.</p>
         </div>
         <div className='flex items-center gap-3'>
           <span className='text-sm text-neutral-600 dark:text-neutral-300 w-fit min-w-fit'>Ordenar por</span>
@@ -222,51 +261,79 @@ function RouteComponent() {
           >
             {orderBy === 'asc' ? <SortAsc /> : <SortDesc />}
           </Button>
-          <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
-            {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+          <Button variant={'outline'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => { refetch() }} aria-label='Atualizar convites'>
+            {(isLoading || isRefetching) ? <RefreshCw className='animate-spin w-4 h-4' /> : <RefreshCw className='w-4 h-4' />}
+          </Button>
+          <Button
+            variant={'outline'}
+            disabled={selectedInvites.length !== 1}
+            aria-disabled={selectedInvites.length !== 1}
+            aria-label='Cancelar convite selecionado'
+            title='Cancelar convite'
+            onClick={() => setOpenCancelDialog(true)}
+          >
+            <CircleX className='w-4 h-4' /> Cancelar
           </Button>
           <NewInvitationSheet onCreated={() => { refetch() }} />
         </div>
       </div>
 
-      <div className='flex flex-col w-full h-full flex-1 overflow-hidden border-t'>
-
-        <DataTable
-          columns={columns}
-          data={invitations}
-          loading={isLoading || isRefetching}
-          page={currentPage}
-          perPage={perPage}
-          totalItems={totalItems}
-          onChange={(next) => {
-            if (typeof next.page === 'number') setCurrentPage(next.page)
-            if (typeof next.perPage === 'number') setPerPage(next.perPage)
-          }}
-          emptyMessage='Nenhum convite encontrado'
-          emptySlot={(
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant='icon'>
-                  <Users className='h-6 w-6' />
-                </EmptyMedia>
-                <EmptyTitle>Nenhum convite ainda</EmptyTitle>
-                <EmptyDescription>Envie convites para usuários participarem do workspace.</EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <div className='flex gap-2'>
-                  <NewInvitationSheet onCreated={() => { refetch() }} />
-                  <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
-                    {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
-                  </Button>
-                </div>
-              </EmptyContent>
-              <Button variant='link' asChild className='text-muted-foreground'>
-                <a href='#'>Saiba mais <ArrowUpRight className='inline-block ml-1 h-4 w-4' /></a>
-              </Button>
-            </Empty>
-          )}
-        />
+      <div className='flex flex-col w-full h-full flex-1 overflow-hidden p-4'>
+        <div className='border rounded-lg overflow-hidden h-full flex flex-col flex-1'>
+          <DataTable
+            columns={columns}
+            data={invitations}
+            loading={isLoading || isRefetching}
+            page={currentPage}
+            perPage={perPage}
+            totalItems={totalItems}
+            onChange={(next) => {
+              if (typeof next.page === 'number') setCurrentPage(next.page)
+              if (typeof next.perPage === 'number') setPerPage(next.perPage)
+            }}
+            emptyMessage='Nenhum convite encontrado'
+            emptySlot={(
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant='icon'>
+                    <Users className='h-6 w-6' />
+                  </EmptyMedia>
+                  <EmptyTitle>Nenhum convite ainda</EmptyTitle>
+                  <EmptyDescription>Envie convites para usuários participarem do workspace.</EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <div className='flex gap-2'>
+                    <NewInvitationSheet onCreated={() => { refetch() }} />
+                    <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
+                      {(isLoading || isRefetching) ? <><RefreshCw className='animate-spin' /> Atualizando...</> : <><RefreshCw /> Atualizar</>}
+                    </Button>
+                  </div>
+                </EmptyContent>
+                <Button variant='link' asChild className='text-muted-foreground'>
+                  <a href='#'>Saiba mais <ArrowUpRight className='inline-block ml-1 h-4 w-4' /></a>
+                </Button>
+              </Empty>
+            )}
+          />
+        </div>
       </div>
+      
+      <Dialog open={openCancelDialog} onOpenChange={setOpenCancelDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancelar Convite</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja cancelar este convite?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className='flex gap-2'>
+            <Button variant={'outline'} onClick={() => setOpenCancelDialog(false)}>Cancelar</Button>
+            <Button onClick={() => cancelSelectedInvite()} disabled={isCancelling}>
+              {isCancelling ? <Loader className='animate-spin w-4 h-4' aria-label='Carregando' /> : 'Confirmar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
