@@ -33,7 +33,7 @@ import { Route as DashboardSettingsTeamsIndexRouteImport } from './routes/dashbo
 import { Route as DashboardSettingsProfilesIndexRouteImport } from './routes/dashboard/settings/profiles/index'
 import { Route as DashboardSettingsInvitationsIndexRouteImport } from './routes/dashboard/settings/invitations/index'
 import { Route as DashboardSettingsIntegrationsIndexRouteImport } from './routes/dashboard/settings/integrations/index'
-import { Route as DashboardSettingsFinanceIndexRouteImport } from './routes/dashboard/settings/finance/index'
+import { Route as DashboardSettingsBillingsIndexRouteImport } from './routes/dashboard/settings/billings/index'
 import { Route as DashboardSettingsAccountIndexRouteImport } from './routes/dashboard/settings/account/index'
 
 const UserRouteRoute = UserRouteRouteImport.update({
@@ -165,10 +165,10 @@ const DashboardSettingsIntegrationsIndexRoute =
     path: '/integrations/',
     getParentRoute: () => DashboardSettingsRouteRoute,
   } as any)
-const DashboardSettingsFinanceIndexRoute =
-  DashboardSettingsFinanceIndexRouteImport.update({
-    id: '/finance/',
-    path: '/finance/',
+const DashboardSettingsBillingsIndexRoute =
+  DashboardSettingsBillingsIndexRouteImport.update({
+    id: '/billings/',
+    path: '/billings/',
     getParentRoute: () => DashboardSettingsRouteRoute,
   } as any)
 const DashboardSettingsAccountIndexRoute =
@@ -198,7 +198,7 @@ export interface FileRoutesByFullPath {
   '/user/invites': typeof UserInvitesIndexRoute
   '/user/profile': typeof UserProfileIndexRoute
   '/dashboard/settings/account': typeof DashboardSettingsAccountIndexRoute
-  '/dashboard/settings/finance': typeof DashboardSettingsFinanceIndexRoute
+  '/dashboard/settings/billings': typeof DashboardSettingsBillingsIndexRoute
   '/dashboard/settings/integrations': typeof DashboardSettingsIntegrationsIndexRoute
   '/dashboard/settings/invitations': typeof DashboardSettingsInvitationsIndexRoute
   '/dashboard/settings/profiles': typeof DashboardSettingsProfilesIndexRoute
@@ -225,7 +225,7 @@ export interface FileRoutesByTo {
   '/user/invites': typeof UserInvitesIndexRoute
   '/user/profile': typeof UserProfileIndexRoute
   '/dashboard/settings/account': typeof DashboardSettingsAccountIndexRoute
-  '/dashboard/settings/finance': typeof DashboardSettingsFinanceIndexRoute
+  '/dashboard/settings/billings': typeof DashboardSettingsBillingsIndexRoute
   '/dashboard/settings/integrations': typeof DashboardSettingsIntegrationsIndexRoute
   '/dashboard/settings/invitations': typeof DashboardSettingsInvitationsIndexRoute
   '/dashboard/settings/profiles': typeof DashboardSettingsProfilesIndexRoute
@@ -254,7 +254,7 @@ export interface FileRoutesById {
   '/user/invites/': typeof UserInvitesIndexRoute
   '/user/profile/': typeof UserProfileIndexRoute
   '/dashboard/settings/account/': typeof DashboardSettingsAccountIndexRoute
-  '/dashboard/settings/finance/': typeof DashboardSettingsFinanceIndexRoute
+  '/dashboard/settings/billings/': typeof DashboardSettingsBillingsIndexRoute
   '/dashboard/settings/integrations/': typeof DashboardSettingsIntegrationsIndexRoute
   '/dashboard/settings/invitations/': typeof DashboardSettingsInvitationsIndexRoute
   '/dashboard/settings/profiles/': typeof DashboardSettingsProfilesIndexRoute
@@ -284,7 +284,7 @@ export interface FileRouteTypes {
     | '/user/invites'
     | '/user/profile'
     | '/dashboard/settings/account'
-    | '/dashboard/settings/finance'
+    | '/dashboard/settings/billings'
     | '/dashboard/settings/integrations'
     | '/dashboard/settings/invitations'
     | '/dashboard/settings/profiles'
@@ -311,7 +311,7 @@ export interface FileRouteTypes {
     | '/user/invites'
     | '/user/profile'
     | '/dashboard/settings/account'
-    | '/dashboard/settings/finance'
+    | '/dashboard/settings/billings'
     | '/dashboard/settings/integrations'
     | '/dashboard/settings/invitations'
     | '/dashboard/settings/profiles'
@@ -339,7 +339,7 @@ export interface FileRouteTypes {
     | '/user/invites/'
     | '/user/profile/'
     | '/dashboard/settings/account/'
-    | '/dashboard/settings/finance/'
+    | '/dashboard/settings/billings/'
     | '/dashboard/settings/integrations/'
     | '/dashboard/settings/invitations/'
     | '/dashboard/settings/profiles/'
@@ -525,11 +525,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSettingsIntegrationsIndexRouteImport
       parentRoute: typeof DashboardSettingsRouteRoute
     }
-    '/dashboard/settings/finance/': {
-      id: '/dashboard/settings/finance/'
-      path: '/finance'
-      fullPath: '/dashboard/settings/finance'
-      preLoaderRoute: typeof DashboardSettingsFinanceIndexRouteImport
+    '/dashboard/settings/billings/': {
+      id: '/dashboard/settings/billings/'
+      path: '/billings'
+      fullPath: '/dashboard/settings/billings'
+      preLoaderRoute: typeof DashboardSettingsBillingsIndexRouteImport
       parentRoute: typeof DashboardSettingsRouteRoute
     }
     '/dashboard/settings/account/': {
@@ -545,7 +545,7 @@ declare module '@tanstack/react-router' {
 interface DashboardSettingsRouteRouteChildren {
   DashboardSettingsIndexRoute: typeof DashboardSettingsIndexRoute
   DashboardSettingsAccountIndexRoute: typeof DashboardSettingsAccountIndexRoute
-  DashboardSettingsFinanceIndexRoute: typeof DashboardSettingsFinanceIndexRoute
+  DashboardSettingsBillingsIndexRoute: typeof DashboardSettingsBillingsIndexRoute
   DashboardSettingsIntegrationsIndexRoute: typeof DashboardSettingsIntegrationsIndexRoute
   DashboardSettingsInvitationsIndexRoute: typeof DashboardSettingsInvitationsIndexRoute
   DashboardSettingsProfilesIndexRoute: typeof DashboardSettingsProfilesIndexRoute
@@ -558,7 +558,7 @@ const DashboardSettingsRouteRouteChildren: DashboardSettingsRouteRouteChildren =
   {
     DashboardSettingsIndexRoute: DashboardSettingsIndexRoute,
     DashboardSettingsAccountIndexRoute: DashboardSettingsAccountIndexRoute,
-    DashboardSettingsFinanceIndexRoute: DashboardSettingsFinanceIndexRoute,
+    DashboardSettingsBillingsIndexRoute: DashboardSettingsBillingsIndexRoute,
     DashboardSettingsIntegrationsIndexRoute:
       DashboardSettingsIntegrationsIndexRoute,
     DashboardSettingsInvitationsIndexRoute:

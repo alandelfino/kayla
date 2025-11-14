@@ -136,9 +136,9 @@ function RouteComponent() {
               const id = i.id
               setSelectedInvites((prev) => {
                 const exists = prev.includes(id)
-                if (checked && !exists) return [...prev, id]
-                if (!checked && exists) return prev.filter((x) => x !== id)
-                return prev
+                if (checked && !exists) return [id]
+                if (!checked && exists) return []
+                return prev.length === 1 && prev[0] === id ? prev : [id]
               })
             }}
           />
@@ -237,7 +237,7 @@ function RouteComponent() {
         <div className='flex items-center gap-3'>
           <Button 
           variant={'ghost'} 
-          size={'sm'} disabled={isLoading || isRefetching} 
+          disabled={isLoading || isRefetching} 
           onClick={() => { refetch() }} 
           title='Atualizar convites'
           aria-label='Atualizar convites'>

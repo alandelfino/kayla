@@ -261,7 +261,7 @@ function RouteComponent() {
                       </Avatar>
                     </button>
                     <div>
-                      <Button type='button' variant={'ghost'} size={'sm'} className='h-8 rounded-lg px-3 text-xs gap-1.5 border-muted-foreground/20 text-muted-foreground hover:text-foreground' onClick={removeAvatar} disabled={!previewUrl && !me?.image?.url}>
+                      <Button type='button' variant={'ghost'} className='h-8 rounded-lg px-3 text-xs gap-1.5 border-muted-foreground/20 text-muted-foreground hover:text-foreground' onClick={removeAvatar} disabled={!previewUrl && !me?.image?.url}>
                         Remover
                       </Button>
                     </div>

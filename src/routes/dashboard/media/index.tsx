@@ -98,7 +98,7 @@ function RouteComponent() {
         <div className='border-b flex w-full items-center p-2 gap-4'>
 
           <div className='flex items-center gap-2 flex-1'>
-            <Button variant={'outline'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
+            <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
               {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
             </Button>
           </div>
@@ -125,7 +125,7 @@ function RouteComponent() {
               <EmptyContent>
                 <div className='flex gap-2'>
                   <NewMediaDialog onCreated={() => refetch()} />
-                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
+                  <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
                     {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
                   </Button>
                 </div>

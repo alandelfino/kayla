@@ -206,13 +206,13 @@ function RouteComponent() {
 
           {/* Filters */}
           <div className='flex items-center gap-2 flex-1'>
-            <Button variant={'outline'} size={'sm'}>
+            <Button variant={'outline'}>
               <Funnel /> Filtros
             </Button>
           </div>
 
           <div className='flex items-center gap-2'>
-            <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedCategories([]); refetch() }}>
+            <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedCategories([]); refetch() }}>
               {
                 (isLoading || isRefetching)
                   ? <><RefreshCcw className='animate-spin' /> Atualizando...</>
@@ -223,7 +223,7 @@ function RouteComponent() {
             {selectedCategories.length === 1 ? (
               <DeleteCategory categoryId={selectedCategories[0]} />
             ) : (
-              <Button size={'sm'} variant={'ghost'} disabled>
+              <Button variant={'ghost'} disabled>
                 <Trash /> Excluir
               </Button>
             )}
@@ -231,7 +231,7 @@ function RouteComponent() {
             {selectedCategories.length === 1 ? (
               <EditCategorySheet categoryId={selectedCategories[0]} categories={categories} />
             ) : (
-              <Button size={'sm'} variant={'ghost'} disabled>
+              <Button variant={'ghost'} disabled>
                 <Edit /> Editar
               </Button>
             )}
@@ -264,7 +264,7 @@ function RouteComponent() {
               <EmptyContent>
                 <div className='flex gap-2'>
                   <NewCategorySheet />
-                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedCategories([]); refetch() }}>
+                  <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedCategories([]); refetch() }}>
                     {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
                   </Button>
                 </div>

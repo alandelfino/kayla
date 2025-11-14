@@ -13,18 +13,20 @@ import { zodResolver } from '@hookform/resolvers/zod'
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Nome da equipe é obrigatório' }),
+  description: z.string().optional().or(z.literal('')),
 })
 
 export function NewTeamSheet({ onCreated }: { onCreated?: () => void }) {
   const [open, setOpen] = useState(false)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: '' },
+    defaultValues: { name: '', description: '' },
   })
 
   const { isPending, mutateAsync } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const response = await privateInstance.post('/api:VPDORr9u/teams', values)
+      const payload = { name: values.name, description: values.description ?? '' }
+      const response = await privateInstance.post('/api:VPDORr9u/teams', payload)
       if (response.status !== 200 && response.status !== 201) throw new Error('Erro ao criar equipe')
       return response.data as Team
     },
@@ -32,7 +34,7 @@ export function NewTeamSheet({ onCreated }: { onCreated?: () => void }) {
       toast.success('Equipe criada com sucesso!')
       setOpen(false)
       onCreated?.()
-      form.reset({ name: '' })
+      form.reset({ name: '', description: '' })
     },
     onError: (error: unknown) => {
       let message = 'Erro ao criar equipe'
@@ -77,6 +79,21 @@ export function NewTeamSheet({ onCreated }: { onCreated?: () => void }) {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name='description'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição</FormLabel>
+                    <FormControl>
+                      <textarea placeholder='Opcional' {...field}
+                        className='file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm h-28 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <div className='mt-auto border-t p-4'>
@@ -99,4 +116,5 @@ export function NewTeamSheet({ onCreated }: { onCreated?: () => void }) {
 type Team = {
   id: number
   name: string
+  description?: string | null
 }

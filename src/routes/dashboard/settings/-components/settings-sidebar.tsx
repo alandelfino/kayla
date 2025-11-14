@@ -1,11 +1,11 @@
-﻿import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Link, useRouterState } from '@tanstack/react-router'
 
 export function SettingsSidebar() {
   const router = useRouterState()
   const items = [
     { label: 'Conta', href: '/dashboard/settings/account' },
-    { label: 'Financeiro', href: '/dashboard/settings/finance' },
+    { label: 'Cobranças', href: '/dashboard/settings/billings' },
     { separator: true },
     { label: 'Usuários', href: '/dashboard/settings/users' },
     { label: 'Convites', href: '/dashboard/settings/invitations' },

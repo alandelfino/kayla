@@ -13,6 +13,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Nome da equipe é obrigatório' }),
+  description: z.string().optional().or(z.literal('')),
 })
 
 export function EditTeamSheet({ teamId, onSaved }: { teamId: number, onSaved?: () => void }) {
@@ -20,7 +21,7 @@ export function EditTeamSheet({ teamId, onSaved }: { teamId: number, onSaved?: (
   const [loading, setLoading] = useState(false)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: '' },
+    defaultValues: { name: '', description: '' },
   })
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export function EditTeamSheet({ teamId, onSaved }: { teamId: number, onSaved?: (
         setLoading(true)
         const response = await privateInstance.get<Team>(`/api:VPDORr9u/teams/${teamId}`)
         if (response.status !== 200 || !response.data) throw new Error('Falha ao carregar equipe')
-        form.reset({ name: response.data.name })
+        form.reset({ name: response.data.name, description: response.data.description ?? '' })
       } catch {
         toast.error('Erro ao carregar equipe')
       } finally {
@@ -43,7 +44,8 @@ export function EditTeamSheet({ teamId, onSaved }: { teamId: number, onSaved?: (
 
   const { isPending, mutateAsync } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const response = await privateInstance.put(`/api:VPDORr9u/teams/${teamId}`, values)
+      const payload = { name: values.name, description: values.description ?? '' }
+      const response = await privateInstance.put(`/api:VPDORr9u/teams/${teamId}`, payload)
       if (response.status !== 200) throw new Error('Erro ao salvar equipe')
       return response.data as Team
     },
@@ -96,6 +98,22 @@ export function EditTeamSheet({ teamId, onSaved }: { teamId: number, onSaved?: (
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name='description'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição</FormLabel>
+                    <FormControl>
+                      <textarea placeholder='Opcional' {...field}
+                        className='file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm h-28 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
+                        disabled={loading || isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <div className='mt-auto border-t p-4'>
               <div className='grid grid-cols-2 gap-4'>
@@ -117,4 +135,5 @@ export function EditTeamSheet({ teamId, onSaved }: { teamId: number, onSaved?: (
 type Team = {
   id: number
   name: string
+  description?: string | null
 }

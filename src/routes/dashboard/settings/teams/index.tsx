@@ -86,6 +86,31 @@ function RouteComponent() {
     },
   })
 
+  type InvitationsAllResponse = {
+    items: Array<{ team_id?: number | null }>
+    pageTotal?: number
+  }
+  const { data: invitationsAll } = useQuery({
+    refetchOnWindowFocus: false,
+    queryKey: ['invitations', 'for-teams-count'],
+    queryFn: async () => {
+      const first = await privateInstance.get<InvitationsAllResponse>('/api:0jQElwax/invitations', {
+        params: { page: 1, per_page: 50 },
+      })
+      if (first.status !== 200) throw new Error('Erro ao carregar convites')
+      const items: InvitationsAllResponse['items'] = Array.isArray((first.data as any).items) ? (first.data as any).items : []
+      const pageTotal = typeof (first.data as any).pageTotal === 'number' ? (first.data as any).pageTotal : 1
+      for (let p = 2; p <= pageTotal; p++) {
+        const res = await privateInstance.get<InvitationsAllResponse>('/api:0jQElwax/invitations', { params: { page: p, per_page: 50 } })
+        if (res.status === 200) {
+          const more = Array.isArray((res.data as any).items) ? (res.data as any).items : []
+          items.push(...more)
+        }
+      }
+      return items
+    },
+  })
+
   const usersCountByTeam = useMemo(() => {
     const list = Array.isArray(usersCompaniesAll) ? usersCompaniesAll : []
     const map = new Map<number, number>()
@@ -96,6 +121,17 @@ function RouteComponent() {
     }
     return map
   }, [usersCompaniesAll])
+
+  const invitationsCountByTeam = useMemo(() => {
+    const list = Array.isArray(invitationsAll) ? invitationsAll : []
+    const map = new Map<number, number>()
+    for (const it of list) {
+      const tIdRaw = (it as any)?.team_id
+      const tId = typeof tIdRaw === 'number' ? tIdRaw : undefined
+      if (tId != null) map.set(tId, (map.get(tId) ?? 0) + 1)
+    }
+    return map
+  }, [invitationsAll])
 
   const columns: ColumnDef<Team>[] = [
     {
@@ -129,6 +165,17 @@ function RouteComponent() {
       width: '6.25rem',
       cell: (team) => {
         const count = usersCountByTeam.get(team.id) ?? 0
+        return count
+      },
+      headerClassName: 'w-[6.25rem] min-w-[6.25rem] border-r border-neutral-200 px-4 py-2.5',
+      className: 'w-[6.25rem] min-w-[6.25rem] border-r border-neutral-200 !px-4 py-3'
+    },
+    {
+      id: 'invitations',
+      header: 'Convites',
+      width: '6.25rem',
+      cell: (team) => {
+        const count = invitationsCountByTeam.get(team.id) ?? 0
         return count
       },
       headerClassName: 'w-[6.25rem] min-w-[6.25rem] border-r border-neutral-200 px-4 py-2.5',
@@ -220,7 +267,7 @@ function RouteComponent() {
                 <EmptyContent>
                   <div className='flex gap-2'>
                     <NewTeamSheet onCreated={() => { refetch() }} />
-                    <Button variant={'outline'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
+                    <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
                       {(isLoading || isRefetching) ? <RefreshCw className='animate-spin w-4 h-4' /> : <RefreshCw className='w-4 h-4' />}
                     </Button>
                   </div>

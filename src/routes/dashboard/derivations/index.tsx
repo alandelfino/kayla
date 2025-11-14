@@ -177,13 +177,13 @@ function RouteComponent() {
 
           {/* Filters */}
           <div className='flex items-center gap-2 flex-1'>
-            <Button variant={'outline'} size={'sm'}>
+            <Button variant={'outline'}>
               <Funnel /> Filtros
             </Button>
           </div>
 
           <div className='flex items-center gap-2'>
-            <Button size={'sm'} variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelectedDerivations([]); refetch() }}>
+            <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelectedDerivations([]); refetch() }}>
               {
                 (isLoading || isRefetching)
                   ? <><RefreshCcw className='animate-spin' /> Atualizando...</>
@@ -194,7 +194,7 @@ function RouteComponent() {
             {selectedDerivations.length === 1 ? (
               <DeleteDerivation derivationId={selectedDerivations[0]} onDeleted={() => { setSelectedDerivations([]); refetch() }} />
             ) : (
-              <Button size={'sm'} variant={'ghost'} disabled>
+              <Button variant={'ghost'} disabled>
                 <Trash /> Excluir
               </Button>
             )}
@@ -202,7 +202,7 @@ function RouteComponent() {
             {selectedDerivations.length === 1 && selectedDerivationType ? (
               <DerivationItemsSheet derivationId={selectedDerivations[0]} derivationType={selectedDerivationType} />
             ) : (
-              <Button size={'sm'} variant={'ghost'} disabled>
+              <Button variant={'ghost'} disabled>
                 <List /> Items
               </Button>
             )}
@@ -210,7 +210,7 @@ function RouteComponent() {
             {selectedDerivations.length === 1 ? (
               <EditDerivationSheet derivationId={selectedDerivations[0]} />
             ) : (
-              <Button size={'sm'} variant={'ghost'} disabled>
+              <Button variant={'ghost'} disabled>
                 <Edit /> Editar
               </Button>
             )}
@@ -242,7 +242,7 @@ function RouteComponent() {
               <EmptyContent>
                 <div className='flex gap-2'>
                   <NewDerivationSheet onCreated={() => { setSelectedDerivations([]); refetch() }} />
-                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedDerivations([]); refetch() }}>
+                  <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedDerivations([]); refetch() }}>
                     {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
                   </Button>
                 </div>
@@ -251,7 +251,6 @@ function RouteComponent() {
                 variant='link'
                 asChild
                 className='text-muted-foreground'
-                size='sm'
               >
                 <a href='#'>
                   Saiba mais <ArrowUpRight className='inline-block ml-1 h-4 w-4' />

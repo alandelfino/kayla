@@ -25,6 +25,19 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
     defaultValues: { email: '', team_id: '', user_profile_id: '' },
   })
 
+  function resetForm() {
+    form.reset({ email: '', team_id: '', user_profile_id: '' })
+  }
+
+  // Resetar ao fechar o sheet
+  // Mantém o comportamento consistente mesmo quando fecha via overlay, esc ou botão Cancelar
+  // Sem modificar os valores enquanto estiver aberto
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const onOpenChange = (next: boolean) => {
+    setOpen(next)
+    if (!next) resetForm()
+  }
+
   const { data: teamsData, isLoading: isTeamsLoading } = useQuery({
     queryKey: ['teams'],
     enabled: open,
@@ -74,7 +87,7 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
         <div className='flex items-center'>
           <Button

@@ -105,7 +105,6 @@ export function TopbarUser() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
           className="h-11 rounded-md flex items-center gap-2"
         >
           <Avatar className="h-8 w-8 rounded-lg">

@@ -156,14 +156,14 @@ function RouteComponent() {
           {/* Filters */}
           <div className='flex items-center gap-2 flex-1'>
 
-            <Button variant={'outline'} size={'sm'}>
+            <Button variant={'outline'}>
               <Funnel /> Filtros
             </Button>
 
           </div>
 
           <div className='flex items-center gap-2'>
-            <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedUnits([]); refetch() }}>
+            <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedUnits([]); refetch() }}>
               {
                 (isLoading || isRefetching)
                   ? <><RefreshCcw className='animate-spin' /> Atualizando...</>
@@ -174,7 +174,7 @@ function RouteComponent() {
             {selectedUnits.length === 1 ? (
               <DeleteUnit unitId={selectedUnits[0]} />
             ) : (
-              <Button size={'sm'} variant={'ghost'} disabled>
+              <Button variant={'ghost'} disabled>
                 <Trash /> Excluir
               </Button>
             )}
@@ -182,7 +182,7 @@ function RouteComponent() {
             {selectedUnits.length === 1 ? (
               <EditUnitSheet unitId={selectedUnits[0]} />
             ) : (
-              <Button size={'sm'} variant={'ghost'} disabled>
+              <Button variant={'ghost'} disabled>
                 <Edit /> Editar
               </Button>
             )}
@@ -214,7 +214,7 @@ function RouteComponent() {
               <EmptyContent>
                 <div className='flex gap-2'>
                   <NewUnitSheet />
-                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedUnits([]); refetch() }}>
+                  <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedUnits([]); refetch() }}>
                     {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
                   </Button>
                 </div>

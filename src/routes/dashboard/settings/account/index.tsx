@@ -286,7 +286,7 @@ export function CompanyProfileContent() {
                         </button>
                         <input ref={fileInputRef} type='file' accept='image/jpeg,image/png,image/webp' className='hidden' onChange={handleFileChange} />
                         {(previewUrl || (company?.image?.url && !removedLogo)) && (
-                          <Button variant='ghost' size='sm' type='button' className='text-xs font-light text-muted-foreground' onClick={handleRemoveLogo}>Remover logo</Button>
+                          <Button variant='ghost' type='button' className='text-xs font-light text-muted-foreground' onClick={handleRemoveLogo}>Remover logo</Button>
                         )}
                       </div>
                     </div>

@@ -70,7 +70,7 @@ export function EditCategorySheet({ categoryId, categories: categoriesProp = [] 
         name: values.name,
         parent_id: Number(values.parent_id ?? 0),
       }
-      return privateInstance.patch(`/api:ojk_IOB-/categories/${categoryId}`, payload)
+      return privateInstance.put(`/api:ojk_IOB-/categories/${categoryId}`, payload)
     },
     onSuccess: (response) => {
       if (response.status === 200) {

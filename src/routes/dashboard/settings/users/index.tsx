@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { privateInstance } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { RefreshCw, Edit } from 'lucide-react'
@@ -19,6 +20,8 @@ type UserCompany = {
   created_at?: number
   company_id: number
   active?: boolean
+  user_id?: number
+  owner_user?: number
   user: {
     id: number
     created_at?: number
@@ -121,6 +124,9 @@ function RouteComponent() {
 
   const selectedUc = selectedUsers.length === 1 ? usersCompanies.find((it) => it.user?.id === selectedUsers[0]) : undefined
 
+  const isOwner = !!selectedUc && selectedUc.user_id != null && selectedUc.owner_user != null && selectedUc.user_id === selectedUc.owner_user
+  const canEdit = !!selectedUc && !isOwner
+
 
 
 
@@ -149,7 +155,14 @@ function RouteComponent() {
     {
       id: 'name',
       header: 'Nome',
-      cell: (uc) => uc.user?.name ?? '-',
+      cell: (uc) => (
+        <span className="inline-flex items-center gap-2">
+          {uc.user?.name ?? '-'}
+          {uc.user_id != null && uc.owner_user != null && uc.user_id === uc.owner_user ? (
+            <Badge variant={'secondary'} title="Usuário proprietário">Proprietário</Badge>
+          ) : null}
+        </span>
+      ),
       headerClassName: 'min-w-[240px] border-r',
       className: 'min-w-[240px] border-r'
     },
@@ -229,8 +242,8 @@ function RouteComponent() {
             onClick={() => { refetch() }}>
             {(isLoading || isRefetching) ? <RefreshCw className='animate-spin w-4 h-4' /> : <RefreshCw className='w-4 h-4' />}
           </Button>
-          {selectedUc ? (
-            <EditUserCompanySheet uc={selectedUc} onSaved={() => refetch()} />
+          {canEdit ? (
+            <EditUserCompanySheet uc={selectedUc!} onSaved={() => refetch()} />
           ) : (
             <Button
               variant={'outline'}

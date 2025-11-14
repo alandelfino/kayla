@@ -126,19 +126,19 @@ function RouteComponent() {
       <div className='flex flex-col w-full h-full flex-1 overflow-hidden'>
         <div className='border-b flex w-full items-center p-2 gap-4'>
           <div className='flex items-center gap-2 flex-1'>
-            <Button variant={'outline'} size={'sm'}>
+            <Button variant={'outline'}>
               <Funnel /> Filtros
             </Button>
           </div>
           <div className='flex items-center gap-2'>
-            <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
+            <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
               {(isLoading || isRefetching) ? (<><RefreshCcw className='animate-spin' /> Atualizando...</>) : (<><RefreshCcw /> Atualizar</>)}
             </Button>
 
             {selected.length === 1 ? (
               <DeleteWarranty warrantyId={selected[0]} />
             ) : (
-              <Button size={'sm'} variant={'ghost'} disabled>
+              <Button variant={'ghost'} disabled>
                 <Trash /> Excluir
               </Button>
             )}
@@ -146,7 +146,7 @@ function RouteComponent() {
             {selected.length === 1 ? (
               <EditWarrantySheet warrantyId={selected[0]} />
             ) : (
-              <Button size={'sm'} variant={'ghost'} disabled>
+              <Button variant={'ghost'} disabled>
                 <Edit /> Editar
               </Button>
             )}
@@ -176,7 +176,7 @@ function RouteComponent() {
               <EmptyContent>
                 <div className='flex gap-2'>
                   <NewWarrantySheet />
-                  <Button size={'sm'} variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
+                  <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
                     {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
                   </Button>
                 </div>
