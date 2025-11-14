@@ -29,7 +29,6 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
     queryKey: ['teams'],
     enabled: open,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
     queryFn: async () => {
       const response = await privateInstance.get('/api:VPDORr9u/teams')
       if (response.status !== 200) throw new Error('Erro ao carregar equipes')
@@ -41,7 +40,6 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
     queryKey: ['profiles', 'for-invitations'],
     enabled: open,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
     queryFn: async () => {
       const response = await privateInstance.get('/api:BXIMsMQ7/user_profile?per_page=50')
       if (response.status !== 200) throw new Error('Erro ao carregar perfis')
@@ -78,9 +76,23 @@ export function NewInvitationSheet({ onCreated }: { onCreated?: () => void }) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant={'default'}>
-          <Send /> Novo convite
-        </Button>
+        <div className='flex items-center'>
+          <Button
+            variant={'default'}
+            size={'icon'}
+            className='xl:hidden'
+            aria-label='Novo convite por e-mail'
+            title='Enviar convite por e-mail'
+          >
+            <Send className='h-4 w-4' />
+          </Button>
+          <Button
+            variant={'default'}
+            className='hidden xl:inline-flex'
+          >
+            <Send className='h-4 w-4' /> Enviar convite
+          </Button>
+        </div>
       </SheetTrigger>
       <SheetContent className='sm:max-w-[520px]'>
         <Form {...form}>

@@ -208,12 +208,16 @@ export function DataTable<T extends { id?: number | string }>({
 
       {/* Table Footer */}
       <div className='border-t h-12 w-full p-2 flex items-center'>
-        <span className='text-sm'>
+        <span className='text-sm xl:hidden'>
+          {totalItems > 0 ? startIndex + 1 : 0} ao {endIndex} de {totalItems} iten(s).
+        </span>
+        <span className='text-sm hidden xl:inline'>
           Mostrando do {totalItems > 0 ? startIndex + 1 : 0} ao {endIndex} de {totalItems} itens.
         </span>
 
         <div className='flex items-center gap-2 flex-1 justify-end'>
-          <span className='text-sm'>Itens por página</span>
+          <span className='text-sm xl:hidden'>Por página</span>
+          <span className='text-sm hidden xl:inline'>Itens por página</span>
           <Select value={perPage.toString()} onValueChange={handlePerPageChange}>
             <SelectTrigger className='w-[90px]'>
               <SelectValue placeholder={perPage.toString()} />

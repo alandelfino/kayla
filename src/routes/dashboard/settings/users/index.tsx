@@ -1,14 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { privateInstance } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
-import { RefreshCw, CircleAlert, Edit } from 'lucide-react'
-import { toast } from 'sonner'
-import { Switch } from '@/components/ui/switch'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { RefreshCw, Edit } from 'lucide-react'
+ 
+ 
 import { EditUserCompanySheet } from './-components/edit-user-company'
 
 export const Route = createFileRoute('/dashboard/settings/users/')({
@@ -65,10 +64,10 @@ function RouteComponent() {
   const [usersCompanies, setUsersCompanies] = useState<UserCompany[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [selectedUsers, setSelectedUsers] = useState<Array<number | string>>([])
+  
 
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
     queryKey: ['users_companies', currentPage, perPage],
     queryFn: async () => {
       const response = await privateInstance.get('/api:jO41sdEd/users_companies', {
@@ -122,6 +121,10 @@ function RouteComponent() {
 
   const selectedUc = selectedUsers.length === 1 ? usersCompanies.find((it) => it.user?.id === selectedUsers[0]) : undefined
 
+  
+
+  
+
   const columns: ColumnDef<UserCompany>[] = [
     {
       id: 'select',
@@ -142,16 +145,7 @@ function RouteComponent() {
       headerClassName: 'min-w-[60px] w-[60px] border-r',
       className: 'w-[60px] min-w-[60px] font-medium border-r p-2!'
     },
-    {
-      id: 'active',
-      header: 'Ativo',
-      width: '100px',
-      cell: (uc) => (
-        <UserCompanyActionsCell uc={uc} onChanged={() => refetch()} />
-      ),
-      headerClassName: 'w-[70px] min-w-[70px] border-r',
-      className: 'w-[70px] min-w-[70px] border-r whitespace-nowrap'
-    },
+    
     {
       id: 'name',
       header: 'Nome',
@@ -226,22 +220,32 @@ function RouteComponent() {
           <h2 className='text-lg font-semibold'>Usuários</h2>
           <p className='text-sm text-muted-foreground'>Gerencie usuários vinculados à sua conta.</p>
         </div>
-        <div className='flex items-center gap-2'>
-          <Button variant={'outline'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
+        <div className='flex items-center gap-2 ml-auto'>
+          <Button 
+          variant={'ghost'} 
+          title='Atualizar lista de usuários'
+          aria-label='Atualizar lista de usuários'
+          disabled={isLoading || isRefetching} 
+          onClick={() => { refetch() }}>
             {(isLoading || isRefetching) ? <RefreshCw className='animate-spin w-4 h-4' /> : <RefreshCw className='w-4 h-4' />}
           </Button>
           {selectedUc ? (
             <EditUserCompanySheet uc={selectedUc} onSaved={() => refetch()} />
           ) : (
-            <Button variant={'ghost'} disabled title='Editar usuário'>
-              <Edit className='w-4 h-4' /> Editar
+            <Button 
+            variant={'outline'} 
+            disabled 
+            title='Editar usuário'
+            aria-label='Editar usuário'
+            >
+              <Edit className='w-4 h-4' /> <span className='hidden xl:inline'>Editar</span>
             </Button>
           )}
         </div>
       </div>
-      <div className='flex flex-col w-full h-full flex-1 overflow-hidden p-4'>
+      <div className='flex flex-col w-full h-full flex-1 overflow-hidden pl-4'>
 
-        <div className='border rounded-lg overflow-hidden h-full flex flex-col flex-1'>
+        <div className='border rounded-lg overflow-hidden h-full flex flex-col flex-1 rounded-tr-none! rounded-br-none! rounded-bl-none! border-r-0 border-b-0'>
 
           <DataTable
             columns={columns}
@@ -262,70 +266,5 @@ function RouteComponent() {
 
       </div>
     </div>
-  )
-}
-
-function UserCompanyActionsCell({ uc, onChanged }: { uc: UserCompany, onChanged?: () => void }) {
-  const isActive = uc.active === true
-  const [open, setOpen] = useState(false)
-  const [nextActive, setNextActive] = useState<boolean | null>(null)
-
-  const { isPending, mutateAsync } = useMutation({
-    mutationFn: async (nextActive: boolean) => {
-      const url = `/api:jO41sdEd/users_companies/${uc.id}/status`
-      const body = { user_company_id: uc.id, active: nextActive }
-      const response = await privateInstance.put(url, body)
-      if (response.status !== 200) throw new Error('Falha ao alterar status do usuário')
-      return response.data
-    },
-    onSuccess: () => {
-      toast.success('Status do usuário atualizado')
-      onChanged?.()
-    },
-    onError: (error: unknown) => {
-      let description: string | undefined
-      if (typeof error === 'object' && error !== null) {
-        const e = error as { response?: { data?: { message?: string } } }
-        description = e.response?.data?.message
-      }
-      toast.error('Não permitido', {
-        icon: <CircleAlert className='h-4 w-4' />,
-        description: description ?? 'Erro ao atualizar usuário'
-      })
-    }
-  })
-
-  async function confirm(nextActive: boolean) {
-    await mutateAsync(nextActive)
-  }
-
-  return (
-    <>
-      <Switch
-        checked={isActive}
-        onCheckedChange={(value) => { setNextActive(!!value); setOpen(true) }}
-        disabled={isPending}
-        aria-label={'Alternar status do usuário'}
-        title={isActive ? 'Desativar usuário' : 'Ativar usuário'}
-      />
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{nextActive ? 'Ativar usuário' : 'Desativar usuário'}</DialogTitle>
-            <DialogDescription>
-              {nextActive
-                ? 'Tem certeza que deseja ativar este usuário no workspace? Ele terá acesso ao workspace.'
-                : 'Tem certeza que deseja desativar este usuário no workspace? Ele perderá acesso até ser reativado.'}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className='flex gap-2'>
-            <Button variant={'outline'} onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button onClick={() => { if (nextActive != null) confirm(nextActive); setOpen(false) }} disabled={isPending} variant={nextActive ? 'default' : 'destructive'}>
-              Confirmar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
   )
 }

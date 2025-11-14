@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { Form, FormField, FormItem, FormLabel, FormMessage, FormControl } from '@/components/ui/form'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
@@ -16,30 +17,38 @@ type UserCompany = {
   id: number
   user_profile?: { id: number, name: string } | null
   team?: { id: number, name: string } | null
+  active?: boolean | null
+  observation?: string | null
 }
 
 const formSchema = z.object({
+  active: z.boolean().default(true),
   team_id: z.string().min(1, { message: 'Selecione a equipe' }),
   profile_id: z.string().min(1, { message: 'Selecione o perfil' }),
+  observation: z.string().optional().or(z.literal('')),
 })
 
 export function EditUserCompanySheet({ uc, onSaved }: { uc: UserCompany, onSaved?: () => void }) {
   const [open, setOpen] = useState(false)
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<z.input<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      active: uc.active === true,
       team_id: uc.team?.id ? String(uc.team.id) : '',
       profile_id: uc.user_profile?.id ? String(uc.user_profile.id) : '',
+      observation: uc.observation ?? '',
     },
   })
 
   useEffect(() => {
     if (!open) return
     form.reset({
+      active: uc.active === true,
       team_id: uc.team?.id ? String(uc.team.id) : '',
       profile_id: uc.user_profile?.id ? String(uc.user_profile.id) : '',
+      observation: uc.observation ?? '',
     })
-  }, [open, form, uc.team?.id, uc.user_profile?.id])
+  }, [open, form, uc.team?.id, uc.user_profile?.id, uc.active, uc.observation])
 
   const { data: teamsData, isLoading: isTeamsLoading } = useQuery({
     queryKey: ['teams', 'for-user-edit'],
@@ -82,10 +91,12 @@ export function EditUserCompanySheet({ uc, onSaved }: { uc: UserCompany, onSaved
   }
 
   const { isPending, mutateAsync } = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
+    mutationFn: async (values: z.input<typeof formSchema>) => {
       const payload = {
+        active: values.active === true,
         team_id: Number(values.team_id),
         profile_id: Number(values.profile_id),
+        observation: values.observation ?? '',
       }
       const response = await privateInstance.put(`/api:jO41sdEd/users_companies/${uc.id}`, payload)
       if (response.status !== 200) throw new Error('Erro ao atualizar usuário')
@@ -106,15 +117,15 @@ export function EditUserCompanySheet({ uc, onSaved }: { uc: UserCompany, onSaved
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: z.input<typeof formSchema>) {
     return mutateAsync(values)
   }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant={'ghost'} title={'Editar usuário'} aria-label={'Editar usuário'}>
-          <Edit className='h-4 w-4' /> Editar
+        <Button variant={'outline'} title={'Editar usuário'} aria-label={'Editar usuário'}>
+          <Edit className='h-4 w-4' /> <span className='hidden xl:inline'>Editar</span>
         </Button>
       </SheetTrigger>
       <SheetContent className='sm:max-w-[520px]'>
@@ -125,6 +136,36 @@ export function EditUserCompanySheet({ uc, onSaved }: { uc: UserCompany, onSaved
               <SheetDescription>Atualize equipe e perfil do usuário.</SheetDescription>
             </SheetHeader>
             <div className='flex-1 grid auto-rows-min gap-6 px-4 py-4'>
+              <FormField
+                control={form.control}
+                name='active'
+                render={({ field }) => (
+                  <div className='bg-neutral-50 p-4 flex items-center justify-between'>
+                    <div className='flex flex-col'>
+                      <FormLabel>Ativo</FormLabel>
+                      <span className='text-sm text-muted-foreground'>Controla o acesso do usuário ao workspace.</span>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} aria-label='Alternar status do usuário' />
+                    </FormControl>
+                  </div>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='observation'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observação</FormLabel>
+                    <FormControl>
+                      <textarea placeholder='Opcional' {...field}
+                        className='file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm h-28 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name='team_id'

@@ -96,7 +96,7 @@ export function EditProfileSheet({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost">
+        <Button variant="outline">
           <Edit className="w-4 h-4" />Editar
         </Button>
       </SheetTrigger>

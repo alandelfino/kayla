@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Users, RefreshCw, ArrowUpRight, SortAsc, SortDesc, Loader, CircleX } from 'lucide-react'
+import { Users, RefreshCw, ArrowUpRight, Loader, CircleX } from 'lucide-react'
 import { NewInvitationSheet } from './-components/new-invitation'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
@@ -43,8 +42,7 @@ function RouteComponent() {
   const [currentPage, setCurrentPage] = useState(1)
   const [perPage, setPerPage] = useState(20)
   const [totalItems, setTotalItems] = useState(0)
-  const [sortBy, setSortBy] = useState<'email' | 'status' | 'created_at'>('created_at')
-  const [orderBy, setOrderBy] = useState<'asc' | 'desc'>('desc')
+  
   const [selectedInvites, setSelectedInvites] = useState<number[]>([])
   const [openCancelDialog, setOpenCancelDialog] = useState(false)
 
@@ -69,10 +67,9 @@ function RouteComponent() {
 
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    queryKey: ['invitations', currentPage, perPage, sortBy, orderBy],
+    queryKey: ['invitations', currentPage, perPage],
     queryFn: async () => {
-      const response = await privateInstance.get<InvitationsResponse>(`/api:0jQElwax/invitations?page=${currentPage}&per_page=${perPage}&sort_by=${sortBy ?? 'created_at'}&order_by=${orderBy}`)
+      const response = await privateInstance.get<InvitationsResponse>(`/api:0jQElwax/invitations?page=${currentPage}&per_page=${perPage}`)
       if (response.status !== 200) {
         throw new Error('Erro ao carregar convites')
       }
@@ -85,7 +82,6 @@ function RouteComponent() {
   const { data: teamsData } = useQuery({
     queryKey: ['teams', 'for-invitations'],
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
     queryFn: async () => {
       const response = await privateInstance.get('/api:VPDORr9u/teams?per_page=50')
       if (response.status !== 200) throw new Error('Erro ao carregar equipes')
@@ -96,7 +92,6 @@ function RouteComponent() {
   const { data: profilesData } = useQuery({
     queryKey: ['profiles', 'for-invitations'],
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
     queryFn: async () => {
       const response = await privateInstance.get('/api:BXIMsMQ7/user_profile?per_page=50')
       if (response.status !== 200) throw new Error('Erro ao carregar perfis')
@@ -240,46 +235,45 @@ function RouteComponent() {
           <p className='text-sm text-muted-foreground'>Convites para novos usuários.</p>
         </div>
         <div className='flex items-center gap-3'>
-          <span className='text-sm text-neutral-600 dark:text-neutral-300 w-fit min-w-fit'>Ordenar por</span>
-          <Select value={sortBy} onValueChange={(v) => { setSortBy(v as 'email' | 'status' | 'created_at'); refetch() }}>
-            <SelectTrigger className='w-[180px]'>
-              <SelectValue placeholder='Selecione' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value='email'>E-mail</SelectItem>
-                <SelectItem value='status'>Status</SelectItem>
-                <SelectItem value='created_at'>Data de criação</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <Button
-            variant={'ghost'}
-            title={orderBy === 'asc' ? 'Ascendente' : 'Descendente'}
-            aria-label={orderBy === 'asc' ? 'Ordenação ascendente' : 'Ordenação descendente'}
-            onClick={() => { setOrderBy(orderBy === 'asc' ? 'desc' : 'asc'); refetch() }}
-          >
-            {orderBy === 'asc' ? <SortAsc /> : <SortDesc />}
-          </Button>
-          <Button variant={'outline'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => { refetch() }} aria-label='Atualizar convites'>
+          <Button 
+          variant={'ghost'} 
+          size={'sm'} disabled={isLoading || isRefetching} 
+          onClick={() => { refetch() }} 
+          title='Atualizar convites'
+          aria-label='Atualizar convites'>
             {(isLoading || isRefetching) ? <RefreshCw className='animate-spin w-4 h-4' /> : <RefreshCw className='w-4 h-4' />}
           </Button>
-          <Button
-            variant={'outline'}
-            disabled={selectedInvites.length !== 1}
-            aria-disabled={selectedInvites.length !== 1}
-            aria-label='Cancelar convite selecionado'
-            title='Cancelar convite'
-            onClick={() => setOpenCancelDialog(true)}
-          >
-            <CircleX className='w-4 h-4' /> Cancelar
-          </Button>
+          <div className='flex items-center'>
+            <Button
+              variant={'outline'}
+              size={'icon'}
+              className='xl:hidden'
+              disabled={selectedInvites.length !== 1}
+              aria-disabled={selectedInvites.length !== 1}
+              aria-label='Cancelar convite selecionado'
+              title='Cancelar convite'
+              onClick={() => setOpenCancelDialog(true)}
+            >
+              <CircleX className='w-4 h-4' />
+            </Button>
+            <Button
+              variant={'outline'}
+              className='hidden xl:inline-flex'
+              disabled={selectedInvites.length !== 1}
+              aria-disabled={selectedInvites.length !== 1}
+              aria-label='Cancelar convite selecionado'
+              title='Cancelar convite'
+              onClick={() => setOpenCancelDialog(true)}
+            >
+              <CircleX className='w-4 h-4' /> Cancelar
+            </Button>
+          </div>
           <NewInvitationSheet onCreated={() => { refetch() }} />
         </div>
       </div>
 
-      <div className='flex flex-col w-full h-full flex-1 overflow-hidden p-4'>
-        <div className='border rounded-lg overflow-hidden h-full flex flex-col flex-1'>
+      <div className='flex flex-col w-full h-full flex-1 overflow-hidden pl-4'>
+        <div className='border rounded-lg overflow-hidden h-full flex flex-col flex-1 border-r-0 border-b-0 rounded-tr-none! rounded-br-none! rounded-bl-none!'>
           <DataTable
             columns={columns}
             data={invitations}

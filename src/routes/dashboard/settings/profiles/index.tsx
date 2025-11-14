@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
-import { Edit, Funnel, RefreshCcw, Trash, Users, ArrowUpRight } from 'lucide-react'
+import { Edit, RefreshCcw, Trash, Users, ArrowUpRight, RefreshCw } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { NewProfileSheet } from './-components/new-profile'
 import { EditProfileSheet } from './-components/edit-profile'
@@ -22,6 +23,7 @@ type Profile = {
   updated_at?: number
   name: string
   users?: number | any
+  company_id?: number
 }
 
 type ProfilesResponse = {
@@ -45,7 +47,6 @@ function RouteComponent() {
 
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
     queryKey: ['profiles', currentPage, perPage],
     queryFn: async () => {
       const response = await privateInstance.get(`/api:BXIMsMQ7/user_profile?page=${currentPage}&per_page=${perPage}`)
@@ -61,7 +62,7 @@ function RouteComponent() {
   const columns: ColumnDef<Profile>[] = [
     {
       id: 'select',
-      width: '60px',
+      width: '3.75rem',
       header: (
         <div className='flex justify-center items-center text-xs text-neutral-500'>Sel.</div>
       ),
@@ -73,20 +74,27 @@ function RouteComponent() {
           />
         </div>
       ),
-      headerClassName: 'min-w-[60px] w-[60px] border-r',
-      className: 'w-[60px] min-w-[60px] border-r'
+      headerClassName: 'min-w-[3.75rem] w-[3.75rem] border-r border-neutral-200 px-4 py-2.5',
+      className: 'w-[3.75rem] min-w-[3.75rem] border-r border-neutral-200 !px-4 py-3'
     },
     {
       id: 'name',
       header: 'Nome',
-      cell: (profile) => profile.name,
-      headerClassName: 'min-w-[240px] border-r',
-      className: 'min-w-[240px] border-r'
+      cell: (profile) => (
+        <span className='inline-flex items-center gap-2'>
+          {profile.name}
+          {profile.company_id === 0 ? (
+            <Badge variant={'secondary'} title='Perfil global'>Global</Badge>
+          ) : null}
+        </span>
+      ),
+      headerClassName: 'min-w-[15rem] border-r border-neutral-200 px-4 py-2.5',
+      className: 'min-w-[15rem] border-r border-neutral-200 !px-4 py-3'
     },
     {
       id: 'users',
       header: 'Usuários',
-      width: '140px',
+      width: '8.75rem',
       cell: (profile) => {
         const users: any = (profile as any).users
         if (typeof users === 'number') return users
@@ -100,8 +108,8 @@ function RouteComponent() {
         }
         return '-'
       },
-      headerClassName: 'w-[140px] min-w-[140px] border-r',
-      className: 'w-[140px] min-w-[140px]'
+      headerClassName: 'w-[8.75rem] min-w-[8.75rem] border-r border-neutral-200 px-4 py-2.5',
+      className: 'w-[8.75rem] min-w-[8.75rem] border-r border-neutral-200 !px-4 py-3'
     },
   ]
 
@@ -148,6 +156,9 @@ function RouteComponent() {
     }
   }
 
+  const selectedProfile = selectedProfiles.length === 1 ? profiles.find((p) => p.id === selectedProfiles[0]) : undefined
+  const canEditDelete = !!selectedProfile && selectedProfile.company_id !== 0
+
   return (
     <div className='flex flex-col w-full h-full'>
       <div className='flex items-center justify-between p-4'>
@@ -156,22 +167,22 @@ function RouteComponent() {
           <p className='text-sm text-muted-foreground'>Gerencie perfis de usuários.</p>
         </div>
         <div className='flex items-center gap-2'>
-          <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedProfiles([]); refetch() }}>
-            {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+          <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelectedProfiles([]); refetch() }}>
+            {(isLoading || isRefetching) ? <RefreshCw className='animate-spin' /> : <RefreshCw />}
           </Button>
 
-          {selectedProfiles.length === 1 ? (
+          {canEditDelete ? (
             <DeleteProfile profileId={selectedProfiles[0]} />
           ) : (
-            <Button variant={'ghost'} disabled>
+            <Button variant={'outline'} disabled>
               <Trash /> Excluir
             </Button>
           )}
 
-          {selectedProfiles.length === 1 ? (
+          {canEditDelete ? (
             <EditProfileSheet profileId={selectedProfiles[0]} />
           ) : (
-            <Button variant={'ghost'} disabled>
+            <Button variant={'outline'} disabled>
               <Edit /> Editar
             </Button>
           )}
@@ -179,8 +190,8 @@ function RouteComponent() {
         </div>
       </div>
 
-      <div className='flex flex-col w-full h-full flex-1 overflow-hidden p-4'>
-        <div className='border rounded-lg overflow-hidden h-full flex flex-col flex-1'>
+      <div className='flex flex-col w-full h-full flex-1 overflow-hidden pl-4'>
+        <div className='border-t border-l border-neutral-200 rounded-tl-lg overflow-hidden h-full flex flex-col flex-1'>
           <DataTable
             columns={columns}
             data={profiles}
@@ -189,6 +200,7 @@ function RouteComponent() {
             page={currentPage}
             perPage={perPage}
             totalItems={totalItems}
+            rowClassName='h-12'
             emptyMessage='Nenhum perfil encontrado'
             emptySlot={(
               <Empty>

@@ -32,7 +32,7 @@ export function DeleteTeam({ teamId, onDeleted }: { teamId: number, onDeleted?: 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={'ghost'} disabled={isPending}>
+        <Button variant={'outline'} disabled={isPending}>
           <Trash /> Excluir
         </Button>
       </DialogTrigger>

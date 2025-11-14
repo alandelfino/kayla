@@ -67,7 +67,6 @@ function RouteComponent() {
   }
   const { data: usersCompaniesAll } = useQuery({
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
     queryKey: ['users_companies', 'for-teams-count'],
     queryFn: async () => {
       const first = await privateInstance.get<UsersCompaniesResponse>('/api:jO41sdEd/users_companies', {
@@ -101,7 +100,7 @@ function RouteComponent() {
   const columns: ColumnDef<Team>[] = [
     {
       id: 'select',
-      width: '60px',
+      width: '3.75rem',
       header: (<div className='flex justify-center items-center' />),
       cell: (team) => (
         <div className='flex justify-center items-center'>
@@ -114,26 +113,26 @@ function RouteComponent() {
           />
         </div>
       ),
-      headerClassName: 'min-w-[60px] w-[60px] border-r',
-      className: 'w-[60px] min-w-[60px] border-r'
+      headerClassName: 'min-w-[3.75rem] w-[3.75rem] border-r border-neutral-200 px-4 py-2.5',
+      className: 'w-[3.75rem] min-w-[3.75rem] border-r border-neutral-200 !px-4 py-3'
     },
     {
       id: 'name',
       header: 'Nome',
       cell: (team) => team.name,
-      headerClassName: 'min-w-[240px] border-r',
-      className: 'min-w-[240px] border-r'
+      headerClassName: 'min-w-[15rem] border-r border-neutral-200 px-4 py-2.5',
+      className: 'min-w-[15rem] border-r border-neutral-200 !px-4 py-3'
     },
     {
       id: 'users',
       header: 'Usuários',
-      width: '100px',
+      width: '6.25rem',
       cell: (team) => {
         const count = usersCountByTeam.get(team.id) ?? 0
         return count
       },
-      headerClassName: 'w-[100px] min-w-[100px] border-r',
-      className: 'w-[100px] min-w-[100px] border-r'
+      headerClassName: 'w-[6.25rem] min-w-[6.25rem] border-r border-neutral-200 px-4 py-2.5',
+      className: 'w-[6.25rem] min-w-[6.25rem] border-r border-neutral-200 !px-4 py-3'
     },
     {
       id: 'created_at',
@@ -148,8 +147,8 @@ function RouteComponent() {
           return String(ts)
         }
       },
-      headerClassName: 'w-[200px] min-w-[200px] border-r',
-      className: 'w-[200px] min-w-[200px]'
+      headerClassName: 'w-[12.5rem] min-w-[12.5rem] border-r border-neutral-200 px-4 py-2.5',
+      className: 'w-[12.5rem] min-w-[12.5rem] border-r border-neutral-200 !px-4 py-3'
     },
   ]
 
@@ -175,7 +174,7 @@ function RouteComponent() {
           <p className='text-sm text-muted-foreground'>Gerencie suas equipes e permissões.</p>
         </div>
         <div className='flex items-center gap-2'>
-          <Button variant={'outline'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
+          <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
             {(isLoading || isRefetching) ? <RefreshCw className='animate-spin' /> : <RefreshCw />}
           </Button>
           {selectedTeams.length === 1 ? (
@@ -185,21 +184,21 @@ function RouteComponent() {
             </>
           ) : (
             <>
-              <Button variant={'ghost'} disabled> <Trash className='w-4 h-4' /> Excluir</Button>
-              <Button variant={'ghost'} disabled> <Edit className='w-4 h-4' /> Editar</Button>
+              <Button variant={'outline'} disabled> <Trash className='w-4 h-4' /> Excluir</Button>
+              <Button variant={'outline'} disabled> <Edit className='w-4 h-4' /> Editar</Button>
             </>
           )}
           <NewTeamSheet onCreated={() => { refetch() }} />
         </div>
       </div>
 
-      <div className='flex flex-col w-full h-full flex-1 overflow-hidden p-4'>
-        <div className='border rounded-lg overflow-hidden h-full flex flex-col flex-1'>
+      <div className='flex flex-col w-full h-full flex-1 overflow-hidden pl-4'>
+        <div className='border border-neutral-200 rounded-tl-lg overflow-hidden h-full flex flex-col flex-1 border-r-0 border-b-0'>
           <DataTable
             columns={columns}
             data={teams}
             loading={isLoading || isRefetching}
-            rowClassName='h-14'
+            rowClassName='h-12'
             skeletonCount={3}
             page={currentPage}
             perPage={perPage}

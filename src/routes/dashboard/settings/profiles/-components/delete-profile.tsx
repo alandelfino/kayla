@@ -46,7 +46,7 @@ export function DeleteProfile({ profileId }: { profileId: number }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={'ghost'} disabled={isPending}>
+        <Button variant={'outline'} disabled={isPending}>
           <Trash /> Excluir
         </Button>
       </DialogTrigger>
