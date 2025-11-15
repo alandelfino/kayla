@@ -33,7 +33,7 @@ type Derivation = {
 
 function RouteComponent() {
   const [currentPage, setCurrentPage] = useState(1)
-  const [perPage, setPerPage] = useState(10)
+  const [perPage, setPerPage] = useState(20)
   const [selectedDerivations, setSelectedDerivations] = useState<number[]>([])
   const [totalItems, setTotalItems] = useState(0)
 

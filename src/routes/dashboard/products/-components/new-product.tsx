@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import DerivationsMultiSelect from './derivations-multi-select'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,31 +13,16 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { privateInstance } from '@/lib/auth'
 import { Switch } from '@/components/ui/switch'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { maskMoneyInput, toCents, formatMoneyFromCents } from '@/lib/format'
 
 const formSchema = z.object({
-  sku: z.string().min(1, { message: 'Campo obrigatório' }),
+  sku: z.string().min(1, { message: 'Campo obrigatório' }).regex(/^[a-z0-9-]+$/, 'Use apenas minúsculas, números e hífen (-)'),
   name: z.string().min(1, { message: 'Campo obrigatório' }),
   description: z.string().optional().or(z.literal('')),
   type: z.enum(['simple', 'with_derivations'] as const, { message: 'Campo obrigatório' }),
-  price: z.preprocess((v) => typeof v === 'number' ? v : toCents(v), z.number({ message: 'Campo obrigatório' }).int().min(0)),
-  promotional_price: z.preprocess((v) => typeof v === 'number' ? v : toCents(v), z.number().int().min(0)).optional(),
-  stock: z.preprocess(
-    (v) => {
-      if (v === '' || v === null || v === undefined) return undefined
-      if (typeof v === 'string') {
-        const cleaned = v.replace(/[^0-9,.-]/g, '').replace(',', '.')
-        const n = Number(cleaned)
-        return Number.isFinite(n) ? n : NaN
-      }
-      return v
-    },
-    z
-      .number({ message: 'Campo obrigatório' })
-      .refine((v) => !Number.isNaN(v), { message: 'Informe um número válido' })
-      .min(0, { message: 'Informe um número válido' })
-  ),
+  price: z.preprocess((v) => typeof v === 'number' ? v : toCents(v), z.number({ message: 'Campo obrigatório' }).int().min(1, 'O preço deve ser maior que zero')),
+  promotional_price: z.preprocess((v) => typeof v === 'number' ? v : toCents(v), z.number().int().min(0)),
   active: z.boolean({ message: 'Campo obrigatório' }),
   promotional_price_active: z.boolean({ message: 'Campo obrigatório' }),
   managed_inventory: z.boolean({ message: 'Campo obrigatório' }),
@@ -86,9 +71,8 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
       name: '',
       description: '',
       type: 'simple',
-      price: undefined,
-      promotional_price: undefined,
-      stock: undefined,
+      price: 0,
+      promotional_price: 0,
       active: true,
       promotional_price_active: false,
       managed_inventory: false,
@@ -98,7 +82,7 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
     }
   })
 
-  const derivationsTriggerRef = useRef<HTMLButtonElement>(null)
+  const isWithDerivations = form.watch('type') === 'with_derivations'
 
   const { isPending, mutate } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
@@ -151,72 +135,34 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
   })
 
   // Carregar derivações
-  const { data: derivationsData, isLoading: isDerivationsLoading } = useQuery({
-    queryKey: ['derivations'],
-    enabled: open,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    queryFn: async () => {
-      const response = await privateInstance.get('/api:JOs6IYNo/derivations?per_page=50')
-      if (response.status !== 200) throw new Error('Erro ao carregar derivações')
-      return response.data as any
-    }
-  })
+  
 
   // Helpers de máscara
+  function toSkuSlug(val: string) {
+    const base = String(val || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+    const spaced = base.replace(/\s+/g, '-')
+    return spaced
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-{2,}/g, '-')
+  }
   function currencyMask(val: string) { return maskMoneyInput(val) }
-  function getUnitsArray(data: any): any[] {
-    if (Array.isArray(data?.items)) return data.items
-    if (Array.isArray(data)) return data
-    return []
-  }
-  function findUnitTypeById(data: any, id?: number) {
-    if (!id) return undefined
-    const arr = getUnitsArray(data)
-    const found = arr.find((u: any) => Number(u?.id) === Number(id))
-    return found?.type as string | undefined
-  }
-  function stockMask(val: string, unitType?: string) {
-    let decimals = 0
-    if (unitType && /decimal/i.test(unitType)) {
-      const m = unitType.match(/(\d+)/)
-      decimals = m ? parseInt(m[1], 10) : 2
-    }
-    const digits = (val || '').replace(/\D/g, '')
-    if (!digits) return { text: '', value: undefined as number | undefined }
-    if (decimals === 0) {
-      const num = Number(digits)
-      return { text: num.toLocaleString('pt-BR'), value: num }
-    }
-    const num = Number(digits) / Math.pow(10, decimals)
-    return { text: num.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }), value: num }
-  }
-  function formatStockFromNumber(num?: number, unitType?: string) {
-    if (typeof num !== 'number') return ''
-    let decimals = 0
-    if (unitType && /decimal/i.test(unitType)) {
-      const m = unitType.match(/(\d+)/)
-      decimals = m ? parseInt(m[1], 10) : 2
-    }
-    return num.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
-  }
 
   // Estados de exibição mascarada
   const [priceText, setPriceText] = useState('')
   const [promoPriceText, setPromoPriceText] = useState('')
-  const [stockText, setStockText] = useState('')
-  const unitId = form.watch('unit_id')
-  const unitType = findUnitTypeById(unitsData, unitId)
+  
+  
 
   useEffect(() => {
     // Inicializa textos ao abrir/fechar e quando muda unidade
     const p = form.getValues('price')
     const pp = form.getValues('promotional_price')
-    const s = form.getValues('stock')
     setPriceText(formatMoneyFromCents(p))
     setPromoPriceText(formatMoneyFromCents(pp))
-    setStockText(formatStockFromNumber(s, unitType))
-  }, [open, unitType])
+  }, [open])
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -233,14 +179,15 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
               <SheetDescription>Cadastre um novo produto no catálogo.</SheetDescription>
             </SheetHeader>
 
-            <div className='flex-1 px-4 py-4'>
+            <div className='flex-1 overflow-y-auto px-4 py-4'>
+              
               <Tabs defaultValue='geral' className='flex-1'>
                 <TabsList>
                   <TabsTrigger value='geral' className='px-4'>Geral</TabsTrigger>
                   <TabsTrigger value='descricao' className='px-4'>Descrição</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value='geral'>
+                <TabsContent value='geral' className='mt-4'>
                   <div className='grid auto-rows-min gap-6'>
                     <div className='grid grid-cols-1 md:grid-cols-[150px_1fr] gap-4'>
                       <FormField control={form.control} name='sku' render={({ field }) => (
@@ -248,9 +195,10 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                           <FormLabel>SKU</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder='Código interno do produto'
+                              placeholder='SKU'
                               className='min-w-[120px] w-[150px] max-w-[150px]'
-                              {...field}
+                              value={field.value ?? ''}
+                              onChange={(e) => field.onChange(toSkuSlug(e.target.value))}
                               disabled={isPending}
                             />
                           </FormControl>
@@ -268,68 +216,13 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                         </FormItem>
                       )} />
                     </div>
-
-                    {form.watch('type') === 'with_derivations' && (
-                      <FormField control={form.control} name='derivation_ids' render={({ field }) => {
-                        const selectedIds = field.value || []
-                        const derivations = Array.isArray((derivationsData as any)?.items)
-                          ? (derivationsData as any).items
-                          : Array.isArray(derivationsData)
-                            ? (derivationsData as any)
-                            : []
-                        return (
-                          <FormItem>
-                            <FormLabel>Derivações</FormLabel>
-                            <FormControl>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button ref={derivationsTriggerRef} type='button' variant='outline' disabled={isDerivationsLoading || isPending} className='justify-between w-full'>
-                                    {selectedIds.length > 0 ? `${selectedIds.length} selecionada(s)` : 'Selecione as derivações'}
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent style={{ width: derivationsTriggerRef.current?.offsetWidth }}>
-                                  <DropdownMenuLabel>Disponíveis</DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-                                  {isDerivationsLoading && (
-                                    <div className='px-2 py-1.5 text-sm text-muted-foreground'>Carregando...</div>
-                                  )}
-                                  {!isDerivationsLoading && derivations?.length === 0 && (
-                                    <div className='px-2 py-1.5 text-sm text-muted-foreground'>Nenhuma derivação encontrada</div>
-                                  )}
-                                  {derivations?.map((d: any) => {
-                                    const id = typeof d?.id === 'number' ? d.id : Number(d?.id)
-                                    const name = d?.name ?? d?.title ?? `Derivação ${id}`
-                                    const checked = selectedIds.includes(id)
-                                    return (
-                                      <DropdownMenuCheckboxItem key={id} checked={checked}
-                                        onCheckedChange={(next) => {
-                                          const current = new Set(selectedIds)
-                                          if (next) current.add(id)
-                                          else current.delete(id)
-                                          const nextArr = Array.from(current)
-                                          form.setValue('derivation_ids', nextArr, { shouldDirty: true, shouldValidate: true })
-                                        }}
-                                      >
-                                        {name}
-                                      </DropdownMenuCheckboxItem>
-                                    )
-                                  })}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )
-                      }} />
-                    )}
-
-                    <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                    <div className='grid grid-cols-1 gap-4'>
                       <FormField control={form.control} name='type' render={({ field }) => (
                         <FormItem>
                           <FormLabel>Tipo</FormLabel>
                           <FormControl>
                             <Select value={field.value} onValueChange={field.onChange}>
-                              <SelectTrigger className='w-full'>
+                              <SelectTrigger className='w-full' aria-label='Tipo do produto'>
                                 <SelectValue placeholder='Selecione o tipo' />
                               </SelectTrigger>
                               <SelectContent>
@@ -343,7 +236,25 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                           <FormMessage />
                         </FormItem>
                       )} />
+                      <div className={`overflow-hidden transition-all duration-200 ease-in-out ${isWithDerivations ? 'opacity-100 translate-y-0 max-h-[500px]' : 'opacity-0 -translate-y-1 max-h-0'}`}>
+                        <FormField control={form.control} name='derivation_ids' render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Derivações</FormLabel>
+                            <FormControl>
+                              <DerivationsMultiSelect
+                                value={field.value || []}
+                                onChange={(next) => form.setValue('derivation_ids', next, { shouldDirty: true, shouldValidate: true })}
+                                disabled={isPending}
+                                enabled={open}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                      </div>
+                    </div>
 
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                       <FormField control={form.control} name='price' render={({ field }) => (
                         <FormItem>
                           <FormLabel>Preço</FormLabel>
@@ -360,26 +271,6 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                           <FormMessage />
                         </FormItem>
                       )} />
-
-                      <FormField control={form.control} name='stock' render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Estoque</FormLabel>
-                          <FormControl>
-                            <Input type='text' inputMode='numeric' placeholder={unitType && /decimal/i.test(unitType) ? '0,00' : '0'} value={stockText}
-                              onChange={(e) => {
-                                const { text, value } = stockMask(e.target.value, unitType)
-                                setStockText(text)
-                                field.onChange(value)
-                              }}
-                              disabled={isPending}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                    </div>
-
-                    <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                       <FormField control={form.control} name='promotional_price' render={({ field }) => (
                         <FormItem>
                           <FormLabel>Preço promocional</FormLabel>
@@ -396,7 +287,9 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                           <FormMessage />
                         </FormItem>
                       )} />
+                    </div>
 
+                    <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                       <FormField control={form.control} name='unit_id' render={({ field }) => (
                         <FormItem>
                           <FormLabel>Unidade</FormLabel>
@@ -501,7 +394,7 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                   </div>
                 </TabsContent>
 
-                <TabsContent value='descricao'>
+                <TabsContent value='descricao' className='mt-4'>
                   <div className='grid auto-rows-min gap-6'>
                     <FormField control={form.control} name='description' render={({ field }) => (
                       <FormItem>
