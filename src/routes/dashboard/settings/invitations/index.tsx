@@ -10,6 +10,7 @@ import { Users, RefreshCw, ArrowUpRight, Loader, CircleX } from 'lucide-react'
 import { NewInvitationSheet } from './-components/new-invitation'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
+import { getCompanyTimeZone, getCompanyConfig, formatDateByCompany } from '@/lib/format'
 
 export const Route = createFileRoute('/dashboard/settings/invitations/')({
   component: RouteComponent,
@@ -200,12 +201,59 @@ function RouteComponent() {
       id: 'created_at',
       header: 'Enviado em',
       cell: (i) => {
-        if (!i.created_at) return '-'
+        const raw = i.created_at
+        if (!raw) return '-'
+        function normalizeToMs(v: string | number | undefined): number | undefined {
+          if (v == null) return undefined
+          if (typeof v === 'number') {
+            const abs = Math.abs(v)
+            if (abs < 1e11) return Math.round(v * 1000)
+            if (abs > 1e14) return Math.round(v / 1000)
+            return v
+          }
+          const s = String(v).trim()
+          if (/^\d+$/.test(s)) {
+            const n = Number(s)
+            const abs = Math.abs(n)
+            if (abs < 1e11) return Math.round(n * 1000)
+            if (abs > 1e14) return Math.round(n / 1000)
+            return n
+          }
+          const t = Date.parse(s)
+          return Number.isFinite(t) ? t : undefined
+        }
+        const ms = normalizeToMs(raw)
+        if (!ms) return String(raw)
         try {
-          const d = new Date(i.created_at)
-          return d.toLocaleString()
+          const tz = getCompanyTimeZone()
+          const d = new Date(ms)
+          const parts = new Intl.DateTimeFormat('en-US', {
+            timeZone: tz,
+            hour12: false,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          }).formatToParts(d)
+          const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+          const dd = get('day')
+          const MM = get('month')
+          const yyyy = get('year')
+          const HH = get('hour')
+          const mm = get('minute')
+          const ss = get('second')
+          const cfg = getCompanyConfig()
+          const mask = String(cfg?.date_format ?? 'dd/mm/yyyy HH:mm:ss')
+          const date = /^dd\/mm\/yyyy(\s|\-|$)/i.test(mask)
+            ? `${dd}/${MM}/${yyyy}`
+            : /^yyyy\/mm\/dd(\s|\-|$)/i.test(mask)
+            ? `${yyyy}/${MM}/${dd}`
+            : `${dd}/${MM}/${yyyy}`
+          return `${date} ${HH}:${mm}:${ss}`
         } catch {
-          return i.created_at
+          return formatDateByCompany(ms)
         }
       },
       headerClassName: 'w-[200px] min-w-[200px] border-r',

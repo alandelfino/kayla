@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { RefreshCw, Edit } from 'lucide-react'
+import { formatDateByCompany, getCompanyTimeZone, getCompanyConfig } from '@/lib/format'
 
 
 import { EditUserCompanySheet } from './-components/edit-user-company'
@@ -192,13 +193,14 @@ function RouteComponent() {
       header: 'Criado em',
       cell: (uc) => {
         const ts = uc.user?.created_at ?? uc.created_at
-        if (!ts) return '-'
-        try {
-          const d = new Date(ts)
-          return d.toLocaleString()
-        } catch {
-          return String(ts)
-        }
+        const d = fmtDateOnly(ts)
+        const t = fmtTimeOnly(ts)
+        return (
+          <span className='inline-flex items-center'>
+            <span className='text-sm'>{d || '-'}</span>
+            {t ? <span className='ml-1 text-sm'>{t}</span> : null}
+          </span>
+        )
       },
       headerClassName: 'w-[200px] min-w-[200px] border-r',
       className: 'w-[200px] min-w-[200px]'
@@ -281,3 +283,55 @@ function RouteComponent() {
     </div>
   )
 }
+  const normalizeEpoch = (v?: number): number | undefined => {
+    if (typeof v !== 'number' || !Number.isFinite(v)) return undefined
+    const abs = Math.abs(v)
+    if (abs < 1e11) return Math.round(v * 1000)
+    if (abs > 1e14) return Math.round(v / 1000)
+    return v
+  }
+  const fmtDateOnly = (v?: number) => {
+    const ms = normalizeEpoch(v)
+    if (!ms) return '-'
+    try {
+      const tz = getCompanyTimeZone()
+      const d = new Date(ms)
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour12: false,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).formatToParts(d)
+      const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+      const dd = get('day')
+      const MM = get('month')
+      const yyyy = get('year')
+      const cfg = getCompanyConfig()
+      const mask = String(cfg?.date_format ?? 'dd/mm/yyyy HH:mm:ss')
+      if (/^dd\/mm\/yyyy(\s|\-|$)/i.test(mask)) return `${dd}/${MM}/${yyyy}`
+      if (/^yyyy\/mm\/dd(\s|\-|$)/i.test(mask)) return `${yyyy}/${MM}/${dd}`
+      return `${dd}/${MM}/${yyyy}`
+    } catch {
+      return formatDateByCompany(ms)
+    }
+  }
+  const fmtTimeOnly = (v?: number) => {
+    const ms = normalizeEpoch(v)
+    if (!ms) return ''
+    try {
+      const tz = getCompanyTimeZone()
+      const d = new Date(ms)
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }).formatToParts(d)
+      const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+      return `${get('hour')}:${get('minute')}:${get('second')}`
+    } catch {
+      return ''
+    }
+  }

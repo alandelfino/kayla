@@ -5,7 +5,9 @@ import { privateInstance } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
-import { RefreshCw, FileText } from 'lucide-react'
+import { RefreshCw, FileText, CreditCard } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { formatarMoeda, fromCents, formatDateByCompany, getCompanyTimeZone, getCompanyConfig } from '@/lib/format'
 
 export const Route = createFileRoute('/dashboard/settings/billings/')({
   component: RouteComponent,
@@ -20,10 +22,12 @@ type Billing = {
   period_end?: number
   due_date?: number
   status?: 'pending' | 'canceled' | 'paid' | 'overdue'
-  amount?: number
+  commission_amount?: number
+  fixed_amount?: number
   total_sales?: number
   percentage_applied?: number
   total_orders?: number
+  total_amount?: number
 }
 
 type BillingsResponse = {
@@ -47,6 +51,7 @@ function RouteComponent() {
   const [perPage, setPerPage] = useState(20)
   const [billings, setBillings] = useState<Billing[]>([])
   const [totalItems, setTotalItems] = useState(0)
+  const [selectedBillingId, setSelectedBillingId] = useState<number | null>(null)
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
     refetchOnWindowFocus: false,
@@ -62,50 +67,104 @@ function RouteComponent() {
     }
   })
 
+  const normalizeEpoch = (v?: number): number | undefined => {
+    if (typeof v !== 'number' || !Number.isFinite(v)) return undefined
+    const abs = Math.abs(v)
+    if (abs < 1e11) return Math.round(v * 1000)
+    if (abs > 1e14) return Math.round(v / 1000)
+    return v
+  }
   const fmtDate = (v?: number) => {
-    if (!v) return '-'
-    try { return new Date(v).toLocaleDateString() } catch { return String(v) }
+    const ms = normalizeEpoch(v)
+    return formatDateByCompany(ms)
   }
-  const fmtCurrency = (v?: number) => {
-    if (typeof v !== 'number') return '-'
-    try { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v) } catch { return v.toLocaleString('pt-BR') }
+  const fmtCurrency = (v?: number) => formatarMoeda(fromCents(v))
+  const fmtDateOnly = (v?: number) => {
+    const ms = normalizeEpoch(v)
+    if (!ms) return '-'
+    try {
+      const tz = getCompanyTimeZone()
+      const d = new Date(ms)
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour12: false,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).formatToParts(d)
+      const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+      const dd = get('day')
+      const MM = get('month')
+      const yyyy = get('year')
+      const cfg = getCompanyConfig()
+      const mask = String(cfg?.date_format ?? 'dd/mm/yyyy HH:mm:ss')
+      if (/^dd\/mm\/yyyy(\s|\-|$)/i.test(mask)) return `${dd}/${MM}/${yyyy}`
+      if (/^yyyy\/mm\/dd(\s|\-|$)/i.test(mask)) return `${yyyy}/${MM}/${dd}`
+      return `${dd}/${MM}/${yyyy}`
+    } catch {
+      const s = fmtDate(v)
+      const m1 = String(s).match(/(\d{2})\/(\d{2})\/(\d{4})/)
+      if (m1) return `${m1[1]}/${m1[2]}/${m1[3]}`
+      const m2 = String(s).match(/(\d{4})\/(\d{2})\/(\d{2})/)
+      if (m2) return `${m2[1]}/${m2[2]}/${m2[3]}`
+      return String(s)
+    }
   }
-  const fmtNumber = (v?: number) => {
-    if (typeof v !== 'number') return '-'
-    return v.toLocaleString('pt-BR')
+  const fmtTimeOnly = (v?: number) => {
+    const ms = normalizeEpoch(v)
+    if (!ms) return ''
+    try {
+      const tz = getCompanyTimeZone()
+      const d = new Date(ms)
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }).formatToParts(d)
+      const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+      return `${get('hour')}:${get('minute')}:${get('second')}`
+    } catch {
+      return ''
+    }
   }
+  
 
   const columns: ColumnDef<Billing>[] = [
     {
+      id: 'select',
+      header: () => (<div className='flex justify-center items-center' />),
+      cell: (i) => (
+        <div className='flex justify-center items-center'>
+          <Checkbox
+            checked={selectedBillingId === i.id}
+            onCheckedChange={(checked) => setSelectedBillingId(checked ? i.id : null)}
+            aria-label='Selecionar cobrança'
+          />
+        </div>
+      ),
+      headerClassName: 'w-[70px] min-w-[70px] border-r',
+      className: 'w-[70px] min-w-[70px]'
+    },
+    {
       id: 'info',
-      header: 'Informações',
+      header: 'Período',
       cell: (i) => {
-        const start = fmtDate(i.period_start)
-        const end = fmtDate(i.period_end)
+        const start = fmtDateOnly(i.period_start)
+        const end = fmtDateOnly(i.period_end)
+        const startT = fmtTimeOnly(i.period_start)
+        const endT = fmtTimeOnly(i.period_end)
         return (
-          <div className='flex flex-col gap-2'>
-            <div className='flex items-center gap-2'>
-              <FileText className='h-4 w-4 text-muted-foreground' />
-              <span className='text-sm font-medium'>Período</span>
-              <span className='text-sm text-muted-foreground'>{start} — {end}</span>
+          <div className='flex items-center gap-4'>
+            <div className='flex items-center'>
+              <span className='text-sm'>{start}</span>
+              {startT ? <span className='ml-1 text-sm'>{startT}</span> : null}
             </div>
-            <div className='flex flex-wrap gap-2'>
-              <div className='inline-flex items-center gap-1 px-2 py-1 rounded-md border border-neutral-200 bg-neutral-50'>
-                <span className='text-xs text-muted-foreground'>Valor</span>
-                <span className='text-sm'>{fmtCurrency(i.amount)}</span>
-              </div>
-              <div className='inline-flex items-center gap-1 px-2 py-1 rounded-md border border-neutral-200 bg-neutral-50'>
-                <span className='text-xs text-muted-foreground'>Vendas</span>
-                <span className='text-sm'>{fmtNumber(i.total_sales)}</span>
-              </div>
-              <div className='inline-flex items-center gap-1 px-2 py-1 rounded-md border border-neutral-200 bg-neutral-50'>
-                <span className='text-xs text-muted-foreground'>Pedidos</span>
-                <span className='text-sm'>{fmtNumber(i.total_orders)}</span>
-              </div>
-              <div className='inline-flex items-center gap-1 px-2 py-1 rounded-md border border-neutral-200 bg-neutral-50'>
-                <span className='text-xs text-muted-foreground'>Percentual</span>
-                <span className='text-sm'>{typeof i.percentage_applied === 'number' ? `${i.percentage_applied}%` : '-'}</span>
-              </div>
+            <span className='text-sm'>até</span>
+            <div className='flex items-center'>
+              <span className='text-sm'>{end}</span>
+              {endT ? <span className='ml-1 text-sm'>{endT}</span> : null}
             </div>
           </div>
         )
@@ -117,13 +176,22 @@ function RouteComponent() {
       id: 'due_date',
       header: 'Vencimento',
       cell: (i) => {
-        if (!i.due_date) return '-'
-        try {
-          return new Date(i.due_date).toLocaleDateString()
-        } catch {
-          return String(i.due_date)
-        }
+        const d = fmtDateOnly(i.due_date)
+        const t = fmtTimeOnly(i.due_date)
+        return (
+          <div className='flex items-center'>
+            <span className='text-sm'>{d || '-'}</span>
+            {t ? <span className='ml-1 text-sm'>{t}</span> : null}
+          </div>
+        )
       },
+      headerClassName: 'w-[140px] min-w-[140px] border-r',
+      className: 'w-[140px] min-w-[140px]'
+    },
+    {
+      id: 'total_amount',
+      header: 'Total',
+      cell: (i) => fmtCurrency(i.total_amount),
       headerClassName: 'w-[140px] min-w-[140px] border-r',
       className: 'w-[140px] min-w-[140px]'
     },
@@ -163,16 +231,19 @@ function RouteComponent() {
       id: 'created_at',
       header: 'Criado em',
       cell: (i) => {
-        if (!i.created_at) return '-'
-        try {
-          return new Date(i.created_at).toLocaleString()
-        } catch {
-          return String(i.created_at)
-        }
+        const d = fmtDateOnly(i.created_at)
+        const t = fmtTimeOnly(i.created_at)
+        return (
+          <div className='flex items-center'>
+            <span className='text-sm'>{d || '-'}</span>
+            {t ? <span className='ml-1 text-sm'>{t}</span> : null}
+          </div>
+        )
       },
       headerClassName: 'w-[200px] min-w-[200px] border-r',
       className: 'w-[200px] min-w-[200px]'
     },
+    
   ]
 
   useEffect(() => {
@@ -205,6 +276,17 @@ function RouteComponent() {
           </Button>
           <Button
             variant={'outline'}
+            size={'icon'}
+            className='xl:hidden'
+            aria-label='Detalhes da cobrança'
+            title='Detalhes da cobrança'
+            disabled={!selectedBillingId}
+            aria-disabled={!selectedBillingId}
+          >
+            <FileText className='w-4 h-4' />
+          </Button>
+          <Button
+            variant={'outline'}
             className='hidden xl:inline-flex'
             disabled={isLoading || isRefetching}
             aria-disabled={isLoading || isRefetching}
@@ -213,6 +295,28 @@ function RouteComponent() {
             onClick={() => { refetch() }}
           >
             {(isLoading || isRefetching) ? <><RefreshCw className='animate-spin w-4 h-4' /> Atualizando...</> : <><RefreshCw className='w-4 h-4' /> Atualizar</>}
+          </Button>
+          <Button
+            variant={'outline'}
+            className='hidden xl:inline-flex'
+            aria-label='Detalhes da cobrança'
+            title='Detalhes da cobrança'
+            disabled={!selectedBillingId}
+            aria-disabled={!selectedBillingId}
+          >
+            <FileText className='w-4 h-4' />
+            Detalhes
+          </Button>
+          <Button
+            variant={'outline'}
+            className='hidden xl:inline-flex'
+            aria-label='Pagar cobrança'
+            title='Pagar cobrança'
+            disabled={!selectedBillingId}
+            aria-disabled={!selectedBillingId}
+          >
+            <CreditCard className='w-4 h-4' />
+            Pagar
           </Button>
         </div>
       </div>

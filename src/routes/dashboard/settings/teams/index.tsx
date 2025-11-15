@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { Users, ArrowUpRight, Trash, Edit, RefreshCw } from 'lucide-react'
+import { getCompanyTimeZone, getCompanyConfig, formatDateByCompany } from '@/lib/format'
 import { NewTeamSheet } from './-components/new-team'
 import { EditTeamSheet } from './-components/edit-team'
 import { DeleteTeam } from './-components/delete-team'
@@ -186,12 +187,50 @@ function RouteComponent() {
       header: 'Criado em',
       cell: (team) => {
         const ts = team.created_at
-        if (!ts) return '-'
+        const normalizeEpoch = (v?: number): number | undefined => {
+          if (typeof v !== 'number' || !Number.isFinite(v)) return undefined
+          const abs = Math.abs(v)
+          if (abs < 1e11) return Math.round(v * 1000)
+          if (abs > 1e14) return Math.round(v / 1000)
+          return v
+        }
+        const ms = normalizeEpoch(ts)
+        if (!ms) return '-'
         try {
-          const d = new Date(ts)
-          return d.toLocaleString()
+          const tz = getCompanyTimeZone()
+          const d = new Date(ms)
+          const parts = new Intl.DateTimeFormat('en-US', {
+            timeZone: tz,
+            hour12: false,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          }).formatToParts(d)
+          const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+          const dd = get('day')
+          const MM = get('month')
+          const yyyy = get('year')
+          const HH = get('hour')
+          const mm = get('minute')
+          const ss = get('second')
+          const cfg = getCompanyConfig()
+          const mask = String(cfg?.date_format ?? 'dd/mm/yyyy HH:mm:ss')
+          const date = /^dd\/mm\/yyyy(\s|\-|$)/i.test(mask)
+            ? `${dd}/${MM}/${yyyy}`
+            : /^yyyy\/mm\/dd(\s|\-|$)/i.test(mask)
+            ? `${yyyy}/${MM}/${dd}`
+            : `${dd}/${MM}/${yyyy}`
+          return (
+            <span className='inline-flex items-center'>
+              <span className='text-sm'>{date}</span>
+              <span className='ml-1 text-sm'>{`${HH}:${mm}:${ss}`}</span>
+            </span>
+          )
         } catch {
-          return String(ts)
+          return formatDateByCompany(ms)
         }
       },
       headerClassName: 'w-[12.5rem] min-w-[12.5rem] border-r border-neutral-200 px-4 py-2.5',

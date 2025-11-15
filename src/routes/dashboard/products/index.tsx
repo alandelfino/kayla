@@ -59,13 +59,9 @@ function normalizeResponse(data: ProductsResponse) {
   return { items, itemsTotal, pageTotal }
 }
 
+import { formatMoneyFromCents } from '@/lib/format'
 function formatCurrencyBRL(value?: number) {
-  const n = typeof value === 'number' ? value : 0
-  try {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
-  } catch {
-    return `R$ ${n.toFixed(2)}`
-  }
+  return formatMoneyFromCents(value)
 }
 
 function RouteComponent() {

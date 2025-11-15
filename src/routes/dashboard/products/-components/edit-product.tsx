@@ -13,44 +13,15 @@ import { toast } from 'sonner'
 import { privateInstance } from '@/lib/auth'
 import { Switch } from '@/components/ui/switch'
 import { useEffect, useState } from 'react'
+import { maskMoneyInput, toCents, formatMoneyFromCents } from '@/lib/format'
 
 const formSchema = z.object({
   sku: z.string().min(1, { message: 'Campo obrigatório' }),
   name: z.string().min(1, { message: 'Campo obrigatório' }),
   description: z.string().optional().or(z.literal('')),
   type: z.enum(['simple', 'with_derivations'] as const, { message: 'Campo obrigatório' }),
-  price: z.preprocess(
-    (v) => {
-      if (v === '' || v === null || v === undefined) return undefined
-      if (typeof v === 'string') {
-        const cleaned = v.replace(/[^0-9,.-]/g, '').replace(',', '.')
-        const n = Number(cleaned)
-        return Number.isFinite(n) ? n : NaN
-      }
-      return v
-    },
-    z
-      .number({ message: 'Campo obrigatório' })
-      .refine((v) => !Number.isNaN(v), { message: 'Informe um número válido' })
-      .min(0, { message: 'Informe um número válido' })
-  ),
-  promotional_price: z
-    .preprocess(
-      (v) => {
-        if (v === '' || v === null || v === undefined) return undefined
-        if (typeof v === 'string') {
-          const cleaned = v.replace(/[^0-9,.-]/g, '').replace(',', '.')
-          const n = Number(cleaned)
-          return Number.isFinite(n) ? n : NaN
-        }
-        return v
-      },
-      z
-        .number({ message: 'Informe um número válido' })
-        .refine((v) => !Number.isNaN(v), { message: 'Informe um número válido' })
-        .min(0)
-    )
-    .optional(),
+  price: z.preprocess((v) => typeof v === 'number' ? v : toCents(v), z.number({ message: 'Campo obrigatório' }).int().min(0)),
+  promotional_price: z.preprocess((v) => typeof v === 'number' ? v : toCents(v), z.number().int().min(0)).optional(),
   stock: z.preprocess(
     (v) => {
       if (v === '' || v === null || v === undefined) return undefined
@@ -194,16 +165,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
   })
 
   // Helpers de máscara
-  function formatCurrencyBRLFromNumber(num?: number) {
-    if (typeof num !== 'number') return ''
-    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  }
-  function currencyMask(val: string) {
-    const digits = (val || '').replace(/\D/g, '')
-    if (!digits) return { text: '', value: undefined as number | undefined }
-    const num = Number(digits) / 100
-    return { text: num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }), value: num }
-  }
+  function currencyMask(val: string) { return maskMoneyInput(val) }
   function getUnitsArray(data: any): any[] {
     if (Array.isArray(data?.items)) return data.items
     if (Array.isArray(data)) return data
@@ -251,8 +213,8 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
     const p = form.getValues('price')
     const pp = form.getValues('promotional_price')
     const s = form.getValues('stock')
-    setPriceText(formatCurrencyBRLFromNumber(p))
-    setPromoPriceText(formatCurrencyBRLFromNumber(pp))
+    setPriceText(formatMoneyFromCents(p))
+    setPromoPriceText(formatMoneyFromCents(pp))
     setStockText(formatStockFromNumber(s, unitType))
   }, [open, unitType])
 
