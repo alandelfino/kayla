@@ -74,7 +74,7 @@ loginInstance.interceptors.response.use((response) => {
 })
 
 const privateInstance = axios.create({
-    baseURL: "https:server.directacrm.com.br",
+    baseURL: "https://server.directacrm.com.br",
 })
 
 privateInstance.interceptors.request.use((config) => {
