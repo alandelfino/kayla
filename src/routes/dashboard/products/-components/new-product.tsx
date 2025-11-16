@@ -2,7 +2,8 @@ import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import DerivationsMultiSelect from './derivations-multi-select'
+import { TagsSelect } from '@/components/tags-select'
+import CategoryTreeSelect from '@/components/category-tree-select'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,10 +14,10 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { privateInstance } from '@/lib/auth'
 import { Switch } from '@/components/ui/switch'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { maskMoneyInput, toCents, formatMoneyFromCents, getCurrencyInfo } from '@/lib/format'
 
-const formSchema = z.object({
+  const formSchema = z.object({
   sku: z.string().min(1, { message: 'Campo obrigatório' }).regex(/^[a-z0-9-]+$/, 'Use apenas minúsculas, números e hífen (-)'),
   name: z.string().min(1, { message: 'Campo obrigatório' }),
   description: z.string().optional().or(z.literal('')),
@@ -55,7 +56,9 @@ const formSchema = z.object({
       .int()
   ),
   derivation_ids: z.array(z.number()).default([]),
-}).superRefine((data, ctx) => {
+  warranty_ids: z.array(z.number()).default([]),
+  category_ids: z.array(z.number()).min(1, 'Selecione pelo menos uma categoria').default([]),
+  }).superRefine((data, ctx) => {
   if (data.type === 'with_derivations' && (!data.derivation_ids || data.derivation_ids.length === 0)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['derivation_ids'], message: 'Selecione pelo menos uma derivação' })
   }
@@ -79,6 +82,8 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
       unit_id: undefined,
       brand_id: undefined,
       derivation_ids: [],
+      category_ids: [],
+      warranty_ids: [],
     }
   })
 
@@ -136,6 +141,73 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
 
   // Carregar derivações
   
+  // Carregar categorias
+  type ApiCategory = { id: number | string; name: string; parent_id?: number | string | null; children?: ApiCategory[] }
+  const { data: categoriesResponse } = useQuery({
+    queryKey: ['categories'],
+    enabled: open,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    queryFn: async () => {
+      const res = await privateInstance.get('/api:ojk_IOB-/categories?page=1&per_page=50')
+      if (res.status !== 200) throw new Error('Erro ao carregar categorias')
+      return res.data
+    },
+  })
+  const categories: ApiCategory[] = useMemo(() => {
+    const d: any = categoriesResponse
+    if (!d) return []
+    if (Array.isArray(d)) return d as ApiCategory[]
+    if (Array.isArray(d.items)) return d.items as ApiCategory[]
+    if (Array.isArray(d.categories)) return d.categories as ApiCategory[]
+    if (Array.isArray(d.data)) return d.data as ApiCategory[]
+    return []
+  }, [categoriesResponse])
+  const { items: categoryItems, rootChildren: categoryRootChildren } = useMemo(() => {
+    const items: Record<string, { name: string; children?: string[] }> = {}
+    const rootChildren: string[] = []
+    if (!categories || categories.length === 0) return { items, rootChildren }
+    const hasNested = categories.some((c) => Array.isArray(c.children) && c.children!.length > 0)
+    if (hasNested) {
+      const visit = (cat: ApiCategory, isRootChild: boolean) => {
+        const id = String(cat.id)
+        items[id] = { name: cat.name, children: [] }
+        if (isRootChild) rootChildren.push(id)
+        if (Array.isArray(cat.children)) {
+          for (const child of cat.children) {
+            const childId = String(child.id)
+            items[id].children!.push(childId)
+            visit(child, false)
+          }
+        }
+      }
+      for (const cat of categories) visit(cat, true)
+    } else {
+      const childrenMap = new Map<string, string[]>()
+      const byId = new Map<string, ApiCategory>()
+      const getId = (c: ApiCategory) => String(c.id)
+      const getParent = (c: ApiCategory) => {
+        const raw = c.parent_id as unknown as string | number | null | undefined
+        const pid = raw == null || raw === 0 || raw === '0' ? null : String(raw)
+        return pid
+      }
+      for (const c of categories) {
+        const id = getId(c)
+        byId.set(id, c)
+        childrenMap.set(id, [])
+      }
+      for (const c of categories) {
+        const id = getId(c)
+        const parentId = getParent(c)
+        if (parentId && childrenMap.has(parentId)) childrenMap.get(parentId)!.push(id)
+        else rootChildren.push(id)
+      }
+      for (const [id, cat] of byId.entries()) {
+        items[id] = { name: cat.name, children: childrenMap.get(id) }
+      }
+    }
+    return { items, rootChildren }
+  }, [categories])
 
   // Helpers de máscara
   const { code } = getCurrencyInfo()
@@ -180,7 +252,9 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
         managed_inventory: false,
         unit_id: undefined,
         brand_id: undefined,
+        warranty: '',
         derivation_ids: [],
+        category_ids: [],
       })
       setPriceText('')
       setPromoPriceText('')
@@ -240,6 +314,24 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                       )} />
                     </div>
                     <div className='grid grid-cols-1 gap-4'>
+                      <FormField control={form.control} name='category_ids' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Categorias</FormLabel>
+                          <FormControl>
+                            <CategoryTreeSelect
+                              value={field.value || []}
+                              onChange={(next) => form.setValue('category_ids', next, { shouldDirty: true, shouldValidate: true })}
+                              disabled={isPending}
+                              items={categoryItems}
+                              rootChildren={categoryRootChildren}
+                              placeholder='Selecione as categorias...'
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
+                    <div className='grid grid-cols-1 gap-4'>
                       <FormField control={form.control} name='type' render={({ field }) => (
                         <FormItem>
                           <FormLabel>Tipo</FormLabel>
@@ -264,11 +356,21 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                           <FormItem>
                             <FormLabel>Derivações</FormLabel>
                             <FormControl>
-                              <DerivationsMultiSelect
+                              <TagsSelect
                                 value={field.value || []}
-                                onChange={(next) => form.setValue('derivation_ids', next, { shouldDirty: true, shouldValidate: true })}
+                                onChange={(next) => form.setValue('derivation_ids', (next as any[]).map((v) => Number(v)).filter((n) => Number.isFinite(n)), { shouldDirty: true, shouldValidate: true })}
                                 disabled={isPending}
                                 enabled={open}
+                                queryKey={['derivations']}
+                                fetcher={async () => {
+                                  const response = await privateInstance.get('/api:JOs6IYNo/derivations?per_page=50')
+                                  if (response.status !== 200) throw new Error('Erro ao carregar derivações')
+                                  return response.data as any
+                                }}
+                                getId={(item: any) => item?.id}
+                                getLabel={(item: any) => item?.name ?? item?.title ?? `#${item?.id}`}
+                                placeholder='Selecione as derivações...'
+                                searchPlaceholder='Digite para pesquisar'
                               />
                             </FormControl>
                             <FormMessage />
@@ -312,7 +414,7 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                       )} />
                     </div>
 
-                    <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                       <FormField control={form.control} name='unit_id' render={({ field }) => (
                         <FormItem>
                           <FormLabel>Unidade</FormLabel>
@@ -367,6 +469,34 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                         </FormItem>
                       )} />
                     </div>
+
+                    <div className='grid grid-cols-1 gap-4'>
+                      <FormField control={form.control} name='warranty_ids' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Garantias</FormLabel>
+                          <FormControl>
+                            <TagsSelect
+                              value={field.value || []}
+                              onChange={(next) => form.setValue('warranty_ids', (next as any[]).map((v) => Number(v)).filter((n) => Number.isFinite(n)), { shouldDirty: true, shouldValidate: true })}
+                              disabled={isPending}
+                              enabled={open}
+                              queryKey={['warranties']}
+                              fetcher={async () => {
+                                const response = await privateInstance.get('/api:PcyOgAiT/warranties?per_page=50')
+                                if (response.status !== 200) throw new Error('Erro ao carregar garantias')
+                                return response.data as any
+                              }}
+                              getId={(item: any) => item?.id}
+                              getLabel={(item: any) => item?.name ?? item?.store_name ?? `#${item?.id}`}
+                              placeholder='Selecione as garantias...'
+                              searchPlaceholder='Digite para pesquisar'
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
+
 
                     <div className='grid grid-cols-1 gap-4'>
                       <FormField control={form.control} name='active' render={({ field }) => (
