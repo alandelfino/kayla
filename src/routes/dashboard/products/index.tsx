@@ -59,10 +59,7 @@ function normalizeResponse(data: ProductsResponse) {
   return { items, itemsTotal, pageTotal }
 }
 
-import { formatMoneyFromCents } from '@/lib/format'
-function formatCurrencyBRL(value?: number) {
-  return formatMoneyFromCents(value)
-}
+import { formatMoneyFromCents, getCurrencyInfo } from '@/lib/format'
 
 function RouteComponent() {
   const [currentPage, setCurrentPage] = useState(1)
@@ -88,17 +85,16 @@ function RouteComponent() {
 
   const [items, setItems] = useState<Product[]>([])
 
+  const { code } = getCurrencyInfo()
+  const localeMap: Record<string, string> = { BRL: 'pt-BR', USD: 'en-US', EUR: 'de-DE', GBP: 'en-GB', JPY: 'ja-JP', MXN: 'es-MX', CAD: 'en-CA', AUD: 'en-AU' }
+  const locale = localeMap[code] ?? 'en-US'
+
   const columns: ColumnDef<Product>[] = useMemo(() => [
     {
       id: 'select',
       width: '60px',
       header: () => (
-        <div className='flex justify-center items-center'>
-          <Checkbox
-            checked={items.length > 0 && selected.length === items.length}
-            onCheckedChange={toggleSelectAll}
-          />
-        </div>
+        <div className='flex justify-center items-center text-xs text-neutral-500'>Sel.</div>
       ),
       cell: (row) => (
         <div className='flex justify-center items-center'>
@@ -111,15 +107,15 @@ function RouteComponent() {
       headerClassName: 'w-[60px] min-w-[60px] border-r',
       className: 'w-[60px] min-w-[60px] font-medium border-r p-2!'
     },
-    { id: 'name', header: 'Nome', width: '280px', cell: (p) => p.name ?? '—', headerClassName: 'w-[280px] min-w-[280px] border-r', className: 'w-[280px] min-w-[280px] p-2!' },
     { id: 'sku', header: 'SKU', width: '160px', cell: (p) => p.sku ?? '—', headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
+    { id: 'name', header: 'Nome', width: '280px', cell: (p) => p.name ?? '—', headerClassName: 'w-[280px] min-w-[280px] border-r', className: 'w-[280px] min-w-[280px] p-2!' },
     { id: 'type', header: 'Tipo', width: '180px', cell: (p) => (p.type === 'with_derivations' ? 'Com variações' : 'Simples'), headerClassName: 'w-[180px] min-w-[180px] border-r', className: 'w-[180px] min-w-[180px] p-2!' },
-    { id: 'price', header: 'Preço', width: '160px', cell: (p) => formatCurrencyBRL(p.price), headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
-    { id: 'promotional_price', header: 'Preço Promocional', width: '180px', cell: (p) => p.promotional_price ? formatCurrencyBRL(p.promotional_price) : '—', headerClassName: 'w-[180px] min-w-[180px] border-r', className: 'w-[180px] min-w-[180px] p-2!' },
+    { id: 'price', header: 'Preço', width: '160px', cell: (p) => formatMoneyFromCents(p.price, code, locale), headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
+    { id: 'promotional_price', header: 'Preço Promocional', width: '180px', cell: (p) => typeof p.promotional_price === 'number' ? formatMoneyFromCents(p.promotional_price, code, locale) : '—', headerClassName: 'w-[180px] min-w-[180px] border-r', className: 'w-[180px] min-w-[180px] p-2!' },
     { id: 'stock', header: 'Estoque', width: '120px', cell: (p) => typeof p.stock === 'number' ? p.stock : '—', headerClassName: 'w-[120px] min-w-[120px] border-r', className: 'w-[120px] min-w-[120px] p-2!' },
     { id: 'active', header: 'Ativo', width: '120px', cell: (p) => p.active ? 'Sim' : 'Não', headerClassName: 'w-[120px] min-w-[120px] border-r', className: 'w-[120px] min-w-[120px] p-2!' },
     { id: 'promotional_price_active', header: 'Promoção ativa', width: '160px', cell: (p) => p.promotional_price_active ? 'Sim' : 'Não', headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
-  ], [items, selected])
+  ], [items, selected, code, locale])
 
   useEffect(() => {
     if (!data) return
@@ -137,8 +133,7 @@ function RouteComponent() {
   useEffect(() => { if (isRefetching) setSelected([]) }, [isRefetching])
   useEffect(() => { if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages) }, [totalPages, currentPage])
 
-  const toggleSelectAll = () => { if (selected.length === items.length) setSelected([]); else setSelected(items.map(i => i.id)) }
-  const toggleSelect = (id: number) => { if (selected.includes(id)) setSelected(selected.filter(s => s !== id)); else setSelected([...selected, id]) }
+  const toggleSelect = (id: number) => { if (selected.includes(id)) setSelected([]); else setSelected([id]) }
 
   return (
     <div className='flex flex-col w-full h-full overflow-x-hidden'>

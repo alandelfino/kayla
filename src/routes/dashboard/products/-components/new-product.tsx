@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import { privateInstance } from '@/lib/auth'
 import { Switch } from '@/components/ui/switch'
 import { useEffect, useState } from 'react'
-import { maskMoneyInput, toCents, formatMoneyFromCents } from '@/lib/format'
+import { maskMoneyInput, toCents, formatMoneyFromCents, getCurrencyInfo } from '@/lib/format'
 
 const formSchema = z.object({
   sku: z.string().min(1, { message: 'Campo obrigatório' }).regex(/^[a-z0-9-]+$/, 'Use apenas minúsculas, números e hífen (-)'),
@@ -71,8 +71,8 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
       name: '',
       description: '',
       type: 'simple',
-      price: 0,
-      promotional_price: 0,
+      price: undefined,
+      promotional_price: undefined,
       active: true,
       promotional_price_active: false,
       managed_inventory: false,
@@ -138,6 +138,9 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
   
 
   // Helpers de máscara
+  const { code } = getCurrencyInfo()
+  const localeMap: Record<string, string> = { BRL: 'pt-BR', USD: 'en-US', EUR: 'de-DE', GBP: 'en-GB', JPY: 'ja-JP', MXN: 'es-MX', CAD: 'en-CA', AUD: 'en-AU' }
+  const locale = localeMap[code] ?? 'en-US'
   function toSkuSlug(val: string) {
     const base = String(val || '')
       .normalize('NFD')
@@ -148,7 +151,7 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
       .replace(/[^a-z0-9-]/g, '')
       .replace(/-{2,}/g, '-')
   }
-  function currencyMask(val: string) { return maskMoneyInput(val) }
+  function currencyMask(val: string) { return maskMoneyInput(val, code, locale) }
 
   // Estados de exibição mascarada
   const [priceText, setPriceText] = useState('')
@@ -157,11 +160,31 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
   
 
   useEffect(() => {
-    // Inicializa textos ao abrir/fechar e quando muda unidade
     const p = form.getValues('price')
     const pp = form.getValues('promotional_price')
-    setPriceText(formatMoneyFromCents(p))
-    setPromoPriceText(formatMoneyFromCents(pp))
+    setPriceText(typeof p === 'number' ? formatMoneyFromCents(p, code, locale) : '')
+    setPromoPriceText(typeof pp === 'number' ? formatMoneyFromCents(pp, code, locale) : '')
+  }, [open, code, locale])
+
+  useEffect(() => {
+    if (!open) {
+      form.reset({
+        sku: '',
+        name: '',
+        description: '',
+        type: 'simple',
+        price: undefined,
+        promotional_price: undefined,
+        active: true,
+        promotional_price_active: false,
+        managed_inventory: false,
+        unit_id: undefined,
+        brand_id: undefined,
+        derivation_ids: [],
+      })
+      setPriceText('')
+      setPromoPriceText('')
+    }
   }, [open])
 
   return (
@@ -348,10 +371,10 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                     <div className='grid grid-cols-1 gap-4'>
                       <FormField control={form.control} name='active' render={({ field }) => (
                         <FormItem>
-                          <div className='flex items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
+                          <div className='flex border items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
                             <div className='flex flex-col gap-0.5'>
                               <FormLabel>Ativo</FormLabel>
-                              <FormDescription className='leading-snug'>Quando habilitado, o produto aparece ativo no catálogo.</FormDescription>
+                              <FormDescription className='leading-snug text-xs'>Quando habilitado, o produto aparece ativo no catálogo.</FormDescription>
                             </div>
                             <FormControl>
                               <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={isPending} />
@@ -363,10 +386,10 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
 
                       <FormField control={form.control} name='promotional_price_active' render={({ field }) => (
                         <FormItem>
-                          <div className='flex items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
+                          <div className='flex border items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
                             <div className='flex flex-col gap-0.5'>
                               <FormLabel>Promoção ativa</FormLabel>
-                              <FormDescription className='leading-snug'>Aplica o preço promocional quando disponível.</FormDescription>
+                              <FormDescription className='leading-snug text-xs'>Aplica o preço promocional quando disponível.</FormDescription>
                             </div>
                             <FormControl>
                               <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={isPending} />
@@ -378,10 +401,10 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
 
                       <FormField control={form.control} name='managed_inventory' render={({ field }) => (
                         <FormItem>
-                          <div className='flex items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
+                          <div className='flex border items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
                             <div className='flex flex-col gap-0.5'>
                               <FormLabel>Gerenciar estoque</FormLabel>
-                              <FormDescription className='leading-snug'>Controla o estoque automaticamente para vendas e entradas.</FormDescription>
+                              <FormDescription className='leading-snug text-xs'>Controla o estoque automaticamente para vendas e entradas.</FormDescription>
                             </div>
                             <FormControl>
                               <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={isPending} />

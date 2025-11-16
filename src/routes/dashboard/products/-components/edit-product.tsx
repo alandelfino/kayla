@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import { privateInstance } from '@/lib/auth'
 import { Switch } from '@/components/ui/switch'
 import { useEffect, useState } from 'react'
-import { maskMoneyInput, toCents, formatMoneyFromCents } from '@/lib/format'
+import { maskMoneyInput, toCents, formatMoneyFromCents, getCurrencyInfo } from '@/lib/format'
 
 const formSchema = z.object({
   sku: z.string().min(1, { message: 'Campo obrigatório' }).regex(/^[a-z0-9-]+$/, 'Use apenas minúsculas, números e hífen (-)'),
@@ -90,11 +90,37 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
       const response = await privateInstance.get(`/api:c3X9fE5j/products/${productId}`)
       const p = response?.data
       if (!p) throw new Error('Resposta inválida ao buscar produto')
-      const derivationIds = Array.isArray((p as any)?.derivation_ids)
-        ? ((p as any).derivation_ids as any[]).map((v: any) => Number(v)).filter((n) => Number.isFinite(n))
-        : Array.isArray((p as any)?.derivations)
-          ? ((p as any).derivations as any[]).map((d: any) => Number(d?.id)).filter((n) => Number.isFinite(n))
-          : []
+      const rawDerivationsFromItems = Array.isArray((p as any)?.derivations?.items) ? (p as any).derivations.items : null
+      const rawDerivationsArray = Array.isArray((p as any)?.derivations) ? (p as any).derivations : null
+      let rawDerivationIds = Array.isArray((p as any)?.derivation_ids)
+        ? ((p as any).derivation_ids as any[])
+        : Array.isArray(rawDerivationsFromItems)
+          ? (rawDerivationsFromItems as any[]).map((d: any) => d?.derivation_id ?? d?.derivation?.id ?? d?.id)
+          : Array.isArray(rawDerivationsArray)
+            ? (rawDerivationsArray as any[]).map((d: any) => d?.derivation_id ?? d?.derivation?.id ?? d?.id)
+            : []
+
+      if (!rawDerivationIds || rawDerivationIds.length === 0) {
+        const entries = queryClient.getQueriesData({ queryKey: ['products'] }) as any[]
+        for (const [, listData] of entries) {
+          const itemsArr = Array.isArray((listData as any)?.items) ? (listData as any).items : Array.isArray(listData) ? listData : []
+          const found = itemsArr.find((it: any) => Number(it?.id) === Number(productId))
+          if (found) {
+            const fromItems = Array.isArray(found?.derivations?.items) ? found.derivations.items : null
+            const fromArray = Array.isArray(found?.derivations) ? found.derivations : null
+            rawDerivationIds = Array.isArray(found?.derivation_ids)
+              ? found.derivation_ids
+              : Array.isArray(fromItems)
+                ? (fromItems as any[]).map((d: any) => d?.derivation_id ?? d?.derivation?.id ?? d?.id)
+                : Array.isArray(fromArray)
+                  ? (fromArray as any[]).map((d: any) => d?.derivation_id ?? d?.derivation?.id ?? d?.id)
+                  : []
+            break
+          }
+        }
+      }
+
+      const derivationIds = (rawDerivationIds as any[]).map((v: any) => Number(v)).filter((n) => Number.isFinite(n))
       form.reset({
         sku: p.sku ?? '',
         name: p.name ?? '',
@@ -117,6 +143,27 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
   }
 
   useEffect(() => { if (open && productId) fetchProduct() }, [open, productId])
+
+  useEffect(() => {
+    if (!open) {
+      form.reset({
+        sku: '',
+        name: '',
+        description: '',
+        type: 'simple',
+        price: undefined,
+        promotional_price: undefined,
+        active: true,
+        promotional_price_active: false,
+        managed_inventory: false,
+        unit_id: undefined,
+        brand_id: undefined,
+        derivation_ids: [],
+      })
+      setPriceText('')
+      setPromoPriceText('')
+    }
+  }, [open])
 
   const { isPending, mutate } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => privateInstance.put(`/api:c3X9fE5j/products/${productId}`, values),
@@ -163,7 +210,10 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
   
 
   // Helpers de máscara
-  function currencyMask(val: string) { return maskMoneyInput(val) }
+  const { code } = getCurrencyInfo()
+  const localeMap: Record<string, string> = { BRL: 'pt-BR', USD: 'en-US', EUR: 'de-DE', GBP: 'en-GB', JPY: 'ja-JP', MXN: 'es-MX', CAD: 'en-CA', AUD: 'en-AU' }
+  const locale = localeMap[code] ?? 'en-US'
+  function currencyMask(val: string) { return maskMoneyInput(val, code, locale) }
   
   
 
@@ -172,6 +222,8 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
   const [promoPriceText, setPromoPriceText] = useState('')
   
   const isWithDerivations = form.watch('type') === 'with_derivations'
+  const priceCents = form.watch('price')
+  const promoPriceCents = form.watch('promotional_price')
 
   function toSkuSlug(val: string) {
     const base = String(val || '')
@@ -185,11 +237,9 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
   }
 
   useEffect(() => {
-    const p = form.getValues('price')
-    const pp = form.getValues('promotional_price')
-    setPriceText(formatMoneyFromCents(p))
-    setPromoPriceText(formatMoneyFromCents(pp))
-  }, [open])
+    setPriceText(typeof priceCents === 'number' ? formatMoneyFromCents(priceCents, code, locale) : '')
+    setPromoPriceText(typeof promoPriceCents === 'number' ? formatMoneyFromCents(promoPriceCents, code, locale) : '')
+  }, [priceCents, promoPriceCents, code, locale, open])
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

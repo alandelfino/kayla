@@ -175,7 +175,7 @@ export function DataTable<T extends { id?: number | string }>({
             {!loading && data.length > 0 && (
               <>
                 {data.map((item, index) => (
-                  <TableRow key={(item as any).id ?? index} className={`${rowClassName ?? 'h-10'} ${index % 2 === 0 ? '' : 'bg-neutral-50'}`}>
+                  <TableRow key={(item as any).id ?? index} className={`${rowClassName ?? 'h-10'} ${index % 2 === 0 ? '' : 'bg-neutral-50/20'}`}>
                     {columns.map((col) => (
                       <TableCell key={col.id} className={`border-r !px-4 ${col.className ?? ''}`} style={col.width ? { width: col.width } : undefined}>
                         {col.cell(item)}
