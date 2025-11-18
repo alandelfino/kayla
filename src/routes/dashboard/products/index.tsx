@@ -13,6 +13,7 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyCont
 import { NewProductSheet } from './-components/new-product'
 import { EditProductSheet } from './-components/edit-product'
 import { DeleteProductDialog } from './-components/delete-product'
+import { ChildProductsSheet } from './-components/child-products'
 
 export const Route = createFileRoute('/dashboard/products/')({
   component: RouteComponent,
@@ -88,6 +89,16 @@ function RouteComponent() {
   const { code } = getCurrencyInfo()
   const localeMap: Record<string, string> = { BRL: 'pt-BR', USD: 'en-US', EUR: 'de-DE', GBP: 'en-GB', JPY: 'ja-JP', MXN: 'es-MX', CAD: 'en-CA', AUD: 'en-AU' }
   const locale = localeMap[code] ?? 'en-US'
+
+  const selectedProduct = useMemo(() => items.find((i) => i.id === selected[0]), [items, selected])
+  const canManageChilds = useMemo(() => {
+    const p: any = selectedProduct as any
+    if (!p) return false
+    const byType = p?.type === 'with_derivations'
+    const hasArray = Array.isArray(p?.derivations) && (p?.derivations?.length ?? 0) > 0
+    const hasItems = Array.isArray(p?.derivations?.items) && (p?.derivations?.items?.length ?? 0) > 0
+    return byType || hasArray || hasItems
+  }, [selectedProduct])
 
   const columns: ColumnDef<Product>[] = useMemo(() => [
     {
@@ -178,6 +189,13 @@ function RouteComponent() {
             ) : (
               <Button variant={'outline'} disabled>
                 <Edit /> Editar
+              </Button>
+            )}
+            {selected.length === 1 && canManageChilds ? (
+              <ChildProductsSheet productId={selected[0]} />
+            ) : (
+              <Button variant={'outline'} disabled>
+                <Package /> Derivações
               </Button>
             )}
             <NewProductSheet onCreated={() => { refetch() }} />

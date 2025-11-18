@@ -99,7 +99,7 @@ export function EditWarrantySheet({ className, warrantyId, ...props }: React.Com
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost">
+        <Button variant="outline">
           <Edit className="w-4 h-4" />Editar
         </Button>
       </SheetTrigger>
@@ -137,57 +137,59 @@ export function EditWarrantySheet({ className, warrantyId, ...props }: React.Com
                 </FormItem>
               )} />
 
-              <FormField control={form.control} name="period" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Período</FormLabel>
-                  <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um período" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="day">Dia</SelectItem>
-                          <SelectItem value="month">Mês</SelectItem>
-                          <SelectItem value="year">Ano</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField control={form.control} name="period" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Período</FormLabel>
+                    <FormControl>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um período" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="day">Dia</SelectItem>
+                            <SelectItem value="month">Mês</SelectItem>
+                            <SelectItem value="year">Ano</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
 
-              <FormField control={form.control} name="amount" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Quantidade</FormLabel>
-                  <FormControl>
-                    <Input type="number" min={1} step={1} placeholder="Ex.: 12" {...field} disabled={loading || isPending} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+                <FormField control={form.control} name="amount" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quantidade</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={1} step={1} placeholder="Ex.: 12" {...field} disabled={loading || isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
 
-              <FormField control={form.control} name="price" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Preço</FormLabel>
-                  <FormControl>
-                    <Input
-                      inputMode="numeric"
-                      placeholder="R$ 0,00"
-                      value={priceDisplay}
-                      onChange={(e) => {
-                        const onlyDigits = e.target.value.replace(/\D/g, '')
-                        const centavos = onlyDigits ? parseInt(onlyDigits, 10) : 0
-                        setPriceDisplay(formatCurrencyBRL(centavos))
-                        field.onChange(centavos)
-                      }}
-                      disabled={loading || isPending}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+                <FormField control={form.control} name="price" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Preço</FormLabel>
+                    <FormControl>
+                      <Input
+                        inputMode="numeric"
+                        placeholder="R$ 0,00"
+                        value={priceDisplay}
+                        onChange={(e) => {
+                          const onlyDigits = e.target.value.replace(/\D/g, '')
+                          const centavos = onlyDigits ? parseInt(onlyDigits, 10) : 0
+                          setPriceDisplay(formatCurrencyBRL(centavos))
+                          field.onChange(centavos)
+                        }}
+                        disabled={loading || isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </div>
             </div>
             <div className="mt-auto border-t p-4">
               <div className="grid grid-cols-2 gap-4">

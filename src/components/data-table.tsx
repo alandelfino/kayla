@@ -67,7 +67,7 @@ export function DataTable<T extends { id?: number | string }>({
   }
 
   return (
-    <div className='flex flex-col w-full flex-1 overflow-y-auto overflow-x-hidden'>
+    <div className='flex flex-col w-full h-full min-h-0 overflow-y-auto overflow-x-hidden'>
 
       <div className='relative h-full'>
         <div className='w-full overflow-x-auto'>

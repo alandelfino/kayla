@@ -39,7 +39,7 @@ export function DeleteWarranty({ warrantyId, disabled = false }: { warrantyId: n
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" disabled={disabled || !warrantyId}>
+        <Button variant="outline" size="sm" disabled={disabled || !warrantyId}>
           <Trash /> Excluir
         </Button>
       </DialogTrigger>

@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Topbar } from '../-components/topbar'
 import { Button } from '@/components/ui/button'
-import { Edit, Funnel, RefreshCcw, Trash, ShieldCheck } from 'lucide-react'
+import { Edit, Funnel, RefreshCw, Trash, ShieldCheck } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -131,14 +131,14 @@ function RouteComponent() {
             </Button>
           </div>
           <div className='flex items-center gap-2'>
-            <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
-              {(isLoading || isRefetching) ? (<><RefreshCcw className='animate-spin' /> Atualizando...</>) : (<><RefreshCcw /> Atualizar</>)}
+            <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
+              {isLoading || isRefetching ? (<RefreshCw className='animate-spin' />) : (<RefreshCw />)}
             </Button>
 
             {selected.length === 1 ? (
               <DeleteWarranty warrantyId={selected[0]} />
             ) : (
-              <Button variant={'ghost'} disabled>
+              <Button variant={'outline'} disabled>
                 <Trash /> Excluir
               </Button>
             )}
@@ -146,7 +146,7 @@ function RouteComponent() {
             {selected.length === 1 ? (
               <EditWarrantySheet warrantyId={selected[0]} />
             ) : (
-              <Button variant={'ghost'} disabled>
+              <Button variant={'outline'} disabled>
                 <Edit /> Editar
               </Button>
             )}
@@ -176,8 +176,8 @@ function RouteComponent() {
               <EmptyContent>
                 <div className='flex gap-2'>
                   <NewWarrantySheet />
-                  <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
-                    {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+                  <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
+                    {isLoading || isRefetching ? <RefreshCw className='animate-spin' /> : <RefreshCw />}
                   </Button>
                 </div>
               </EmptyContent>
