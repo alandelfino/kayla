@@ -252,7 +252,7 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
         managed_inventory: false,
         unit_id: undefined,
         brand_id: undefined,
-        warranty: '',
+        warranty_ids: [],
         derivation_ids: [],
         category_ids: [],
       })
@@ -482,7 +482,7 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                               enabled={open}
                               queryKey={['warranties']}
                               fetcher={async () => {
-                                const response = await privateInstance.get('/api:PcyOgAiT/warranties?per_page=50')
+                                const response = await privateInstance.get('/api:PcyOgAiT/warranties?page=1&per_page=50')
                                 if (response.status !== 200) throw new Error('Erro ao carregar garantias')
                                 return response.data as any
                               }}
