@@ -31,7 +31,7 @@ export function DeleteProductDialog({ productId, onDeleted }: { productId: numbe
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={'ghost'}>
+        <Button variant={'outline'}>
           <Trash className='w-4 h-4' /> Excluir
         </Button>
       </DialogTrigger>

@@ -70,7 +70,7 @@ function RouteComponent() {
     refetchOnWindowFocus: false,
     queryKey: ['invitations', currentPage, perPage],
     queryFn: async () => {
-      const response = await privateInstance.get<InvitationsResponse>(`/api:0jQElwax/invitations?page=${currentPage}&per_page=${perPage}`)
+      const response = await privateInstance.get<InvitationsResponse>(`/api:0jQElwax/invitations?page=${currentPage}&per_page=${Math.min(50, perPage)}`)
       if (response.status !== 200) {
         throw new Error('Erro ao carregar convites')
       }

@@ -43,7 +43,7 @@ function RouteComponent() {
     queryKey: ['derivations', currentPage, perPage],
     queryFn: async () => {
       // Ajuste os parâmetros conforme o Swagger do endpoint Derivations
-      const response = await privateInstance.get(`api:JOs6IYNo/derivations?page=${currentPage}&per_page=${perPage}`)
+      const response = await privateInstance.get(`api:JOs6IYNo/derivations?page=${currentPage}&per_page=${Math.min(50, perPage)}`)
       if (response.status !== 200) {
         throw new Error('Erro ao carregar derivações')
       }

@@ -105,7 +105,7 @@ function RouteComponent() {
         refetchOnMount: false,
         queryKey: ['customers', currentPage, perPage, sortBy, orderBy],
         queryFn: async () => {
-            const url = `/api:Th9UjqzY/customers?page=${currentPage}&per_page=${perPage}&sort_by=${sortBy ?? 'created_at'}&order_by=${orderBy}`
+            const url = `/api:Th9UjqzY/customers?page=${currentPage}&per_page=${Math.min(50, perPage)}&sort_by=${sortBy ?? 'created_at'}&order_by=${orderBy}`
             const response = await privateInstance.get(url)
             if (response.status !== 200) {
                 throw new Error('Erro ao carregar clientes')

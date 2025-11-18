@@ -74,7 +74,7 @@ function RouteComponent() {
     queryKey: ['products', currentPage, perPage],
     queryFn: async () => {
       // Tenta paginação padrão page/per_page. Se a API não suportar, ainda funcionará com o retorno em array.
-      const url = `/api:c3X9fE5j/products?page=${currentPage}&per_page=${perPage}`
+      const url = `/api:c3X9fE5j/products?page=${currentPage}&per_page=${Math.min(50, perPage)}`
       const response = await privateInstance.get(url)
       if (response.status !== 200) {
         throw new Error('Erro ao carregar produtos')
@@ -113,7 +113,22 @@ function RouteComponent() {
     { id: 'price', header: 'Preço', width: '160px', cell: (p) => formatMoneyFromCents(p.price, code, locale), headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
     { id: 'promotional_price', header: 'Preço Promocional', width: '180px', cell: (p) => typeof p.promotional_price === 'number' ? formatMoneyFromCents(p.promotional_price, code, locale) : '—', headerClassName: 'w-[180px] min-w-[180px] border-r', className: 'w-[180px] min-w-[180px] p-2!' },
     { id: 'stock', header: 'Estoque', width: '120px', cell: (p) => typeof p.stock === 'number' ? p.stock : '—', headerClassName: 'w-[120px] min-w-[120px] border-r', className: 'w-[120px] min-w-[120px] p-2!' },
-    { id: 'active', header: 'Ativo', width: '120px', cell: (p) => p.active ? 'Sim' : 'Não', headerClassName: 'w-[120px] min-w-[120px] border-r', className: 'w-[120px] min-w-[120px] p-2!' },
+    { id: 'managed_inventory', header: 'Gerenciar estoque', width: '160px', cell: (p) => p.managed_inventory ? 'Sim' : 'Não', headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
+    { id: 'active', header: 'Status', width: '120px', cell: (p) => {
+      const active = p.active === true
+      return (
+        <span
+          className={
+            active
+              ? 'inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-green-50 text-green-600'
+              : 'inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-100 text-gray-700'
+          }
+        >
+          <span className={active ? 'h-1.5 w-1.5 rounded-full bg-green-600' : 'h-1.5 w-1.5 rounded-full bg-gray-500'} />
+          {active ? 'Ativo' : 'Inativo'}
+        </span>
+      )
+    }, headerClassName: 'w-[120px] min-w-[120px] border-r', className: 'w-[120px] min-w-[120px] p-2!' },
     { id: 'promotional_price_active', header: 'Promoção ativa', width: '160px', cell: (p) => p.promotional_price_active ? 'Sim' : 'Não', headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
   ], [items, selected, code, locale])
 
@@ -146,14 +161,14 @@ function RouteComponent() {
             </Button>
           </div>
           <div className='flex items-center gap-2'>
-            <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
-              {(isLoading || isRefetching) ? (<><RefreshCcw className='animate-spin' /> Atualizando...</>) : (<><RefreshCcw /> Atualizar</>)}
+            <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
+              {(isLoading || isRefetching) ? (<RefreshCcw className='animate-spin' />) : (<RefreshCcw />)}
             </Button>
 
             {selected.length === 1 ? (
               <DeleteProductDialog productId={selected[0]} onDeleted={() => { setSelected([]); refetch() }} />
             ) : (
-              <Button variant={'ghost'} disabled>
+              <Button variant={'outline'} disabled>
                 <Trash /> Excluir
               </Button>
             )}
@@ -161,7 +176,7 @@ function RouteComponent() {
             {selected.length === 1 ? (
               <EditProductSheet productId={selected[0]} onSaved={() => { refetch() }} />
             ) : (
-              <Button variant={'ghost'} disabled>
+              <Button variant={'outline'} disabled>
                 <Edit /> Editar
               </Button>
             )}
@@ -191,7 +206,7 @@ function RouteComponent() {
               <EmptyContent>
                 <div className='flex gap-2'>
                   <NewProductSheet onCreated={() => { refetch() }} />
-                  <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
+                  <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
                     {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
                   </Button>
                 </div>

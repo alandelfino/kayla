@@ -59,7 +59,7 @@ function RouteComponent() {
     refetchOnMount: false,
     queryKey: ['warranties', currentPage, perPage],
     queryFn: async () => {
-      const response = await privateInstance.get(`/api:PcyOgAiT/warranties?page=${currentPage}&per_page=${perPage}`)
+      const response = await privateInstance.get(`/api:PcyOgAiT/warranties?page=${currentPage}&per_page=${Math.min(50, perPage)}`)
       if (response.status !== 200) {
         throw new Error('Erro ao carregar garantias')
       }

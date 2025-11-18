@@ -41,7 +41,7 @@ function RouteComponent() {
     refetchOnMount: false,
     queryFn: async () => {
       const res = await privateInstance.get('/api:ojk_IOB-/categories', {
-        params: { page: currentPage, per_page: perPage }
+        params: { page: currentPage, per_page: Math.min(50, perPage) }
       })
       if (res.status !== 200) throw new Error('Erro ao carregar categorias')
       return res.data

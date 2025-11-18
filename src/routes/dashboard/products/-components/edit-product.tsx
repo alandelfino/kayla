@@ -133,7 +133,32 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
           ? ((p as any).warranties.items as any[]).map((w: any) => w?.warranty_id ?? w?.id)
           : Array.isArray((p as any)?.warranties)
             ? ((p as any).warranties as any[]).map((w: any) => w?.warranty_id ?? w?.id)
-            : []
+            : Array.isArray((p as any)?.waranties)
+              ? ((p as any).waranties as any[]).map((w: any) => w?.warranty_id ?? w?.id)
+              : []
+
+      if (!rawWarrantyIds || rawWarrantyIds.length === 0) {
+        const entries = queryClient.getQueriesData({ queryKey: ['products'] }) as any[]
+        for (const [, listData] of entries) {
+          const itemsArr = Array.isArray((listData as any)?.items) ? (listData as any).items : Array.isArray(listData) ? listData : []
+          const found = itemsArr.find((it: any) => Number(it?.id) === Number(productId))
+          if (found) {
+            const fromItems = Array.isArray(found?.warranties?.items) ? found.warranties.items : null
+            const fromArray = Array.isArray(found?.warranties) ? found.warranties : null
+            const fromTypoArray = Array.isArray(found?.waranties) ? found.waranties : null
+            rawWarrantyIds = Array.isArray(found?.warranty_ids)
+              ? found.warranty_ids
+              : Array.isArray(fromItems)
+                ? (fromItems as any[]).map((w: any) => w?.warranty_id ?? w?.id)
+                : Array.isArray(fromArray)
+                  ? (fromArray as any[]).map((w: any) => w?.warranty_id ?? w?.id)
+                  : Array.isArray(fromTypoArray)
+                    ? (fromTypoArray as any[]).map((w: any) => w?.warranty_id ?? w?.id)
+                    : []
+            break
+          }
+        }
+      }
       const warrantyIds = (rawWarrantyIds as any[]).map((v: any) => Number(v)).filter((n) => Number.isFinite(n))
 
       let rawCategoryIds = Array.isArray((p as any)?.category_ids)
@@ -143,6 +168,26 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
           : Array.isArray((p as any)?.categories)
             ? ((p as any).categories as any[]).map((c: any) => c?.category_id ?? c?.id)
             : []
+
+      if (!rawCategoryIds || rawCategoryIds.length === 0) {
+        const entries = queryClient.getQueriesData({ queryKey: ['products'] }) as any[]
+        for (const [, listData] of entries) {
+          const itemsArr = Array.isArray((listData as any)?.items) ? (listData as any).items : Array.isArray(listData) ? listData : []
+          const found = itemsArr.find((it: any) => Number(it?.id) === Number(productId))
+          if (found) {
+            const fromItems = Array.isArray(found?.categories?.items) ? found.categories.items : null
+            const fromArray = Array.isArray(found?.categories) ? found.categories : null
+            rawCategoryIds = Array.isArray(found?.category_ids)
+              ? found.category_ids
+              : Array.isArray(fromItems)
+                ? (fromItems as any[]).map((c: any) => c?.category_id ?? c?.id)
+                : Array.isArray(fromArray)
+                  ? (fromArray as any[]).map((c: any) => c?.category_id ?? c?.id)
+                  : []
+            break
+          }
+        }
+      }
       const categoryIds = (rawCategoryIds as any[]).map((v: any) => Number(v)).filter((n) => Number.isFinite(n))
       form.reset({
         sku: p.sku ?? '',
@@ -156,7 +201,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
         managed_inventory: !!p.managed_inventory,
         unit_id: typeof p.unit_id === 'number' ? p.unit_id : undefined,
         brand_id: typeof p.brand_id === 'number' ? p.brand_id : undefined,
-        warranty: typeof p.warranty === 'string' ? p.warranty : '',
+        warranty_ids: warrantyIds,
         derivation_ids: derivationIds,
         category_ids: categoryIds,
       })
@@ -183,7 +228,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
         managed_inventory: false,
         unit_id: undefined,
         brand_id: undefined,
-        warranty_ids: warrantyIds,
+        warranty_ids: [],
         derivation_ids: [],
         category_ids: [],
       })
@@ -193,7 +238,10 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
   }, [open])
 
   const { isPending, mutate } = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => privateInstance.put(`/api:c3X9fE5j/products/${productId}`, values),
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      const { type, derivation_ids, ...payload } = values
+      return privateInstance.put(`/api:c3X9fE5j/products/${productId}`, payload)
+    },
     onSuccess: (response) => {
       if (response.status === 200) {
         toast.success('Produto atualizado com sucesso!')
@@ -212,7 +260,8 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
   // Carregar marcas e unidades do backend (Xano Products API)
   const { data: brandsData, isLoading: isBrandsLoading } = useQuery({
     queryKey: ['brands'],
-    enabled: open,
+    enabled: true,
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     queryFn: async () => {
@@ -224,7 +273,8 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
 
   const { data: unitsData, isLoading: isUnitsLoading } = useQuery({
     queryKey: ['units'],
-    enabled: open,
+    enabled: true,
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     queryFn: async () => {
@@ -242,7 +292,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     queryFn: async () => {
-      const res = await privateInstance.get('/api:ojk_IOB-/categories?page=1&per_page=200')
+      const res = await privateInstance.get('/api:ojk_IOB-/categories?page=1&per_page=50')
       if (res.status !== 200) throw new Error('Erro ao carregar categorias')
       return res.data
     },
@@ -338,7 +388,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant={'ghost'}>
+        <Button variant={'outline'}>
           <Edit className='w-4 h-4' /> Editar
         </Button>
       </SheetTrigger>
@@ -417,7 +467,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
                         <FormItem>
                           <FormLabel>Tipo</FormLabel>
                           <FormControl>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select value={field.value} onValueChange={field.onChange} disabled>
                               <SelectTrigger className='w-full' aria-label='Tipo do produto'>
                                 <SelectValue placeholder='Selecione o tipo' />
                               </SelectTrigger>
@@ -440,7 +490,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
                               <TagsSelect
                                 value={field.value || []}
                                 onChange={(next) => form.setValue('derivation_ids', (next as any[]).map((v) => Number(v)).filter((n) => Number.isFinite(n)), { shouldDirty: true, shouldValidate: true })}
-                                disabled={loading || isPending}
+                                disabled
                                 enabled={open}
                                 queryKey={['derivations']}
                                 fetcher={async () => {
