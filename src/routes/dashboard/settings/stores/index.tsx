@@ -1,0 +1,196 @@
+import { createFileRoute } from '@tanstack/react-router'
+import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Button } from '@/components/ui/button'
+import { DataTable, type ColumnDef } from '@/components/data-table'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
+import { RefreshCw, RefreshCcw, Edit, Trash, Store as StoreIcon, ArrowUpRight } from 'lucide-react'
+import { privateInstance } from '@/lib/auth'
+import { Checkbox } from '@/components/ui/checkbox'
+import { NewStoreSheet } from './-components/new-store'
+import { EditStoreSheet } from './-components/edit-store'
+import { DeleteStore } from './-components/delete-store'
+
+type StoreItem = {
+  id: number
+  name?: string
+  description?: string
+  created_at?: number
+  updated_at?: number | null
+  company_id?: number
+}
+
+type StoresResponse = {
+  itemsReceived?: number
+  curPage?: number
+  nextPage?: number | null
+  prevPage?: number | null
+  offset?: number
+  perPage?: number
+  itemsTotal?: number
+  pageTotal?: number
+  items?: StoreItem[]
+} | StoreItem[]
+
+function normalizeStores(resp?: StoresResponse) {
+  if (!resp) return { items: [], totalItems: 0 }
+  if (Array.isArray(resp)) return { items: resp, totalItems: resp.length }
+  const items = Array.isArray(resp.items) ? resp.items : []
+  const totalItems = typeof resp.itemsTotal === 'number' ? resp.itemsTotal : items.length
+  return { items, totalItems }
+}
+
+export const Route = createFileRoute('/dashboard/settings/stores/')({
+  component: RouteComponent,
+})
+
+function RouteComponent() {
+  const [selected, setSelected] = useState<number[]>([])
+  const [items, setItems] = useState<StoreItem[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [perPage, setPerPage] = useState(20)
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+
+  const { data, isLoading, isRefetching, refetch } = useQuery({
+    queryKey: ['stores', currentPage, perPage],
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    queryFn: async () => {
+      const response = await privateInstance.get(`/api:gI4qBCGQ/stores?page=${currentPage}&per_page=${Math.min(50, perPage)}`)
+      if (response.status !== 200) throw new Error('Erro ao carregar lojas')
+      return response.data as StoresResponse
+    }
+  })
+
+  useEffect(() => {
+    if (!data) {
+      setItems([])
+      setTotalItems(0)
+      return
+    }
+    const normalized = normalizeStores(data as StoresResponse)
+    setItems(normalized.items)
+    setTotalItems(normalized.totalItems)
+    const pageTotal = Math.max(1, Math.ceil(normalized.totalItems / Math.max(1, perPage)))
+    setTotalPages(pageTotal)
+  }, [data])
+
+  useEffect(() => {
+    setSelected([])
+  }, [currentPage, perPage])
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages)
+    }
+  }, [totalPages, currentPage])
+
+  const columns: ColumnDef<StoreItem>[] = useMemo(() => [
+    {
+      id: 'select',
+      width: '60px',
+      header: () => (<div className='flex justify-center items-center text-xs text-neutral-500'>Sel.</div>),
+      cell: (row) => (
+        <div className='flex justify-center items-center'>
+          <Checkbox checked={selected.includes(row.id)} onCheckedChange={() => { if (selected.includes(row.id)) setSelected([]); else setSelected([row.id]) }} />
+        </div>
+      ),
+      headerClassName: 'w-[60px] min-w-[60px] border-r border-neutral-200 px-4 py-2.5',
+      className: 'w-[60px] min-w-[60px] border-r border-neutral-200 !px-4 py-3'
+    },
+    {
+      id: 'name',
+      header: 'Nome',
+      cell: (s) => s.name ?? '—',
+      headerClassName: 'min-w-[15rem] border-r border-neutral-200 px-4 py-2.5',
+      className: 'min-w-[15rem] border-r border-neutral-200 !px-4 py-3'
+    },
+    {
+      id: 'description',
+      header: 'Descrição',
+      width: '20rem',
+      cell: (s) => s.description ?? '—',
+      headerClassName: 'min-w-[20rem] border-r border-neutral-200 px-4 py-2.5',
+      className: 'min-w-[20rem] border-r border-neutral-200 !px-4 py-3'
+    },
+  ], [selected])
+
+  return (
+    <div className='flex flex-col w-full h-full'>
+      <div className='flex items-center justify-between p-4'>
+        <div className='flex flex-col'>
+          <h2 className='text-lg font-semibold'>Lojas</h2>
+          <p className='text-sm text-muted-foreground'>Gerencie as lojas da conta.</p>
+        </div>
+        <div className='flex items-center gap-2'>
+          <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
+            {(isLoading || isRefetching) ? (<RefreshCw className='animate-spin' />) : (<RefreshCw />)}
+          </Button>
+          {selected.length === 1 ? (
+            <DeleteStore storeId={selected[0]} onDeleted={() => { setSelected([]); refetch() }} />
+          ) : (
+            <Button variant={'outline'} disabled>
+              <Trash /> Excluir
+            </Button>
+          )}
+          {selected.length === 1 ? (
+            <EditStoreSheet storeId={selected[0]} onSaved={() => { setSelected([]); refetch() }} />
+          ) : (
+            <Button variant={'outline'} disabled>
+              <Edit /> Editar
+            </Button>
+          )}
+          <NewStoreSheet onCreated={() => { setSelected([]); refetch() }} />
+        </div>
+      </div>
+
+      <div className='flex flex-col w-full h-full flex-1 overflow-hidden pl-4'>
+        <div className='border-t border-l border-neutral-200 rounded-tl-lg overflow-hidden h-full flex flex-col flex-1'>
+          <DataTable
+            columns={columns}
+            data={items}
+            loading={isLoading || isRefetching}
+            skeletonCount={3}
+            page={currentPage}
+            perPage={perPage}
+            totalItems={totalItems}
+            rowClassName='h-12'
+            emptyMessage='Nenhuma loja encontrada'
+            emptySlot={(
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <StoreIcon className='h-6 w-6' />
+                  </EmptyMedia>
+                  <EmptyTitle>Nenhuma loja ainda</EmptyTitle>
+                  <EmptyDescription>
+                    Você ainda não criou nenhuma loja. Comece criando sua primeira loja.
+                  </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <div className='flex gap-2'>
+                    <NewStoreSheet onCreated={() => { refetch() }} />
+                    <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
+                      {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+                    </Button>
+                  </div>
+                </EmptyContent>
+                <Button variant='link' asChild className='text-muted-foreground'>
+                  <a href='#'>
+                    Saiba mais <ArrowUpRight className='inline-block ml-1 h-4 w-4' />
+                  </a>
+                </Button>
+              </Empty>
+            )}
+            onChange={({ page, perPage }) => {
+              if (typeof page === 'number') setCurrentPage(page)
+              if (typeof perPage === 'number') setPerPage(perPage)
+              refetch()
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -30,6 +30,7 @@ import { Route as DashboardBrandsIndexRouteImport } from './routes/dashboard/bra
 import { Route as DashboardSettingsWebhooksIndexRouteImport } from './routes/dashboard/settings/webhooks/index'
 import { Route as DashboardSettingsUsersIndexRouteImport } from './routes/dashboard/settings/users/index'
 import { Route as DashboardSettingsTeamsIndexRouteImport } from './routes/dashboard/settings/teams/index'
+import { Route as DashboardSettingsStoresIndexRouteImport } from './routes/dashboard/settings/stores/index'
 import { Route as DashboardSettingsProfilesIndexRouteImport } from './routes/dashboard/settings/profiles/index'
 import { Route as DashboardSettingsInvitationsIndexRouteImport } from './routes/dashboard/settings/invitations/index'
 import { Route as DashboardSettingsIntegrationsIndexRouteImport } from './routes/dashboard/settings/integrations/index'
@@ -147,6 +148,12 @@ const DashboardSettingsTeamsIndexRoute =
     path: '/teams/',
     getParentRoute: () => DashboardSettingsRouteRoute,
   } as any)
+const DashboardSettingsStoresIndexRoute =
+  DashboardSettingsStoresIndexRouteImport.update({
+    id: '/stores/',
+    path: '/stores/',
+    getParentRoute: () => DashboardSettingsRouteRoute,
+  } as any)
 const DashboardSettingsProfilesIndexRoute =
   DashboardSettingsProfilesIndexRouteImport.update({
     id: '/profiles/',
@@ -202,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/integrations': typeof DashboardSettingsIntegrationsIndexRoute
   '/dashboard/settings/invitations': typeof DashboardSettingsInvitationsIndexRoute
   '/dashboard/settings/profiles': typeof DashboardSettingsProfilesIndexRoute
+  '/dashboard/settings/stores': typeof DashboardSettingsStoresIndexRoute
   '/dashboard/settings/teams': typeof DashboardSettingsTeamsIndexRoute
   '/dashboard/settings/users': typeof DashboardSettingsUsersIndexRoute
   '/dashboard/settings/webhooks': typeof DashboardSettingsWebhooksIndexRoute
@@ -229,6 +237,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings/integrations': typeof DashboardSettingsIntegrationsIndexRoute
   '/dashboard/settings/invitations': typeof DashboardSettingsInvitationsIndexRoute
   '/dashboard/settings/profiles': typeof DashboardSettingsProfilesIndexRoute
+  '/dashboard/settings/stores': typeof DashboardSettingsStoresIndexRoute
   '/dashboard/settings/teams': typeof DashboardSettingsTeamsIndexRoute
   '/dashboard/settings/users': typeof DashboardSettingsUsersIndexRoute
   '/dashboard/settings/webhooks': typeof DashboardSettingsWebhooksIndexRoute
@@ -258,6 +267,7 @@ export interface FileRoutesById {
   '/dashboard/settings/integrations/': typeof DashboardSettingsIntegrationsIndexRoute
   '/dashboard/settings/invitations/': typeof DashboardSettingsInvitationsIndexRoute
   '/dashboard/settings/profiles/': typeof DashboardSettingsProfilesIndexRoute
+  '/dashboard/settings/stores/': typeof DashboardSettingsStoresIndexRoute
   '/dashboard/settings/teams/': typeof DashboardSettingsTeamsIndexRoute
   '/dashboard/settings/users/': typeof DashboardSettingsUsersIndexRoute
   '/dashboard/settings/webhooks/': typeof DashboardSettingsWebhooksIndexRoute
@@ -288,6 +298,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/integrations'
     | '/dashboard/settings/invitations'
     | '/dashboard/settings/profiles'
+    | '/dashboard/settings/stores'
     | '/dashboard/settings/teams'
     | '/dashboard/settings/users'
     | '/dashboard/settings/webhooks'
@@ -315,6 +326,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/integrations'
     | '/dashboard/settings/invitations'
     | '/dashboard/settings/profiles'
+    | '/dashboard/settings/stores'
     | '/dashboard/settings/teams'
     | '/dashboard/settings/users'
     | '/dashboard/settings/webhooks'
@@ -343,6 +355,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/integrations/'
     | '/dashboard/settings/invitations/'
     | '/dashboard/settings/profiles/'
+    | '/dashboard/settings/stores/'
     | '/dashboard/settings/teams/'
     | '/dashboard/settings/users/'
     | '/dashboard/settings/webhooks/'
@@ -504,6 +517,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSettingsTeamsIndexRouteImport
       parentRoute: typeof DashboardSettingsRouteRoute
     }
+    '/dashboard/settings/stores/': {
+      id: '/dashboard/settings/stores/'
+      path: '/stores'
+      fullPath: '/dashboard/settings/stores'
+      preLoaderRoute: typeof DashboardSettingsStoresIndexRouteImport
+      parentRoute: typeof DashboardSettingsRouteRoute
+    }
     '/dashboard/settings/profiles/': {
       id: '/dashboard/settings/profiles/'
       path: '/profiles'
@@ -549,6 +569,7 @@ interface DashboardSettingsRouteRouteChildren {
   DashboardSettingsIntegrationsIndexRoute: typeof DashboardSettingsIntegrationsIndexRoute
   DashboardSettingsInvitationsIndexRoute: typeof DashboardSettingsInvitationsIndexRoute
   DashboardSettingsProfilesIndexRoute: typeof DashboardSettingsProfilesIndexRoute
+  DashboardSettingsStoresIndexRoute: typeof DashboardSettingsStoresIndexRoute
   DashboardSettingsTeamsIndexRoute: typeof DashboardSettingsTeamsIndexRoute
   DashboardSettingsUsersIndexRoute: typeof DashboardSettingsUsersIndexRoute
   DashboardSettingsWebhooksIndexRoute: typeof DashboardSettingsWebhooksIndexRoute
@@ -564,6 +585,7 @@ const DashboardSettingsRouteRouteChildren: DashboardSettingsRouteRouteChildren =
     DashboardSettingsInvitationsIndexRoute:
       DashboardSettingsInvitationsIndexRoute,
     DashboardSettingsProfilesIndexRoute: DashboardSettingsProfilesIndexRoute,
+    DashboardSettingsStoresIndexRoute: DashboardSettingsStoresIndexRoute,
     DashboardSettingsTeamsIndexRoute: DashboardSettingsTeamsIndexRoute,
     DashboardSettingsUsersIndexRoute: DashboardSettingsUsersIndexRoute,
     DashboardSettingsWebhooksIndexRoute: DashboardSettingsWebhooksIndexRoute,

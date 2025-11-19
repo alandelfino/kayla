@@ -11,6 +11,7 @@ export function SettingsSidebar() {
     { label: 'Convites', href: '/dashboard/settings/invitations' },
     { label: 'Equipes', href: '/dashboard/settings/teams' },
     { label: 'Perfis', href: '/dashboard/settings/profiles' },
+    { label: 'Lojas', href: '/dashboard/settings/stores' },
     { separator: true },
     { label: 'Integrações', href: '/dashboard/settings/integrations' },
     { label: 'Webhooks', href: '/dashboard/settings/webhooks' },
