@@ -60,7 +60,7 @@ function normalizeResponse(data: ProductsResponse) {
   return { items, itemsTotal, pageTotal }
 }
 
-import { formatMoneyFromCents, getCurrencyInfo } from '@/lib/format'
+ 
 
 function RouteComponent() {
   const [currentPage, setCurrentPage] = useState(1)
@@ -86,9 +86,7 @@ function RouteComponent() {
 
   const [items, setItems] = useState<Product[]>([])
 
-  const { code } = getCurrencyInfo()
-  const localeMap: Record<string, string> = { BRL: 'pt-BR', USD: 'en-US', EUR: 'de-DE', GBP: 'en-GB', JPY: 'ja-JP', MXN: 'es-MX', CAD: 'en-CA', AUD: 'en-AU' }
-  const locale = localeMap[code] ?? 'en-US'
+  
 
   const selectedProduct = useMemo(() => items.find((i) => i.id === selected[0]), [items, selected])
   const canManageChilds = useMemo(() => {
@@ -121,8 +119,7 @@ function RouteComponent() {
     { id: 'sku', header: 'SKU', width: '160px', cell: (p) => p.sku ?? '—', headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
     { id: 'name', header: 'Nome', width: '280px', cell: (p) => p.name ?? '—', headerClassName: 'w-[280px] min-w-[280px] border-r', className: 'w-[280px] min-w-[280px] p-2!' },
     { id: 'type', header: 'Tipo', width: '180px', cell: (p) => (p.type === 'with_derivations' ? 'Com variações' : 'Simples'), headerClassName: 'w-[180px] min-w-[180px] border-r', className: 'w-[180px] min-w-[180px] p-2!' },
-    { id: 'price', header: 'Preço', width: '160px', cell: (p) => formatMoneyFromCents(p.price, code, locale), headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
-    { id: 'promotional_price', header: 'Preço Promocional', width: '180px', cell: (p) => typeof p.promotional_price === 'number' ? formatMoneyFromCents(p.promotional_price, code, locale) : '—', headerClassName: 'w-[180px] min-w-[180px] border-r', className: 'w-[180px] min-w-[180px] p-2!' },
+    
     { id: 'stock', header: 'Estoque', width: '120px', cell: (p) => typeof p.stock === 'number' ? p.stock : '—', headerClassName: 'w-[120px] min-w-[120px] border-r', className: 'w-[120px] min-w-[120px] p-2!' },
     { id: 'managed_inventory', header: 'Gerenciar estoque', width: '160px', cell: (p) => p.managed_inventory ? 'Sim' : 'Não', headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
     { id: 'active', header: 'Status', width: '120px', cell: (p) => {
@@ -140,8 +137,7 @@ function RouteComponent() {
         </span>
       )
     }, headerClassName: 'w-[120px] min-w-[120px] border-r', className: 'w-[120px] min-w-[120px] p-2!' },
-    { id: 'promotional_price_active', header: 'Promoção ativa', width: '160px', cell: (p) => p.promotional_price_active ? 'Sim' : 'Não', headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
-  ], [items, selected, code, locale])
+  ], [items, selected])
 
   useEffect(() => {
     if (!data) return

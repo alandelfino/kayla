@@ -15,17 +15,14 @@ import { toast } from 'sonner'
 import { privateInstance } from '@/lib/auth'
 import { Switch } from '@/components/ui/switch'
 import { useEffect, useState, useMemo } from 'react'
-import { maskMoneyInput, toCents, formatMoneyFromCents, getCurrencyInfo } from '@/lib/format'
+ 
 
 const formSchema = z.object({
   sku: z.string().min(1, { message: 'Campo obrigatório' }).regex(/^[a-z0-9-]+$/, 'Use apenas minúsculas, números e hífen (-)'),
   name: z.string().min(1, { message: 'Campo obrigatório' }),
   description: z.string().optional().or(z.literal('')),
   type: z.enum(['simple', 'with_derivations'] as const, { message: 'Campo obrigatório' }),
-  price: z.preprocess((v) => typeof v === 'number' ? v : toCents(v), z.number({ message: 'Campo obrigatório' }).int().min(0)),
-  promotional_price: z.preprocess((v) => typeof v === 'number' ? v : toCents(v), z.number().int().min(0)).optional(),
   active: z.boolean({ message: 'Campo obrigatório' }),
-  promotional_price_active: z.boolean({ message: 'Campo obrigatório' }),
   managed_inventory: z.boolean({ message: 'Campo obrigatório' }),
   unit_id: z.preprocess(
     (v) => {
@@ -76,10 +73,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
       name: '',
       description: '',
       type: 'simple',
-      price: undefined,
-      promotional_price: undefined,
       active: true,
-      promotional_price_active: false,
       managed_inventory: false,
       unit_id: undefined,
       brand_id: undefined,
@@ -194,10 +188,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
         name: p.name ?? '',
         description: p.description ?? '',
         type: p.type ?? 'simple',
-        price: typeof p.price === 'number' ? p.price : undefined,
-        promotional_price: typeof p.promotional_price === 'number' ? p.promotional_price : undefined,
         active: !!p.active,
-        promotional_price_active: !!p.promotional_price_active,
         managed_inventory: !!p.managed_inventory,
         unit_id: typeof p.unit_id === 'number' ? p.unit_id : undefined,
         brand_id: typeof p.brand_id === 'number' ? p.brand_id : undefined,
@@ -221,10 +212,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
         name: '',
         description: '',
         type: 'simple',
-        price: undefined,
-        promotional_price: undefined,
         active: true,
-        promotional_price_active: false,
         managed_inventory: false,
         unit_id: undefined,
         brand_id: undefined,
@@ -232,8 +220,6 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
         derivation_ids: [],
         category_ids: [],
       })
-      setPriceText('')
-      setPromoPriceText('')
     }
   }, [open])
 
@@ -353,21 +339,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
   }, [categories])
   
 
-  // Helpers de máscara
-  const { code } = getCurrencyInfo()
-  const localeMap: Record<string, string> = { BRL: 'pt-BR', USD: 'en-US', EUR: 'de-DE', GBP: 'en-GB', JPY: 'ja-JP', MXN: 'es-MX', CAD: 'en-CA', AUD: 'en-AU' }
-  const locale = localeMap[code] ?? 'en-US'
-  function currencyMask(val: string) { return maskMoneyInput(val, code, locale) }
-  
-  
-
-  // Estados de exibição mascarada
-  const [priceText, setPriceText] = useState('')
-  const [promoPriceText, setPromoPriceText] = useState('')
-  
   const isWithDerivations = form.watch('type') === 'with_derivations'
-  const priceCents = form.watch('price')
-  const promoPriceCents = form.watch('promotional_price')
 
   function toSkuSlug(val: string) {
     const base = String(val || '')
@@ -380,10 +352,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
       .replace(/-{2,}/g, '-')
   }
 
-  useEffect(() => {
-    setPriceText(typeof priceCents === 'number' ? formatMoneyFromCents(priceCents, code, locale) : '')
-    setPromoPriceText(typeof promoPriceCents === 'number' ? formatMoneyFromCents(promoPriceCents, code, locale) : '')
-  }, [priceCents, promoPriceCents, code, locale, open])
+  
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -510,40 +479,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
                       </div>
                     </div>
 
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                      <FormField control={form.control} name='price' render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Preço</FormLabel>
-                          <FormControl>
-                            <Input type='text' inputMode='numeric' placeholder='R$ 0,00' value={priceText}
-                              onChange={(e) => {
-                                const { text, value } = currencyMask(e.target.value)
-                                setPriceText(text)
-                                field.onChange(value)
-                              }}
-                              disabled={loading || isPending}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                      <FormField control={form.control} name='promotional_price' render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Preço promocional</FormLabel>
-                          <FormControl>
-                            <Input type='text' inputMode='numeric' placeholder='R$ 0,00' value={promoPriceText}
-                              onChange={(e) => {
-                                const { text, value } = currencyMask(e.target.value)
-                                setPromoPriceText(text)
-                                field.onChange(value)
-                              }}
-                              disabled={loading || isPending}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                    </div>
+                    
 
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                       <FormField control={form.control} name='unit_id' render={({ field }) => (
@@ -645,20 +581,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
                         </FormItem>
                       )} />
 
-                      <FormField control={form.control} name='promotional_price_active' render={({ field }) => (
-                        <FormItem>
-                          <div className='flex items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
-                            <div className='flex flex-col gap-0.5'>
-                              <FormLabel>Promoção ativa</FormLabel>
-                              <FormDescription className='leading-snug'>Aplica o preço promocional quando disponível.</FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={loading || isPending} />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
+                      
 
                       <FormField control={form.control} name='managed_inventory' render={({ field }) => (
                         <FormItem>

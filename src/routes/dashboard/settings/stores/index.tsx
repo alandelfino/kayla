@@ -4,17 +4,17 @@ import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
-import { RefreshCw, RefreshCcw, Edit, Trash, Store as StoreIcon, ArrowUpRight } from 'lucide-react'
+import { RefreshCw, RefreshCcw, Edit, Store as StoreIcon, ArrowUpRight } from 'lucide-react'
 import { privateInstance } from '@/lib/auth'
 import { Checkbox } from '@/components/ui/checkbox'
-import { NewStoreSheet } from './-components/new-store'
 import { EditStoreSheet } from './-components/edit-store'
-import { DeleteStore } from './-components/delete-store'
+import { NewStoreSheet } from './-components/new-store'
 
 type StoreItem = {
   id: number
   name?: string
   description?: string
+  price_table_name?: string
   created_at?: number
   updated_at?: number | null
   company_id?: number
@@ -107,10 +107,10 @@ function RouteComponent() {
       className: 'min-w-[15rem] border-r border-neutral-200 !px-4 py-3'
     },
     {
-      id: 'description',
-      header: 'Descrição',
+      id: 'price_table_name',
+      header: 'Tabela de preço',
       width: '20rem',
-      cell: (s) => s.description ?? '—',
+      cell: (s) => s.price_table_name ?? '—',
       headerClassName: 'min-w-[20rem] border-r border-neutral-200 px-4 py-2.5',
       className: 'min-w-[20rem] border-r border-neutral-200 !px-4 py-3'
     },
@@ -127,13 +127,7 @@ function RouteComponent() {
           <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
             {(isLoading || isRefetching) ? (<RefreshCw className='animate-spin' />) : (<RefreshCw />)}
           </Button>
-          {selected.length === 1 ? (
-            <DeleteStore storeId={selected[0]} onDeleted={() => { setSelected([]); refetch() }} />
-          ) : (
-            <Button variant={'outline'} disabled>
-              <Trash /> Excluir
-            </Button>
-          )}
+          <NewStoreSheet onCreated={() => { setSelected([]); refetch() }} />
           {selected.length === 1 ? (
             <EditStoreSheet storeId={selected[0]} onSaved={() => { setSelected([]); refetch() }} />
           ) : (
@@ -141,7 +135,6 @@ function RouteComponent() {
               <Edit /> Editar
             </Button>
           )}
-          <NewStoreSheet onCreated={() => { setSelected([]); refetch() }} />
         </div>
       </div>
 
@@ -170,7 +163,7 @@ function RouteComponent() {
                 </EmptyHeader>
                 <EmptyContent>
                   <div className='flex gap-2'>
-                    <NewStoreSheet onCreated={() => { refetch() }} />
+                    <NewStoreSheet onCreated={() => { setSelected([]); refetch() }} />
                     <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
                       {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
                     </Button>
