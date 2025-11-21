@@ -23,6 +23,7 @@ const formSchema = z.object({
   description: z.string().optional().or(z.literal('')),
   type: z.enum(['simple', 'with_derivations'] as const, { message: 'Campo obrigatório' }),
   active: z.boolean({ message: 'Campo obrigatório' }),
+  promotional_price_active: z.boolean({ message: 'Campo obrigatório' }),
   managed_inventory: z.boolean({ message: 'Campo obrigatório' }),
   unit_id: z.preprocess(
     (v) => {
@@ -74,6 +75,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
       description: '',
       type: 'simple',
       active: true,
+      promotional_price_active: false,
       managed_inventory: false,
       unit_id: undefined,
       brand_id: undefined,
@@ -189,6 +191,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
         description: p.description ?? '',
         type: p.type ?? 'simple',
         active: !!p.active,
+        promotional_price_active: !!p.promotional_price_active,
         managed_inventory: !!p.managed_inventory,
         unit_id: typeof p.unit_id === 'number' ? p.unit_id : undefined,
         brand_id: typeof p.brand_id === 'number' ? p.brand_id : undefined,
@@ -213,6 +216,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
         description: '',
         type: 'simple',
         active: true,
+        promotional_price_active: false,
         managed_inventory: false,
         unit_id: undefined,
         brand_id: undefined,
@@ -481,7 +485,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
 
                     
 
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                       <FormField control={form.control} name='unit_id' render={({ field }) => (
                         <FormItem>
                           <FormLabel>Unidade</FormLabel>
@@ -572,6 +576,21 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
                             <div className='flex flex-col gap-0.5'>
                               <FormLabel>Ativo</FormLabel>
                               <FormDescription className='leading-snug'>Quando habilitado, o produto aparece ativo no catálogo.</FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={loading || isPending} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+
+                      <FormField control={form.control} name='promotional_price_active' render={({ field }) => (
+                        <FormItem>
+                          <div className='flex items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
+                            <div className='flex flex-col gap-0.5'>
+                              <FormLabel>Promoção ativa</FormLabel>
+                              <FormDescription className='leading-snug'>Aplica o preço promocional quando disponível.</FormDescription>
                             </div>
                             <FormControl>
                               <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={loading || isPending} />

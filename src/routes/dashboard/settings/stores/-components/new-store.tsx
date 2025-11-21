@@ -45,7 +45,7 @@ export function NewStoreSheet({ onCreated }: { onCreated?: () => void }) {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     queryFn: async () => {
-      const response = await privateInstance.get('/api:gI4qBCGQ/price_tables?per_page=50')
+      const response = await privateInstance.get('/api:m3u66HYX/price_tables?per_page=50')
       if (response.status !== 200) throw new Error('Erro ao carregar tabelas de preço')
       return response.data as any
     }

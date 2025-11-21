@@ -22,6 +22,7 @@ import { useEffect, useState, useMemo } from 'react'
   name: z.string().min(1, { message: 'Campo obrigatório' }),
   description: z.string().optional().or(z.literal('')),
   type: z.enum(['simple', 'with_derivations'] as const, { message: 'Campo obrigatório' }),
+  promotional_price_active: z.boolean({ message: 'Campo obrigatório' }),
   active: z.boolean({ message: 'Campo obrigatório' }),
   managed_inventory: z.boolean({ message: 'Campo obrigatório' }),
   unit_id: z.preprocess(
@@ -71,6 +72,7 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
       name: '',
       description: '',
       type: 'simple',
+      promotional_price_active: false,
       active: true,
       managed_inventory: false,
       unit_id: undefined,
@@ -449,6 +451,21 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                             <div className='flex flex-col gap-0.5'>
                               <FormLabel>Ativo</FormLabel>
                               <FormDescription className='leading-snug text-xs'>Quando habilitado, o produto aparece ativo no catálogo.</FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={isPending} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+
+                      <FormField control={form.control} name='promotional_price_active' render={({ field }) => (
+                        <FormItem>
+                          <div className='flex border items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
+                            <div className='flex flex-col gap-0.5'>
+                              <FormLabel>Promoção ativa</FormLabel>
+                              <FormDescription className='leading-snug text-xs'>Aplica o preço promocional quando disponível.</FormDescription>
                             </div>
                             <FormControl>
                               <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={isPending} />
