@@ -10,9 +10,9 @@ import { privateInstance } from '@/lib/auth'
 import { DataTable } from '@/components/data-table'
 import type { ColumnDef } from '@/components/data-table'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
-import { NewPriceTableSheet } from '../settings/price-tables/-components/new-price-table'
-import { EditPriceTableSheet } from '../settings/price-tables/-components/edit-price-table'
-import { DeletePriceTable } from '../settings/price-tables/-components/delete-price-table'
+import { NewPriceTableSheet } from './-components/new-price-table'
+import { EditPriceTableSheet } from './-components/edit-price-table'
+import { DeletePriceTable } from './-components/delete-price-table'
 
 export const Route = createFileRoute('/dashboard/price-tables/')({
   component: RouteComponent,

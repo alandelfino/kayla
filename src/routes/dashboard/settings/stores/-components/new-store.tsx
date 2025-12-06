@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { z } from 'zod'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Form, FormField, FormItem, FormLabel, FormMessage, FormControl, FormDescription } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -11,25 +11,47 @@ import { toast } from 'sonner'
 import { Loader, Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Nome da loja é obrigatório' }),
   description: z.string().optional().or(z.literal('')),
   active: z.boolean().default(true),
+  price_table_id: z.number().optional(),
 })
+
+type PriceTable = { id: number; name?: string }
+type PriceTablesResponse = { items?: PriceTable[] } | PriceTable[]
 
 export function NewStoreSheet({ onCreated }: { onCreated?: () => void }) {
   const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema) as any,
-    defaultValues: { name: '', description: '', active: true },
+    defaultValues: { name: '', description: '', active: true, price_table_id: undefined },
   })
+
+  const { data: priceTablesData } = useQuery({
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    queryKey: ['price-tables', 'select'],
+    queryFn: async () => {
+      const url = `/api:m3u66HYX/price_tables?page=1&per_page=${50}`
+      const response = await privateInstance.get(url)
+      if (response.status !== 200) throw new Error('Erro ao carregar tabelas de preço')
+      return response.data as PriceTablesResponse
+    }
+  })
+  const priceTables = Array.isArray(priceTablesData)
+    ? priceTablesData
+    : Array.isArray((priceTablesData as any)?.items)
+      ? (priceTablesData as any).items
+      : []
 
 
   const { isPending, mutateAsync } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const payload = { name: values.name, description: values.description ?? '', active: values.active }
+      const payload = { name: values.name, description: values.description ?? '', active: values.active, price_table_id: values.price_table_id }
       const response = await privateInstance.post('/api:gI4qBCGQ/stores', payload)
       if (response.status !== 200 && response.status !== 201) throw new Error('Erro ao criar loja')
       return response.data
@@ -39,7 +61,7 @@ export function NewStoreSheet({ onCreated }: { onCreated?: () => void }) {
       setOpen(false)
       onCreated?.()
       queryClient.invalidateQueries({ queryKey: ['stores'] })
-      form.reset({ name: '', description: '', active: true })
+      form.reset({ name: '', description: '', active: true, price_table_id: undefined })
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message ?? 'Erro ao criar loja')
@@ -81,6 +103,25 @@ export function NewStoreSheet({ onCreated }: { onCreated?: () => void }) {
                     <textarea placeholder='Opcional' {...field}
                       className='file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm h-28 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <FormField control={form.control} name='price_table_id' render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tabela de preço padrão</FormLabel>
+                  <FormControl>
+                    <Select value={field.value != null ? String(field.value) : undefined} onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}>
+                      <SelectTrigger className='w-full'>
+                        <SelectValue placeholder='Selecione uma tabela' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {priceTables.map((pt: PriceTable) => (
+                          <SelectItem key={pt.id} value={String(pt.id)}>{pt.name ?? `Tabela ${pt.id}`}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

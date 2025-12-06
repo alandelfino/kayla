@@ -1,6 +1,6 @@
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeftRight, BadgeDollarSign, BanknoteArrowDown, BetweenHorizonalStart, BookOpen, BookUser, Copyright, FileBadge, FileClock, GitFork, Images, Kanban, ListChecks, Package, Ruler, Settings, TextCursorInput } from "lucide-react";
+import { BadgeDollarSign, BanknoteArrowDown, BetweenHorizonalStart, BookOpen, BookUser, Copyright, FileBadge, FileClock, GitFork, Images, Kanban, ListChecks, Package, Ruler, Settings, TextCursorInput, Factory } from "lucide-react";
 import { useRouterState } from "@tanstack/react-router";
 
 export function Navigation() {
@@ -122,10 +122,15 @@ export function Navigation() {
             groupName: 'Inventário',
             items: [
                 {
-                    label: 'Movimentos de estoque',
-                    icon: <ArrowLeftRight />,
-                    href: '/dashboard/stock-movements',
-                }
+                    label: 'Centros de distribuição',
+                    icon: <Factory />,
+                    href: '/dashboard/distribution-centers',
+                },
+                {
+                    label: 'Estoque',
+                    icon: <Package />,
+                    href: '/dashboard/stock',
+                },
             ]
         },
         {
