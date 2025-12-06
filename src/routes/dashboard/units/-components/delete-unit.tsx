@@ -39,7 +39,7 @@ export function DeleteUnit({ unitId, disabled = false }: { unitId: number; disab
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" disabled={disabled || !unitId}>
+                <Button variant="outline" size="sm" disabled={disabled || !unitId}>
                     <Trash /> Excluir
                 </Button>
             </DialogTrigger>

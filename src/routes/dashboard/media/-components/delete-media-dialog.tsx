@@ -29,7 +29,7 @@ export function DeleteMediaDialog({ media, onDeleted }: { media: ApiMedia, onDel
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size={'icon'} variant={'ghost'}><Trash className='w-4 h-4' /></Button>
+        <Button size={'icon'} variant={'outline'}><Trash className='w-4 h-4' /></Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

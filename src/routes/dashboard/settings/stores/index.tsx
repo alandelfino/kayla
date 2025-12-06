@@ -9,6 +9,7 @@ import { privateInstance } from '@/lib/auth'
 import { Checkbox } from '@/components/ui/checkbox'
 import { EditStoreSheet } from './-components/edit-store'
 import { NewStoreSheet } from './-components/new-store'
+import { formatDateByCompany, getCompanyTimeZone, getCompanyConfig } from '@/lib/format'
 
 type StoreItem = {
   id: number
@@ -18,6 +19,7 @@ type StoreItem = {
   created_at?: number
   updated_at?: number | null
   company_id?: number
+  active?: boolean
 }
 
 type StoresResponse = {
@@ -86,6 +88,45 @@ function RouteComponent() {
     }
   }, [totalPages, currentPage])
 
+  const normalizeEpoch = (v?: number): number | undefined => {
+    if (typeof v !== 'number' || !Number.isFinite(v)) return undefined
+    const abs = Math.abs(v)
+    if (abs < 1e11) return Math.round(v * 1000)
+    if (abs > 1e14) return Math.round(v / 1000)
+    return v
+  }
+  const fmtDateOnly = (v?: number) => {
+    const ms = normalizeEpoch(v)
+    if (!ms) return '-'
+    try {
+      const tz = getCompanyTimeZone()
+      const d = new Date(ms)
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour12: false,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).formatToParts(d)
+      const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+      const dd = get('day')
+      const MM = get('month')
+      const yyyy = get('year')
+      const cfg = getCompanyConfig()
+      const mask = String(cfg?.date_format ?? 'dd/mm/yyyy HH:mm:ss')
+      if (/^dd\/mm\/yyyy(\s|-|$)/i.test(mask)) return `${dd}/${MM}/${yyyy}`
+      if (/^yyyy\/mm\/dd(\s|-|$)/i.test(mask)) return `${yyyy}/${MM}/${dd}`
+      return `${dd}/${MM}/${yyyy}`
+    } catch {
+      const s = formatDateByCompany(ms)
+      const m1 = String(s).match(/(\d{2})\/(\d{2})\/(\d{4})/)
+      if (m1) return `${m1[1]}/${m1[2]}/${m1[3]}`
+      const m2 = String(s).match(/(\d{4})\/(\d{2})\/(\d{2})/)
+      if (m2) return `${m2[1]}/${m2[2]}/${m2[3]}`
+      return String(s)
+    }
+  }
+
   const columns: ColumnDef<StoreItem>[] = useMemo(() => [
     {
       id: 'select',
@@ -107,12 +148,39 @@ function RouteComponent() {
       className: 'min-w-[15rem] border-r border-neutral-200 !px-4 py-3'
     },
     {
-      id: 'price_table_name',
-      header: 'Tabela de preço',
-      width: '20rem',
-      cell: (s) => s.price_table_name ?? '—',
-      headerClassName: 'min-w-[20rem] border-r border-neutral-200 px-4 py-2.5',
-      className: 'min-w-[20rem] border-r border-neutral-200 !px-4 py-3'
+      id: 'created_at',
+      header: 'Criado em',
+      width: '12.5rem',
+      cell: (s) => {
+        const d = fmtDateOnly(s.created_at)
+        return (
+          <span className='text-sm'>{d || '-'}</span>
+        )
+      },
+      headerClassName: 'w-[12.5rem] min-w-[12.5rem] border-r border-neutral-200 px-4 py-2.5',
+      className: 'w-[12.5rem] min-w-[12.5rem] border-r border-neutral-200 !px-4 py-3'
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      width: '6.25rem',
+      cell: (s) => {
+        const active = s.active === true
+        return (
+          <span
+            className={
+              active
+                ? 'inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-green-50 text-green-600'
+                : 'inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-100 text-gray-700'
+            }
+          >
+            <span className={active ? 'h-1.5 w-1.5 rounded-full bg-green-600' : 'h-1.5 w-1.5 rounded-full bg-gray-500'} />
+            {active ? 'Ativo' : 'Inativo'}
+          </span>
+        )
+      },
+      headerClassName: 'w-[6.25rem] min-w-[6.25rem] border-r border-neutral-200 px-4 py-2.5',
+      className: 'w-[6.25rem] min-w-[6.25rem] border-r border-neutral-200 !px-4 py-3'
     },
   ], [selected])
 
@@ -127,7 +195,6 @@ function RouteComponent() {
           <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
             {(isLoading || isRefetching) ? (<RefreshCw className='animate-spin' />) : (<RefreshCw />)}
           </Button>
-          <NewStoreSheet onCreated={() => { setSelected([]); refetch() }} />
           {selected.length === 1 ? (
             <EditStoreSheet storeId={selected[0]} onSaved={() => { setSelected([]); refetch() }} />
           ) : (
@@ -135,6 +202,7 @@ function RouteComponent() {
               <Edit /> Editar
             </Button>
           )}
+          <NewStoreSheet onCreated={() => { setSelected([]); refetch() }} />
         </div>
       </div>
 
@@ -164,7 +232,7 @@ function RouteComponent() {
                 <EmptyContent>
                   <div className='flex gap-2'>
                     <NewStoreSheet onCreated={() => { setSelected([]); refetch() }} />
-                    <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
+                    <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
                       {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
                     </Button>
                   </div>

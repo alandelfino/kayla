@@ -306,7 +306,7 @@ function RouteComponent() {
                 <EmptyContent>
                   <div className='flex gap-2'>
                     <NewTeamSheet onCreated={() => { refetch() }} />
-                    <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
+                    <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
                       {(isLoading || isRefetching) ? <RefreshCw className='animate-spin w-4 h-4' /> : <RefreshCw className='w-4 h-4' />}
                     </Button>
                   </div>

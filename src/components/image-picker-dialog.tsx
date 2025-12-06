@@ -106,7 +106,7 @@ export function ImagePickerDialog({ open, onOpenChange, onInsert }: Props) {
         <div className='px-2 flex items-center justify-end gap-2'>
           {/* Botão para criar nova mídia */}
           <NewMediaDialog onCreated={() => refetch()} onOpenChange={setNewMediaOpen} />
-          <Button variant={'outline'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
+          <Button variant={'ghost'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
             {(isLoading || isRefetching) ? 'Atualizando...' : 'Atualizar'}
           </Button>
           <Button

@@ -31,7 +31,7 @@ export function DeleteStore({ storeId, onDeleted }: { storeId: number, onDeleted
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={'destructive'}>
+        <Button variant={'outline'}>
           <Trash /> Excluir
         </Button>
       </DialogTrigger>

@@ -112,7 +112,7 @@ export function EditCategorySheet({ categoryId, categories: categoriesProp = [] 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button size={'sm'} variant={'ghost'}>
+        <Button size={'sm'} variant={'outline'}>
           <Edit /> Editar
         </Button>
       </SheetTrigger>

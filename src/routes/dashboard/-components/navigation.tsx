@@ -1,6 +1,6 @@
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeftRight, BadgeDollarSign, BanknoteArrowDown, BetweenHorizonalStart, BookOpen, BookUser, Copyright, FileBadge, FileClock, GitFork, Images, Kanban, ListChecks, Package, Ruler, TextCursorInput } from "lucide-react";
+import { ArrowLeftRight, BadgeDollarSign, BanknoteArrowDown, BetweenHorizonalStart, BookOpen, BookUser, Copyright, FileBadge, FileClock, GitFork, Images, Kanban, ListChecks, Package, Ruler, Settings, TextCursorInput } from "lucide-react";
 import { useRouterState } from "@tanstack/react-router";
 
 export function Navigation() {
@@ -97,6 +97,11 @@ export function Navigation() {
                     href: '/dashboard/warranties',
                 },
                 {
+                    label: 'Tabelas de preço',
+                    icon: <BadgeDollarSign />,
+                    href: '/dashboard/price-tables',
+                },
+                {
                     label: 'Produtos',
                     icon: <Package />,
                     href: '/dashboard/products',
@@ -120,6 +125,16 @@ export function Navigation() {
                     label: 'Movimentos de estoque',
                     icon: <ArrowLeftRight />,
                     href: '/dashboard/stock-movements',
+                }
+            ]
+        },
+        {
+            groupName: 'Configurações',
+            items: [
+                {
+                    label: 'Configurações da conta',
+                    icon: <Settings />,
+                    href: '/dashboard/settings/account',
                 }
             ]
         }

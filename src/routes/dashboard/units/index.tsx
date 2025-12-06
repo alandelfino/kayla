@@ -163,7 +163,7 @@ function RouteComponent() {
           </div>
 
           <div className='flex items-center gap-2'>
-            <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedUnits([]); refetch() }}>
+            <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelectedUnits([]); refetch() }}>
               {
                 (isLoading || isRefetching)
                   ? <><RefreshCcw className='animate-spin' /> Atualizando...</>
@@ -174,7 +174,7 @@ function RouteComponent() {
             {selectedUnits.length === 1 ? (
               <DeleteUnit unitId={selectedUnits[0]} />
             ) : (
-              <Button variant={'ghost'} disabled>
+              <Button variant={'outline'} disabled>
                 <Trash /> Excluir
               </Button>
             )}
@@ -182,7 +182,7 @@ function RouteComponent() {
             {selectedUnits.length === 1 ? (
               <EditUnitSheet unitId={selectedUnits[0]} />
             ) : (
-              <Button variant={'ghost'} disabled>
+              <Button variant={'outline'} disabled>
                 <Edit /> Editar
               </Button>
             )}
@@ -214,7 +214,7 @@ function RouteComponent() {
               <EmptyContent>
                 <div className='flex gap-2'>
                   <NewUnitSheet />
-                  <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedUnits([]); refetch() }}>
+                  <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelectedUnits([]); refetch() }}>
                     {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
                   </Button>
                 </div>

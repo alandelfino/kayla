@@ -180,7 +180,7 @@ function RouteComponent() {
           </div>
 
           <div className='flex items-center gap-2'>
-            <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedBrands([]); refetch() }}>
+            <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelectedBrands([]); refetch() }}>
               {
                 (isLoading || isRefetching)
                   ? <><RefreshCcw className='animate-spin' /> Atualizando...</>
@@ -191,7 +191,7 @@ function RouteComponent() {
             {selectedBrands.length === 1 ? (
               <DeleteBrand brandId={selectedBrands[0]} />
             ) : (
-              <Button variant={'ghost'} disabled>
+              <Button variant={'outline'} disabled>
                 <Trash /> Exluir
               </Button>
             )}
@@ -199,7 +199,7 @@ function RouteComponent() {
             {selectedBrands.length === 1 ? (
               <EditBrandSheet brandId={selectedBrands[0]} />
             ) : (
-              <Button variant={'ghost'} disabled>
+              <Button variant={'outline'} disabled>
                 <Edit /> Editar
               </Button>
             )}
@@ -231,7 +231,7 @@ function RouteComponent() {
               <EmptyContent>
                 <div className='flex gap-2'>
                   <NewBrandSheet />
-                  <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { setSelectedBrands([]); refetch() }}>
+                  <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelectedBrands([]); refetch() }}>
                     {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
                   </Button>
                 </div>

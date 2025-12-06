@@ -39,7 +39,7 @@ export function DeleteBrand({ brandId, disabled = false }: { brandId: number; di
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" disabled={disabled || !brandId}>
+                <Button variant="outline" size="sm" disabled={disabled || !brandId}>
                     <Trash /> Excluir
                 </Button>
             </DialogTrigger>

@@ -263,7 +263,7 @@ function RouteComponent() {
         </div>
         <div className='flex items-center gap-3'>
           <Button
-            variant={'outline'}
+            variant={'ghost'}
             size={'icon'}
             className='xl:hidden'
             disabled={isLoading || isRefetching}
@@ -286,7 +286,7 @@ function RouteComponent() {
             <FileText className='w-4 h-4' />
           </Button>
           <Button
-            variant={'outline'}
+            variant={'ghost'}
             className='hidden xl:inline-flex'
             disabled={isLoading || isRefetching}
             aria-disabled={isLoading || isRefetching}
@@ -346,7 +346,7 @@ function RouteComponent() {
                 </EmptyHeader>
                 <EmptyContent>
                   <div className='flex gap-2'>
-                    <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
+                    <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { refetch() }}>
                       {(isLoading || isRefetching) ? <><RefreshCw className='animate-spin' /> Atualizando...</> : <><RefreshCw /> Atualizar</>}
                     </Button>
                   </div>

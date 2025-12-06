@@ -2,28 +2,30 @@ import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
-import { Form, FormField, FormItem, FormLabel, FormMessage, FormControl } from '@/components/ui/form'
+import { Form, FormField, FormItem, FormLabel, FormMessage, FormControl, FormDescription } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { Switch } from '@/components/ui/switch'
 import { privateInstance } from '@/lib/auth'
 import { toast } from 'sonner'
 import { Edit, Loader } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
-type StoreItem = { id: number; name?: string; description?: string }
+type StoreItem = { id: number; name?: string; description?: string; active?: boolean }
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Nome da loja é obrigatório' }),
   description: z.string().optional().or(z.literal('')),
+  active: z.boolean().default(true),
 })
 
 export function EditStoreSheet({ storeId, onSaved }: { storeId: number, onSaved?: () => void }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { name: '', description: '' },
+    resolver: zodResolver(formSchema) as any,
+    defaultValues: { name: '', description: '', active: true },
   })
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export function EditStoreSheet({ storeId, onSaved }: { storeId: number, onSaved?
         const response = await privateInstance.get(`/api:gI4qBCGQ/stores/${storeId}`)
         if (response.status !== 200 || !response.data) throw new Error('Falha ao carregar loja')
         const s = response.data as StoreItem
-        form.reset({ name: s.name ?? '', description: s.description ?? '' })
+        form.reset({ name: s.name ?? '', description: s.description ?? '', active: s.active === true })
       } catch (err: any) {
         toast.error(err?.response?.data?.message ?? 'Erro ao carregar loja')
       } finally {
@@ -45,7 +47,7 @@ export function EditStoreSheet({ storeId, onSaved }: { storeId: number, onSaved?
 
   const { isPending, mutateAsync } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const payload = { name: values.name, description: values.description ?? '' }
+      const payload = { name: values.name, description: values.description ?? '', active: values.active }
       const response = await privateInstance.put(`/api:gI4qBCGQ/stores/${storeId}`, payload)
       if (response.status !== 200) throw new Error('Erro ao atualizar loja')
       return response.data
@@ -98,6 +100,23 @@ export function EditStoreSheet({ storeId, onSaved }: { storeId: number, onSaved?
                   <FormMessage />
                 </FormItem>
               )} />
+
+              <div className='grid grid-cols-1 gap-4'>
+                <FormField control={form.control} name='active' render={({ field }) => (
+                  <FormItem>
+                    <div className='flex border items-center justify-between gap-3 bg-neutral-50 dark:bg-neutral-900 px-3 py-2.5 rounded-md'>
+                      <div className='flex flex-col gap-0.5'>
+                        <FormLabel>Ativo</FormLabel>
+                        <FormDescription className='leading-snug text-xs'>Quando habilitada, a loja aparece ativa.</FormDescription>
+                        <FormMessage />
+                      </div>
+                      <FormControl>
+                        <Switch checked={Boolean(field.value)} onCheckedChange={(v) => field.onChange(v)} disabled={loading || isPending} />
+                      </FormControl>
+                    </div>
+                  </FormItem>
+                )} />
+              </div>
             </div>
 
             <div className='mt-auto border-t p-4'>

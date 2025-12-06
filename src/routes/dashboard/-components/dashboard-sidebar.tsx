@@ -1,8 +1,7 @@
 import * as React from "react"
 import { auth } from '@/lib/auth'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, SidebarMenuButton } from "@/components/ui/sidebar"
-import { Link } from '@tanstack/react-router'
-import { Settings } from 'lucide-react'
+//
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { getAvatarAbbrev } from '@/lib/utils'
 import { Navigation } from "./navigation"
@@ -77,7 +76,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                 <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:text-2xl data-[slot=sidebar-menu-button]:p-1.5! h-full font-confortaa rounded-lg hover:bg-transparent group-data-[state=collapsed]:p-0! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:items-center" >
 
                     {/* Company */}
-                    <Link to='/dashboard/settings/account' className='flex h-full items-center gap-2 group-data-[collapsible=icon]:mx-auto group-data-[state=collapsed]:px-0 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:gap-0 group-data-[state=collapsed]:grid group-data-[state=collapsed]:place-items-center transition-[padding] duration-200 ease-in-out' title='Configurações da empresa' aria-label='Configurações da empresa'>
+                    <div className='flex h-full items-center gap-2 group-data-[collapsible=icon]:mx-auto group-data-[state=collapsed]:px-0 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:gap-0 group-data-[state=collapsed]:grid group-data-[state=collapsed]:place-items-center transition-[padding] duration-200 ease-in-out' aria-label='Empresa'>
                         <Avatar className='self-center h-8 w-8 rounded-md border shadow-xs group-data-[state=collapsed]:h-6 group-data-[state=collapsed]:w-6 transition-all duration-200 ease-in-out'>
                             <AvatarImage src={company?.image?.url ?? company?.logo_url ?? undefined} alt={companyName} />
                             <AvatarFallback className='rounded-md text-[10px] leading-none font-semibold bg-white border'>
@@ -88,10 +87,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                             <div className='font-semibold text-sm leading-none text-slate-800'>{companyName}</div>
                             <span className='text-xs text-slate-500 dark:text-neutral-500'>{companyDoc}</span>
                         </span>
-                        <span className='ml-auto group-data-[state=collapsed]:hidden'>
-                            <Settings className='size-4' />
-                        </span>
-                    </Link>
+                    </div>
 
                 </SidebarMenuButton>
             </SidebarHeader>

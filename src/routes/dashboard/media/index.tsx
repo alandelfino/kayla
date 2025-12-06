@@ -98,7 +98,7 @@ function RouteComponent() {
         <div className='border-b flex w-full items-center p-2 gap-4'>
 
           <div className='flex items-center gap-2 flex-1'>
-            <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
+            <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
               {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
             </Button>
           </div>
@@ -125,7 +125,7 @@ function RouteComponent() {
               <EmptyContent>
                 <div className='flex gap-2'>
                   <NewMediaDialog onCreated={() => refetch()} />
-                  <Button variant={'outline'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
+                  <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
                     {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
                   </Button>
                 </div>
@@ -154,7 +154,7 @@ function RouteComponent() {
                       </div>
                     </div>
                     <div className='opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1'>
-                      <Button size={'icon'} variant={'ghost'} onClick={() => setSelected(m)}><Edit className='w-4 h-4' /></Button>
+                      <Button size={'icon'} variant={'outline'} onClick={() => setSelected(m)}><Edit className='w-4 h-4' /></Button>
                       <DeleteMediaDialog media={m} onDeleted={() => refetch()} />
                     </div>
                   </div>

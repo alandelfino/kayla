@@ -28,7 +28,7 @@ export function DeleteCustomerDialog({ customerId }: { customerId: number }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="text-destructive">
+        <Button variant="outline" className="text-destructive">
           <Trash2 className="w-4 h-4" />Excluir
         </Button>
       </DialogTrigger>
