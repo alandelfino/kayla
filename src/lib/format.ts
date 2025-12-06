@@ -218,7 +218,7 @@ export function getCompanyMoneyConfig(key: string = 'default'): MoneyFormatConfi
 }
 
 function groupThousands(intPart: string, sep: string): string {
-  const s = intPart.replace(/^(\-)/, '')
+  const s = intPart.replace(/^(-)/, '')
   let out = ''
   for (let i = 0; i < s.length; i++) {
     const idx = s.length - i - 1
@@ -276,7 +276,7 @@ export function parseMoneyStringToCents(text: string, cfg: MoneyFormatConfig): n
 export function validateMoneyString(text: string, cfg: MoneyFormatConfig): boolean {
   if (typeof text !== 'string' || !text.trim()) return false
   const re = new RegExp(`^-?(${cfg.symbolPosition === 'prefix' ? cfg.symbol + '\\s?' : ''})?[0-9${cfg.thousandSeparator}]+(${cfg.decimalSeparator}[0-9]+)?(${cfg.symbolPosition === 'suffix' ? '\\s?' + cfg.symbol : ''})?$`)
-  return re.test(text.replace(/\u0000/g, ''))
+  return re.test(text.replaceAll('\u0000', ''))
 }
 
 export function convertMoneyString(text: string, fromCfg: MoneyFormatConfig, toCfg: MoneyFormatConfig): string {

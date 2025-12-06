@@ -98,8 +98,8 @@ function RouteComponent() {
       const yyyy = get('year')
       const cfg = getCompanyConfig()
       const mask = String(cfg?.date_format ?? 'dd/mm/yyyy HH:mm:ss')
-      if (/^dd\/mm\/yyyy(\s|\-|$)/i.test(mask)) return `${dd}/${MM}/${yyyy}`
-      if (/^yyyy\/mm\/dd(\s|\-|$)/i.test(mask)) return `${yyyy}/${MM}/${dd}`
+      if (/^dd\/mm\/yyyy(\s|-|$)/i.test(mask)) return `${dd}/${MM}/${yyyy}`
+      if (/^yyyy\/mm\/dd(\s|-|$)/i.test(mask)) return `${yyyy}/${MM}/${dd}`
       return `${dd}/${MM}/${yyyy}`
     } catch {
       const s = fmtDate(v)

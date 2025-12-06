@@ -77,13 +77,13 @@ export function DataTable<T extends { id?: number | string }>({
 
       <div className='relative h-full'>
         <div className='w-full overflow-x-auto overflow-y-auto' data-slot='datatable-scroller' ref={mainScrollerRef}>
-        <Table className='border-b'>
+        <Table className='border-b table-fixed'>
           <TableHeader className='sticky top-0 bg-neutral-50 z-10 border-b'>
             <TableRow className='bg-neutral-50'>
               {columns.map((col) => (
                 <TableHead
                   key={col.id}
-                  className={`border-r sticky top-0 z-10 bg-neutral-50 ${col.headerClassName ?? ''}`}
+                  className={`border-r ${col.headerClassName ?? ''}`}
                   style={col.width ? { width: col.width } : undefined}
                 >
                   {typeof col.header === 'function' ? col.header(data) : col.header}

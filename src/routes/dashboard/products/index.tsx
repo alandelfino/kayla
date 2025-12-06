@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Topbar } from '../-components/topbar'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Edit, RefreshCcw, Trash, Package } from 'lucide-react'
+import { Edit, RefreshCcw, Trash, Package, GitFork } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -120,7 +120,6 @@ function RouteComponent() {
     { id: 'name', header: 'Nome', width: '280px', cell: (p) => p.name ?? '—', headerClassName: 'w-[280px] min-w-[280px] border-r', className: 'w-[280px] min-w-[280px] p-2!' },
     { id: 'type', header: 'Tipo', width: '180px', cell: (p) => (p.type === 'with_derivations' ? 'Com variações' : 'Simples'), headerClassName: 'w-[180px] min-w-[180px] border-r', className: 'w-[180px] min-w-[180px] p-2!' },
     
-    { id: 'stock', header: 'Estoque', width: '120px', cell: (p) => typeof p.stock === 'number' ? p.stock : '—', headerClassName: 'w-[120px] min-w-[120px] border-r', className: 'w-[120px] min-w-[120px] p-2!' },
     { id: 'managed_inventory', header: 'Gerenciar estoque', width: '160px', cell: (p) => p.managed_inventory ? 'Sim' : 'Não', headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
     { id: 'active', header: 'Status', width: '120px', cell: (p) => {
       const active = p.active === true
@@ -191,7 +190,7 @@ function RouteComponent() {
               <ChildProductsSheet productId={selected[0]} />
             ) : (
               <Button variant={'outline'} disabled>
-                <Package /> Derivações
+                <GitFork /> Derivações
               </Button>
             )}
             <NewProductSheet onCreated={() => { refetch() }} />

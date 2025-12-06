@@ -18,13 +18,13 @@ import { useEffect, useState, useMemo } from 'react'
  
 
   const formSchema = z.object({
-  sku: z.string().min(1, { message: 'Campo obrigatório' }).regex(/^[a-z0-9-]+$/, 'Use apenas minúsculas, números e hífen (-)'),
-  name: z.string().min(1, { message: 'Campo obrigatório' }),
-  description: z.string().optional().or(z.literal('')),
-  type: z.enum(['simple', 'with_derivations'] as const, { message: 'Campo obrigatório' }),
-  promotional_price_active: z.boolean({ message: 'Campo obrigatório' }),
-  active: z.boolean({ message: 'Campo obrigatório' }),
-  managed_inventory: z.boolean({ message: 'Campo obrigatório' }),
+    sku: z.string().min(1, { message: 'Campo obrigatório' }).regex(/^[a-z0-9-]+$/, 'Use apenas minúsculas, números e hífen (-)'),
+    name: z.string().min(1, { message: 'Campo obrigatório' }),
+    description: z.string().optional().or(z.literal('')),
+    type: z.enum(['simple', 'with_derivations'] as const, { message: 'Campo obrigatório' }),
+    promotional_price_active: z.boolean().default(false),
+    active: z.boolean({ message: 'Campo obrigatório' }),
+    managed_inventory: z.boolean({ message: 'Campo obrigatório' }),
   unit_id: z.preprocess(
     (v) => {
       if (v === '' || v === null || v === undefined) return undefined
@@ -229,6 +229,7 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
         name: '',
         description: '',
         type: 'simple',
+        promotional_price_active: false,
         active: true,
         managed_inventory: false,
         unit_id: undefined,
@@ -453,7 +454,7 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                               <FormDescription className='leading-snug text-xs'>Quando habilitado, o produto aparece ativo no catálogo.</FormDescription>
                             </div>
                             <FormControl>
-                              <Switch checked={!!field.value} onCheckedChange={(v) => field.onChange(!!v)} disabled={isPending} />
+                              <Switch checked={Boolean(field.value)} onCheckedChange={(v) => field.onChange(v)} disabled={isPending} />
                             </FormControl>
                           </div>
                           <FormMessage />

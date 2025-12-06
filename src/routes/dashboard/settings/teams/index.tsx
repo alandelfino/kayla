@@ -218,9 +218,9 @@ function RouteComponent() {
           const ss = get('second')
           const cfg = getCompanyConfig()
           const mask = String(cfg?.date_format ?? 'dd/mm/yyyy HH:mm:ss')
-          const date = /^dd\/mm\/yyyy(\s|\-|$)/i.test(mask)
+          const date = /^dd\/mm\/yyyy(\s|-|$)/i.test(mask)
             ? `${dd}/${MM}/${yyyy}`
-            : /^yyyy\/mm\/dd(\s|\-|$)/i.test(mask)
+            : /^yyyy\/mm\/dd(\s|-|$)/i.test(mask)
             ? `${yyyy}/${MM}/${dd}`
             : `${dd}/${MM}/${yyyy}`
           return (
