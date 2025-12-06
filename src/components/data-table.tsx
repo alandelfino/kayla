@@ -21,12 +21,13 @@ type DataTableProps<T> = {
   loading?: boolean
   emptyMessage?: string
   emptySlot?: React.ReactNode
-  page: number
-  perPage: number
-  totalItems: number
-  onChange: (next: { page?: number; perPage?: number }) => void
+  page?: number
+  perPage?: number
+  totalItems?: number
+  onChange?: (next: { page?: number; perPage?: number }) => void
   skeletonCount?: number
   rowClassName?: string
+  hideFooter?: boolean
 }
 
 export function DataTable<T extends { id?: number | string }>({
@@ -41,28 +42,33 @@ export function DataTable<T extends { id?: number | string }>({
   onChange,
   skeletonCount,
   rowClassName,
+  hideFooter = false,
 }: DataTableProps<T>) {
-  const totalPages = Math.max(1, Math.ceil(totalItems / Math.max(perPage, 1)))
-  const startIndex = (page - 1) * perPage
-  const endIndex = Math.min(startIndex + perPage, totalItems)
+  const mainScrollerRef = React.useRef<HTMLDivElement | null>(null)
+  const safeTotalItems = typeof totalItems === 'number' ? totalItems : data.length
+  const safePerPage = typeof perPage === 'number' ? perPage : Math.max(data.length, 1)
+  const safePage = typeof page === 'number' ? page : 1
+  const totalPages = Math.max(1, Math.ceil(safeTotalItems / Math.max(safePerPage, 1)))
+  const startIndex = (safePage - 1) * safePerPage
+  const endIndex = Math.min(startIndex + safePerPage, safeTotalItems)
 
   const goToFirstPage = () => {
-    if (page > 1) onChange({ page: 1 })
+    if (safePage > 1) onChange?.({ page: 1 })
   }
   const goToPreviousPage = () => {
-    if (page > 1) onChange({ page: page - 1 })
+    if (safePage > 1) onChange?.({ page: safePage - 1 })
   }
   const goToNextPage = () => {
-    if (page < totalPages) onChange({ page: page + 1 })
+    if (safePage < totalPages) onChange?.({ page: safePage + 1 })
   }
   const goToLastPage = () => {
-    if (page < totalPages) onChange({ page: totalPages })
+    if (safePage < totalPages) onChange?.({ page: totalPages })
   }
 
   const handlePerPageChange = (value: string) => {
     const next = parseInt(value)
-    if (!Number.isNaN(next) && next !== perPage) {
-      onChange({ perPage: next })
+    if (!Number.isNaN(next) && next !== safePerPage) {
+      onChange?.({ perPage: next })
     }
   }
 
@@ -70,14 +76,14 @@ export function DataTable<T extends { id?: number | string }>({
     <div className='flex flex-col w-full h-full min-h-0 overflow-y-auto overflow-x-hidden'>
 
       <div className='relative h-full'>
-        <div className='w-full overflow-x-auto'>
+        <div className='w-full overflow-x-auto overflow-y-auto' data-slot='datatable-scroller' ref={mainScrollerRef}>
         <Table className='border-b'>
           <TableHeader className='sticky top-0 bg-neutral-50 z-10 border-b'>
             <TableRow className='bg-neutral-50'>
               {columns.map((col) => (
                 <TableHead
                   key={col.id}
-                  className={`border-r ${col.headerClassName ?? ''}`}
+                  className={`border-r sticky top-0 z-10 bg-neutral-50 ${col.headerClassName ?? ''}`}
                   style={col.width ? { width: col.width } : undefined}
                 >
                   {typeof col.header === 'function' ? col.header(data) : col.header}
@@ -207,50 +213,52 @@ export function DataTable<T extends { id?: number | string }>({
       </div>
 
       {/* Table Footer */}
-      <div className='border-t h-12 w-full p-2 flex items-center'>
-        <span className='text-sm xl:hidden'>
-          {totalItems > 0 ? startIndex + 1 : 0} ao {endIndex} de {totalItems} iten(s).
-        </span>
-        <span className='text-sm hidden xl:inline'>
-          Mostrando do {totalItems > 0 ? startIndex + 1 : 0} ao {endIndex} de {totalItems} itens.
-        </span>
+      {hideFooter ? null : (
+        <div className='border-t h-12 w-full p-2 flex items-center'>
+          <span className='text-sm xl:hidden'>
+            {safeTotalItems > 0 ? startIndex + 1 : 0} ao {endIndex} de {safeTotalItems} iten(s).
+          </span>
+          <span className='text-sm hidden xl:inline'>
+            Mostrando do {safeTotalItems > 0 ? startIndex + 1 : 0} ao {endIndex} de {safeTotalItems} itens.
+          </span>
 
-        <div className='flex items-center gap-2 flex-1 justify-end'>
-          <span className='text-sm xl:hidden'>Por página</span>
-          <span className='text-sm hidden xl:inline'>Itens por página</span>
-          <Select value={perPage.toString()} onValueChange={handlePerPageChange}>
-            <SelectTrigger className='w-[90px]'>
-              <SelectValue placeholder={perPage.toString()} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value='20'>20</SelectItem>
-                <SelectItem value='30'>30</SelectItem>
-                <SelectItem value='50'>50</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          <div className='flex items-center gap-2 flex-1 justify-end'>
+            <span className='text-sm xl:hidden'>Por página</span>
+            <span className='text-sm hidden xl:inline'>Itens por página</span>
+            <Select value={safePerPage.toString()} onValueChange={handlePerPageChange}>
+              <SelectTrigger className='w-[90px]'>
+                <SelectValue placeholder={safePerPage.toString()} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value='20'>20</SelectItem>
+                  <SelectItem value='30'>30</SelectItem>
+                  <SelectItem value='50'>50</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
 
-          <Separator orientation='vertical' />
+            <Separator orientation='vertical' />
 
-          <span className='text-sm'>Página {page} de {totalPages}</span>
+            <span className='text-sm'>Página {safePage} de {totalPages}</span>
 
-          <Separator orientation='vertical' />
+            <Separator orientation='vertical' />
 
-          <Button variant={'outline'} size={'icon'} onClick={goToFirstPage} disabled={page === 1}>
-            <ChevronsLeft />
-          </Button>
-          <Button variant={'outline'} size={'icon'} onClick={goToPreviousPage} disabled={page === 1}>
-            <ChevronLeft />
-          </Button>
-          <Button variant={'outline'} size={'icon'} onClick={goToNextPage} disabled={page === totalPages}>
-            <ChevronRight />
-          </Button>
-          <Button variant={'outline'} size={'icon'} onClick={goToLastPage} disabled={page === totalPages}>
-            <ChevronsRight />
-          </Button>
+            <Button variant={'outline'} size={'icon'} onClick={goToFirstPage} disabled={safePage === 1}>
+              <ChevronsLeft />
+            </Button>
+            <Button variant={'outline'} size={'icon'} onClick={goToPreviousPage} disabled={safePage === 1}>
+              <ChevronLeft />
+            </Button>
+            <Button variant={'outline'} size={'icon'} onClick={goToNextPage} disabled={safePage === totalPages}>
+              <ChevronRight />
+            </Button>
+            <Button variant={'outline'} size={'icon'} onClick={goToLastPage} disabled={safePage === totalPages}>
+              <ChevronsRight />
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

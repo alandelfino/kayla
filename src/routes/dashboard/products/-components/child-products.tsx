@@ -2,14 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, SheetFooter, SheetClose } from '@/components/ui/sheet'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { NewChildProductDialog } from './new-child-product'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { Checkbox } from '@/components/ui/checkbox'
 import { privateInstance } from '@/lib/auth'
 import { GitFork, Loader, PackagePlus, RefreshCcw, Trash } from 'lucide-react'
 import { toast } from 'sonner'
+import React from 'react'
 
 type ChildProduct = {
   id: number
@@ -43,29 +43,23 @@ function normalizeChilds(data: ChildsResponse) {
   return { items, itemsTotal, pageTotal }
 }
 
-function toCentsFromText(val: string) {
-  const onlyDigits = String(val || '').replace(/\D/g, '')
-  const cents = onlyDigits ? parseInt(onlyDigits, 10) : 0
-  return cents
-}
 
 export function ChildProductsSheet({ productId }: { productId: number }) {
   const [open, setOpen] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [perPage, setPerPage] = useState(20)
   const [selected, setSelected] = useState<number[]>([])
   const [items, setItems] = useState<ChildProduct[]>([])
-  const [totalItems, setTotalItems] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
   const queryClient = useQueryClient()
+  const bottomScrollerRef = React.useRef<HTMLDivElement | null>(null)
+  const [mainScroller, setMainScroller] = useState<HTMLDivElement | null>(null)
+  const [mirrorWidth, setMirrorWidth] = useState<number>(0)
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
-    queryKey: ['product-derivations', productId, currentPage, perPage],
+    queryKey: ['product-derivations', productId],
     enabled: open,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     queryFn: async () => {
-      const response = await privateInstance.get(`/api:d9ly3uzj/derivated_products?product_id=${productId}&page=${currentPage}&per_page=${Math.min(50, perPage)}`)
+      const response = await privateInstance.get(`/api:d9ly3uzj/derivated_products?product_id=${productId}`)
       if (response.status !== 200) throw new Error('Erro ao carregar derivações do produto')
       return response.data as ChildsResponse
     }
@@ -76,15 +70,28 @@ export function ChildProductsSheet({ productId }: { productId: number }) {
     const normalized = normalizeChilds(data)
     const arr = Array.isArray(normalized.items) ? normalized.items : []
     setItems(arr)
-    const itemsTotal = typeof normalized.itemsTotal === 'number' ? normalized.itemsTotal : arr.length
-    setTotalItems(itemsTotal)
-    const pageTotal = typeof normalized.pageTotal === 'number' ? normalized.pageTotal : Math.max(1, Math.ceil(itemsTotal / perPage))
-    setTotalPages(pageTotal)
-  }, [data, perPage])
+  }, [data])
 
   useEffect(() => { if (isRefetching) setSelected([]) }, [isRefetching])
-  useEffect(() => { setSelected([]) }, [currentPage, perPage])
-  useEffect(() => { if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages) }, [totalPages, currentPage])
+  useEffect(() => {
+    const el = document.querySelector('[data-slot="datatable-scroller"]') as HTMLDivElement | null
+    setMainScroller(el)
+    if (el) setMirrorWidth(el.scrollWidth)
+  }, [open, items])
+  useEffect(() => {
+    const el = mainScroller
+    const mirror = bottomScrollerRef.current
+    if (!el || !mirror) return
+    const handleMain = () => { if (mirror) mirror.scrollLeft = el.scrollLeft }
+    const handleMirror = () => { el.scrollLeft = mirror.scrollLeft }
+    el.addEventListener('scroll', handleMain)
+    mirror.addEventListener('scroll', handleMirror)
+    return () => {
+      el.removeEventListener('scroll', handleMain)
+      mirror.removeEventListener('scroll', handleMirror)
+    }
+  }, [mainScroller, bottomScrollerRef.current])
+  
 
   const columns: ColumnDef<ChildProduct>[] = useMemo(() => [
     {
@@ -115,13 +122,13 @@ export function ChildProductsSheet({ productId }: { productId: number }) {
           <GitFork /> Derivações
         </Button>
       </SheetTrigger>
-      <SheetContent className='sm:max-w-[920px] h-full'>
-        <SheetHeader>
+      <SheetContent className='sm:max-w-[920px] h-full gap-2'>
+        <SheetHeader className='p-3'>
           <SheetTitle>Derivações do produto</SheetTitle>
           <SheetDescription>Gerencie as derivações do produto selecionado.</SheetDescription>
         </SheetHeader>
 
-        <div className='flex items-center gap-2 px-4 py-2 justify-end'>
+        <div className='flex items-center gap-2 px-4 py-1 justify-end'>
           <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
             {(isLoading || isRefetching) ? (<RefreshCcw className='animate-spin' />) : (<RefreshCcw />)}
           </Button>
@@ -136,18 +143,13 @@ export function ChildProductsSheet({ productId }: { productId: number }) {
             </Button>
           )}
         </div>
-        <div className='px-4'>
-          <div className='border-t' />
-        </div>
 
-        <div className='flex-1 min-h-0 overflow-hidden px-4 pb-4'>
+        <div className='flex-1 min-h-0 overflow-hidden border-t'>
           <DataTable
             columns={columns}
             data={items}
             loading={isLoading || isRefetching}
-            page={currentPage}
-            perPage={perPage}
-            totalItems={totalItems}
+            hideFooter
             emptyMessage='Nenhuma derivação encontrada'
             emptySlot={(
               <Empty>
@@ -170,186 +172,17 @@ export function ChildProductsSheet({ productId }: { productId: number }) {
                 </EmptyContent>
               </Empty>
             )}
-            onChange={({ page, perPage }) => { if (typeof page === 'number') setCurrentPage(page); if (typeof perPage === 'number') setPerPage(perPage); refetch() }}
+            
           />
+          <div className='sticky bottom-0 h-[18px] w-full overflow-x-auto bg-neutral-50 border-t' ref={bottomScrollerRef}>
+            <div style={{ width: mirrorWidth ? `${mirrorWidth}px` : '100%' }} />
+          </div>
         </div>
       </SheetContent>
     </Sheet>
   )
 }
 
-function NewChildProductDialog({ productId, onCreated }: { productId: number, onCreated?: () => void }) {
-  const [open, setOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [sku, setSku] = useState('')
-  const [name, setName] = useState('')
-  const [priceText, setPriceText] = useState('')
-  const [promoText, setPromoText] = useState('')
-
-  const { data: parentData } = useQuery({
-    queryKey: ['product-detail', productId],
-    enabled: open,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    queryFn: async () => {
-      const response = await privateInstance.get(`/api:c3X9fE5j/products/${productId}`)
-      if (response.status !== 200) throw new Error('Erro ao carregar produto')
-      return response.data as any
-    }
-  })
-
-  const derivationIds: number[] = useMemo(() => {
-    const p: any = parentData
-    if (!p) return []
-    const fromIds = Array.isArray(p.derivation_ids) ? p.derivation_ids : []
-    const fromItems = Array.isArray(p?.derivations?.items) ? p.derivations.items.map((d: any) => d?.derivation_id ?? d?.derivation?.id ?? d?.id) : []
-    const fromArray = Array.isArray(p?.derivations) ? p.derivations.map((d: any) => d?.derivation_id ?? d?.derivation?.id ?? d?.id) : []
-    const ids = (fromIds.length ? fromIds : (fromItems.length ? fromItems : fromArray)).map((v: any) => Number(v)).filter((n: any) => Number.isFinite(n))
-    return ids
-  }, [parentData])
-
-  const [selectedItemsByDerivation, setSelectedItemsByDerivation] = useState<Record<number, number>>({})
-
-  const handleSelectItem = (derivationId: number, itemId: number) => {
-    setSelectedItemsByDerivation((prev) => ({ ...prev, [derivationId]: itemId }))
-  }
-
-  const { mutate } = useMutation({
-    mutationFn: async () => {
-      setSaving(true)
-      const priceCents = toCentsFromText(priceText)
-      const promoCents = toCentsFromText(promoText)
-      const derivations = Object.entries(selectedItemsByDerivation)
-        .map(([did, iid]) => ({ derivation_id: Number(did), derivation_item_id: Number(iid) }))
-        .filter((p) => Number.isFinite(p.derivation_id) && Number.isFinite(p.derivation_item_id))
-      const derivationsPayload: any[] = derivations.length > 0 ? derivations : [null]
-
-      const payload = {
-        sku,
-        name,
-        price: String(priceCents),
-        promotional_price: Number.isFinite(promoCents) ? promoCents : 0,
-        derivations: derivationsPayload,
-      }
-
-      const response = await privateInstance.post(`/api:d9ly3uzj/derivated_products`, { ...payload, product_id: productId })
-      if (response.status !== 200 && response.status !== 201) throw new Error('Erro ao criar produto filho')
-      return true
-    },
-    onSuccess: () => {
-      toast.success('Produto filho criado!')
-      setOpen(false)
-      setSku('')
-      setName('')
-      setPriceText('')
-      setPromoText('')
-      setSelectedItemsByDerivation({})
-      onCreated?.()
-    },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? err?.message ?? 'Erro ao criar produto filho')
-    },
-    onSettled: () => { setSaving(false) }
-  })
-
-  return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant={'default'}>
-          <PackagePlus /> Nova derivação
-        </Button>
-      </SheetTrigger>
-      <SheetContent className='sm:max-w-[620px]'>
-        <SheetHeader>
-          <SheetTitle>Nova derivação</SheetTitle>
-          <SheetDescription>Crie uma derivação com base nas derivações do produto.</SheetDescription>
-        </SheetHeader>
-
-        <div className='px-4 py-4 space-y-4'>
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-            <div>
-              <label className='text-sm font-medium'>SKU</label>
-              <Input value={sku} onChange={(e) => setSku(e.target.value)} placeholder='SKU' />
-            </div>
-            <div className='md:col-span-2'>
-              <label className='text-sm font-medium'>Nome</label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder='Nome da derivação' />
-            </div>
-          </div>
-
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div>
-              <label className='text-sm font-medium'>Preço</label>
-              <Input value={priceText} onChange={(e) => setPriceText(e.target.value)} placeholder='R$ 0,00' inputMode='numeric' />
-            </div>
-            <div>
-              <label className='text-sm font-medium'>Preço promocional</label>
-              <Input value={promoText} onChange={(e) => setPromoText(e.target.value)} placeholder='R$ 0,00' inputMode='numeric' />
-            </div>
-          </div>
-
-          <div className='space-y-3'>
-            {derivationIds.length === 0 ? (
-              <div className='text-sm text-muted-foreground'>O produto não possui derivações selecionadas.</div>
-            ) : (
-              derivationIds.map((did) => (
-                <DerivationItemSelect key={did} derivationId={did} value={selectedItemsByDerivation[did]} onChange={(iid) => handleSelectItem(did, iid)} />
-              ))
-            )}
-          </div>
-        </div>
-
-          <SheetFooter>
-            <SheetClose asChild>
-              <Button variant={'outline'}>Cancelar</Button>
-            </SheetClose>
-            <Button disabled={saving} onClick={() => mutate()}>
-              {saving ? <Loader className='animate-spin' /> : 'Criar derivação'}
-            </Button>
-          </SheetFooter>
-      </SheetContent>
-    </Sheet>
-  )
-}
-
-function DerivationItemSelect({ derivationId, value, onChange }: { derivationId: number, value?: number, onChange: (id: number) => void }) {
-  const { data, isLoading } = useQuery({
-    queryKey: ['derivation-items', derivationId],
-    enabled: true,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    queryFn: async () => {
-      const response = await privateInstance.get(`/api:JOs6IYNo/derivation_items?derivation_id=${derivationId}`)
-      if (response.status !== 200) throw new Error('Erro ao carregar itens da derivação')
-      return response.data as any
-    }
-  })
-
-  const items = useMemo(() => {
-    const raw = data as any
-    if (!raw) return []
-    const arr = Array.isArray(raw?.items) ? raw.items : Array.isArray(raw) ? raw : []
-    return arr
-  }, [data])
-
-  return (
-    <div className='grid grid-cols-1 gap-2'>
-      <label className='text-sm font-medium'>Item da derivação #{String(derivationId)}</label>
-      <Select value={value ? String(value) : ''} onValueChange={(v) => onChange(Number(v))} disabled={isLoading}>
-        <SelectTrigger className='w-full'>
-          <SelectValue placeholder={isLoading ? 'Carregando itens...' : 'Selecione um item'} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {Array.isArray(items) ? items.map((it: any) => (
-              <SelectItem key={it.id} value={String(it.id)}>{it.name ?? it.value ?? `Item #${it.id}`}</SelectItem>
-            )) : null}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </div>
-  )
-}
 
 function DeleteChildProduct({ productId, childId, onDeleted }: { productId: number, childId: number, onDeleted?: () => void }) {
   const [pending, setPending] = useState(false)
