@@ -55,6 +55,7 @@ import { useEffect, useState, useMemo } from 'react'
   ),
   derivation_ids: z.array(z.number()).default([]),
   warranty_ids: z.array(z.number()).default([]),
+  store_ids: z.array(z.number()).default([]),
   category_ids: z.array(z.number()).min(1, 'Selecione pelo menos uma categoria').default([]),
   }).superRefine((data, ctx) => {
   if (data.type === 'with_derivations' && (!data.derivation_ids || data.derivation_ids.length === 0)) {
@@ -80,6 +81,7 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
       derivation_ids: [],
       category_ids: [],
       warranty_ids: [],
+      store_ids: [],
     }
   })
 
@@ -235,6 +237,7 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
         unit_id: undefined,
         brand_id: undefined,
         warranty_ids: [],
+        store_ids: [],
         derivation_ids: [],
         category_ids: [],
       })
@@ -244,7 +247,7 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant={'default'}>
+        <Button variant={'default'} size={'sm'}>
           <PackagePlus /> Novo produto
         </Button>
       </SheetTrigger>
@@ -436,6 +439,33 @@ export function NewProductSheet({ onCreated }: { onCreated?: () => void }) {
                               getId={(item: any) => item?.id}
                               getLabel={(item: any) => item?.name ?? item?.store_name ?? `#${item?.id}`}
                               placeholder='Selecione as garantias...'
+                              searchPlaceholder='Digite para pesquisar'
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
+
+                    <div className='grid grid-cols-1 gap-4'>
+                      <FormField control={form.control} name='store_ids' render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Lojas</FormLabel>
+                          <FormControl>
+                            <TagsSelect
+                              value={field.value || []}
+                              onChange={(next) => form.setValue('store_ids', (next as any[]).map((v) => Number(v)).filter((n) => Number.isFinite(n)), { shouldDirty: true, shouldValidate: true })}
+                              disabled={isPending}
+                              enabled={open}
+                              queryKey={['stores']}
+                              fetcher={async () => {
+                                const response = await privateInstance.get('/api:c3X9fE5j/stores?per_page=100')
+                                if (response.status !== 200) throw new Error('Erro ao carregar lojas')
+                                return response.data as any
+                              }}
+                              getId={(item: any) => item?.id}
+                              getLabel={(item: any) => item?.name ?? `#${item?.id}`}
+                              placeholder='Selecione as lojas...'
                               searchPlaceholder='Digite para pesquisar'
                             />
                           </FormControl>

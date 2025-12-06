@@ -10,7 +10,6 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ImageCrop, ImageCropContent, ImageCropApply, ImageCropReset } from '@/components/ui/shadcn-io/image-crop'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetDescription } from '@/components/ui/sheet'
@@ -35,14 +34,8 @@ type CompanyProfile = {
   user_id?: number
   alias?: string
   website?: string
-  country?: string
-  time_zone?: string
   segment?: string
-  date_format?: string
-  currency?: string
-  number_format?: string
   image?: VaultImage
-  language?: 'pt-br' | 'en-us'
 }
 
 function getSubdomain() { return window.location.hostname.split('.')[0] }
@@ -59,13 +52,7 @@ export function EditCompanySheet({ open, onOpenChange }: { open: boolean; onOpen
   const formSchema = z.object({
     name: z.string().min(1, 'Nome é obrigatório'),
     website: z.string().optional().default(''),
-    country: z.string().optional().default(''),
-    time_zone: z.string().optional().default('America/Sao_Paulo'),
     segment: z.string().optional().default(''),
-    date_format: z.string().optional().default('dd/mm/yyyy HH:mm:ss'),
-    currency: z.string().optional().default('BRL ( R$ )'),
-    number_format: z.string().optional().default('0.000,00'),
-    language: z.enum(['pt-br','en-us'] as const).optional().default('pt-br'),
   })
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -73,13 +60,7 @@ export function EditCompanySheet({ open, onOpenChange }: { open: boolean; onOpen
     defaultValues: {
       name: '',
       website: '',
-      country: '',
-      time_zone: 'America/Sao_Paulo',
       segment: '',
-      date_format: 'dd/mm/yyyy HH:mm:ss',
-      currency: 'BRL ( R$ )',
-      number_format: '0.000,00',
-      language: 'pt-br',
     },
   })
 
@@ -102,14 +83,8 @@ export function EditCompanySheet({ open, onOpenChange }: { open: boolean; onOpen
         user_id: Number(payload?.user_id ?? 0),
         alias: String(payload?.alias ?? ''),
         website: String(payload?.website ?? ''),
-        country: String(payload?.country ?? 'Brazil'),
-        time_zone: String(payload?.time_zone ?? 'America/Sao_Paulo'),
         segment: String(payload?.segment ?? ''),
-        date_format: String(payload?.date_format ?? 'dd/mm/yyyy HH:mm:ss'),
-        currency: String(payload?.currency ?? 'BRL ( R$ )'),
-        number_format: String(payload?.number_format ?? '0.000,00'),
         image: payload?.image ?? null,
-        language: (payload?.language === 'en-us' ? 'en-us' : 'pt-br'),
       }
       return normalized
     }
@@ -134,13 +109,7 @@ export function EditCompanySheet({ open, onOpenChange }: { open: boolean; onOpen
     form.reset({
       name: data?.name ?? '',
       website: data?.website ?? '',
-      country: data?.country ?? '',
-      time_zone: data?.time_zone ?? 'America/Sao_Paulo',
       segment: data?.segment ?? '',
-      date_format: data?.date_format ?? 'dd/mm/yyyy HH:mm:ss',
-      currency: data?.currency ?? 'BRL ( R$ )',
-      number_format: data?.number_format ?? '0.000,00',
-      language: (data?.language === 'en-us' ? 'en-us' : 'pt-br'),
     })
     try {
       const sub = getSubdomain()
@@ -212,13 +181,7 @@ export function EditCompanySheet({ open, onOpenChange }: { open: boolean; onOpen
       const fd = new FormData()
       fd.append('name', values.name)
       fd.append('website', values.website ?? '')
-      fd.append('country', values.country ?? '')
-      fd.append('time_zone', values.time_zone ?? 'America/Sao_Paulo')
       fd.append('segment', values.segment ?? '')
-      fd.append('date_format', values.date_format ?? 'dd/mm/yyyy HH:mm:ss')
-      fd.append('currency', values.currency ?? 'BRL ( R$ )')
-      fd.append('number_format', values.number_format ?? '0.000,00')
-      fd.append('language', values.language ?? 'pt-br')
       if (selectedFile) {
         fd.append('file', selectedFile, selectedFile.name)
       }
@@ -325,122 +288,7 @@ export function EditCompanySheet({ open, onOpenChange }: { open: boolean; onOpen
                   </FormItem>
                 )} />
               </div>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                <FormField control={form.control} name='country' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>País</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger className='w-full'>
-                          <SelectValue placeholder='Selecione o país' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='Brazil'>Brasil</SelectItem>
-                        <SelectItem value='United States'>Estados Unidos</SelectItem>
-                        <SelectItem value='Portugal'>Portugal</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name='time_zone' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fuso horário</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger className='w-full'>
-                          <SelectValue placeholder='Selecione o fuso horário' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='America/Sao_Paulo'>America/Sao_Paulo</SelectItem>
-                        <SelectItem value='America/Bahia'>America/Bahia</SelectItem>
-                        <SelectItem value='America/Fortaleza'>America/Fortaleza</SelectItem>
-                        <SelectItem value='America/Recife'>America/Recife</SelectItem>
-                        <SelectItem value='America/Belem'>America/Belem</SelectItem>
-                        <SelectItem value='America/Maceio'>America/Maceio</SelectItem>
-                        <SelectItem value='America/Manaus'>America/Manaus</SelectItem>
-                        <SelectItem value='America/Porto_Velho'>America/Porto_Velho</SelectItem>
-                        <SelectItem value='America/Boa_Vista'>America/Boa_Vista</SelectItem>
-                        <SelectItem value='America/Cuiaba'>America/Cuiaba</SelectItem>
-                        <SelectItem value='America/Campo_Grande'>America/Campo_Grande</SelectItem>
-                        <SelectItem value='America/Rio_Branco'>America/Rio_Branco</SelectItem>
-                        <SelectItem value='America/Noronha'>America/Noronha</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name='language' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Idioma</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger className='w-full'>
-                          <SelectValue placeholder='Selecione o idioma' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='pt-br'>Português (Brasil)</SelectItem>
-                        <SelectItem value='en-us'>English (US)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name='currency' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Moeda</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger className='w-full'>
-                          <SelectValue placeholder='Selecione a moeda' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='BRL ( R$ )'>BRL ( R$ )</SelectItem>
-                        <SelectItem value='USD ( $ )'>USD ( $ )</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name='date_format' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Formato de data</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger className='w-full'>
-                          <SelectValue placeholder='Selecione o formato de data' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='dd/mm/yyyy HH:mm:ss'>dd/mm/yyyy HH:mm:ss</SelectItem>
-                        <SelectItem value='yyyy/mm/dd HH:mm:ss'>yyyy/mm/dd HH:mm:ss</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name='number_format' render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Formato numérico</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger className='w-full'>
-                          <SelectValue placeholder='Selecione o formato numérico' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='0.000,00'>0.000,00</SelectItem>
-                        <SelectItem value='0,000.00'>0,000.00</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
+              
               <Dialog open={cropOpen} onOpenChange={setCropOpen}>
                 <DialogContent className='sm:max-w-[600px]'>
                   <DialogHeader>

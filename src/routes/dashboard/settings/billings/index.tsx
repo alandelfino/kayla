@@ -7,7 +7,7 @@ import { DataTable, type ColumnDef } from '@/components/data-table'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { RefreshCw, FileText, CreditCard } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
-import { formatarMoeda, fromCents, formatDateByCompany, getCompanyTimeZone, getCompanyConfig } from '@/lib/format'
+import { formatarMoeda, fromCents } from '@/lib/format'
 
 export const Route = createFileRoute('/dashboard/settings/billings/')({
   component: RouteComponent,
@@ -74,16 +74,12 @@ function RouteComponent() {
     if (abs > 1e14) return Math.round(v / 1000)
     return v
   }
-  const fmtDate = (v?: number) => {
-    const ms = normalizeEpoch(v)
-    return formatDateByCompany(ms)
-  }
   const fmtCurrency = (v?: number) => formatarMoeda(fromCents(v))
   const fmtDateOnly = (v?: number) => {
     const ms = normalizeEpoch(v)
     if (!ms) return '-'
     try {
-      const tz = getCompanyTimeZone()
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
       const d = new Date(ms)
       const parts = new Intl.DateTimeFormat('en-US', {
         timeZone: tz,
@@ -96,25 +92,16 @@ function RouteComponent() {
       const dd = get('day')
       const MM = get('month')
       const yyyy = get('year')
-      const cfg = getCompanyConfig()
-      const mask = String(cfg?.date_format ?? 'dd/mm/yyyy HH:mm:ss')
-      if (/^dd\/mm\/yyyy(\s|-|$)/i.test(mask)) return `${dd}/${MM}/${yyyy}`
-      if (/^yyyy\/mm\/dd(\s|-|$)/i.test(mask)) return `${yyyy}/${MM}/${dd}`
       return `${dd}/${MM}/${yyyy}`
     } catch {
-      const s = fmtDate(v)
-      const m1 = String(s).match(/(\d{2})\/(\d{2})\/(\d{4})/)
-      if (m1) return `${m1[1]}/${m1[2]}/${m1[3]}`
-      const m2 = String(s).match(/(\d{4})\/(\d{2})\/(\d{2})/)
-      if (m2) return `${m2[1]}/${m2[2]}/${m2[3]}`
-      return String(s)
+      return new Date(ms).toLocaleDateString('pt-BR')
     }
   }
   const fmtTimeOnly = (v?: number) => {
     const ms = normalizeEpoch(v)
     if (!ms) return ''
     try {
-      const tz = getCompanyTimeZone()
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
       const d = new Date(ms)
       const parts = new Intl.DateTimeFormat('en-US', {
         timeZone: tz,

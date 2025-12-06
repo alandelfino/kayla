@@ -9,7 +9,7 @@ import { privateInstance } from '@/lib/auth'
 import { Checkbox } from '@/components/ui/checkbox'
 import { EditStoreSheet } from './-components/edit-store'
 import { NewStoreSheet } from './-components/new-store'
-import { formatDateByCompany, getCompanyTimeZone, getCompanyConfig } from '@/lib/format'
+ 
 
 type StoreItem = {
   id: number
@@ -99,7 +99,7 @@ function RouteComponent() {
     const ms = normalizeEpoch(v)
     if (!ms) return '-'
     try {
-      const tz = getCompanyTimeZone()
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
       const d = new Date(ms)
       const parts = new Intl.DateTimeFormat('en-US', {
         timeZone: tz,
@@ -112,18 +112,10 @@ function RouteComponent() {
       const dd = get('day')
       const MM = get('month')
       const yyyy = get('year')
-      const cfg = getCompanyConfig()
-      const mask = String(cfg?.date_format ?? 'dd/mm/yyyy HH:mm:ss')
-      if (/^dd\/mm\/yyyy(\s|-|$)/i.test(mask)) return `${dd}/${MM}/${yyyy}`
-      if (/^yyyy\/mm\/dd(\s|-|$)/i.test(mask)) return `${yyyy}/${MM}/${dd}`
       return `${dd}/${MM}/${yyyy}`
     } catch {
-      const s = formatDateByCompany(ms)
-      const m1 = String(s).match(/(\d{2})\/(\d{2})\/(\d{4})/)
-      if (m1) return `${m1[1]}/${m1[2]}/${m1[3]}`
-      const m2 = String(s).match(/(\d{4})\/(\d{2})\/(\d{2})/)
-      if (m2) return `${m2[1]}/${m2[2]}/${m2[3]}`
-      return String(s)
+      const d = new Date(ms)
+      return d.toLocaleDateString('pt-BR')
     }
   }
 

@@ -10,7 +10,7 @@ import { Users, RefreshCw, ArrowUpRight, Loader, CircleX } from 'lucide-react'
 import { NewInvitationSheet } from './-components/new-invitation'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { getCompanyTimeZone, getCompanyConfig, formatDateByCompany } from '@/lib/format'
+ 
 
 export const Route = createFileRoute('/dashboard/settings/invitations/')({
   component: RouteComponent,
@@ -225,7 +225,7 @@ function RouteComponent() {
         const ms = normalizeToMs(raw)
         if (!ms) return String(raw)
         try {
-          const tz = getCompanyTimeZone()
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
           const d = new Date(ms)
           const parts = new Intl.DateTimeFormat('en-US', {
             timeZone: tz,
@@ -244,16 +244,10 @@ function RouteComponent() {
           const HH = get('hour')
           const mm = get('minute')
           const ss = get('second')
-          const cfg = getCompanyConfig()
-          const mask = String(cfg?.date_format ?? 'dd/mm/yyyy HH:mm:ss')
-          const date = /^dd\/mm\/yyyy(\s|-|$)/i.test(mask)
-            ? `${dd}/${MM}/${yyyy}`
-            : /^yyyy\/mm\/dd(\s|-|$)/i.test(mask)
-            ? `${yyyy}/${MM}/${dd}`
-            : `${dd}/${MM}/${yyyy}`
+          const date = `${dd}/${MM}/${yyyy}`
           return `${date} ${HH}:${mm}:${ss}`
         } catch {
-          return formatDateByCompany(ms)
+          return new Date(ms).toLocaleString('pt-BR')
         }
       },
       headerClassName: 'w-[200px] min-w-[200px] border-r',

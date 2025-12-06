@@ -29,14 +29,8 @@ type CompanyProfile = {
   user_id?: number
   alias?: string
   website?: string
-  country?: string
-  time_zone?: string
   segment?: string
-  date_format?: string
-  currency?: string
-  number_format?: string
   image?: VaultImage
-  language?: 'pt-br' | 'en-us'
 }
 
 function getSubdomain() { return window.location.hostname.split('.')[0] }
@@ -64,14 +58,8 @@ export function CompanyProfileContent() {
         user_id: Number(payload?.user_id ?? 4),
         alias: String(payload?.alias ?? 'diveus'),
         website: String(payload?.website ?? ''),
-        country: String(payload?.country ?? 'Brazil'),
-        time_zone: String(payload?.time_zone ?? 'America/Sao_Paulo'),
         segment: String(payload?.segment ?? ''),
-        date_format: String(payload?.date_format ?? 'dd/mm/yyyy HH:mm:ss'),
-        currency: String(payload?.currency ?? 'BRL ( R$ )'),
-        number_format: String(payload?.number_format ?? '0.000,00'),
         image: payload?.image ?? null,
-        language: (payload?.language === 'en-us' ? 'en-us' : 'pt-br'),
       }
       return normalized
     }
@@ -174,32 +162,6 @@ export function CompanyProfileContent() {
                 <div className='flex flex-col'>
                   <span className='text-xs font-medium text-muted-foreground'>Segmento</span>
                   <span className='text-sm'>{company?.segment ?? '—'}</span>
-                </div>
-                <div className='flex flex-col'>
-                  <span className='text-xs font-medium text-muted-foreground'>País</span>
-                  <span className='text-sm'>{company?.country ?? '—'}</span>
-                </div>
-                <div className='flex flex-col'>
-                  <span className='text-xs font-medium text-muted-foreground'>Fuso horário</span>
-                  <span className='text-sm'>{company?.time_zone ?? '—'}</span>
-                </div>
-              </div>
-              <div className='flex flex-col gap-3'>
-                <div className='flex flex-col'>
-                  <span className='text-xs font-medium text-muted-foreground'>Moeda</span>
-                  <span className='text-sm'>{company?.currency ?? '—'}</span>
-                </div>
-                <div className='flex flex-col'>
-                  <span className='text-xs font-medium text-muted-foreground'>Formato de data</span>
-                  <span className='text-sm'>{company?.date_format ?? '—'}</span>
-                </div>
-                <div className='flex flex-col'>
-                  <span className='text-xs font-medium text-muted-foreground'>Formato numérico</span>
-                  <span className='text-sm'>{company?.number_format ?? '—'}</span>
-                </div>
-                <div className='flex flex-col'>
-                  <span className='text-xs font-medium text-muted-foreground'>Idioma</span>
-                  <span className='text-sm'>{company?.language ?? '—'}</span>
                 </div>
               </div>
             </div>

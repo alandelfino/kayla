@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Topbar } from '../-components/topbar'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Edit, RefreshCcw, Trash, Package, GitFork } from 'lucide-react'
+import { Edit, RefreshCcw, Trash, Package, GitFork, RefreshCw } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -160,21 +160,16 @@ function RouteComponent() {
     <div className='flex flex-col w-full h-full overflow-x-hidden'>
       <Topbar title="Produtos" breadcrumbs={[{ label: 'Dashboard', href: '/dashboard', isLast: false }, { label: 'Produtos', href: '/dashboard/products', isLast: true }]} />
       <div className='flex flex-col w-full h-full flex-1 overflow-hidden min-w-0'>
-        <div className='border-b flex w-full items-center p-2 gap-4 max-w-full overflow-x-hidden'>
-          <div className='flex items-center gap-2 flex-1'>
-            <Button variant={'outline'}>
-              <Package /> Gerenciar
-            </Button>
-          </div>
+        <div className='border-b flex w-full items-center p-2 gap-4 max-w-full overflow-hidden justify-end'>
           <div className='flex items-center gap-2'>
-            <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
-              {(isLoading || isRefetching) ? (<RefreshCcw className='animate-spin' />) : (<RefreshCcw />)}
+            <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }} size={'sm'}>
+              {(isLoading || isRefetching) ? (<RefreshCw className='animate-spin' />) : (<RefreshCw />)}
             </Button>
 
             {selected.length === 1 ? (
               <DeleteProductDialog productId={selected[0]} onDeleted={() => { setSelected([]); refetch() }} />
             ) : (
-              <Button variant={'outline'} disabled>
+              <Button variant={'outline'} disabled size={'sm'}>
                 <Trash /> Excluir
               </Button>
             )}
@@ -182,14 +177,14 @@ function RouteComponent() {
             {selected.length === 1 ? (
               <EditProductSheet productId={selected[0]} onSaved={() => { refetch() }} />
             ) : (
-              <Button variant={'outline'} disabled>
+              <Button variant={'outline'} disabled size={'sm'}>
                 <Edit /> Editar
               </Button>
             )}
             {selected.length === 1 && canManageChilds ? (
               <ChildProductsSheet productId={selected[0]} />
             ) : (
-              <Button variant={'outline'} disabled>
+              <Button variant={'outline'} disabled size={'sm'}>
                 <GitFork /> Derivações
               </Button>
             )}

@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Images, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
-import { NewMediaDialog } from '@/routes/dashboard/media/-components/new-media-dialog'
+import { MultiUploadSheet } from '@/routes/dashboard/media/-components/multi-upload-sheet'
 import { useQuery } from '@tanstack/react-query'
 import { privateInstance } from '@/lib/auth'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -26,7 +26,6 @@ export function ImagePickerDialog({ open, onOpenChange, onInsert }: Props) {
   const [page, setPage] = useState<number>(1)
   const [perPage, setPerPage] = useState<number>(20)
   const [selectedId, setSelectedId] = useState<number | null>(null)
-  const [newMediaOpen, setNewMediaOpen] = useState<boolean>(false)
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['medias-picker', page, perPage, open],
@@ -39,6 +38,12 @@ export function ImagePickerDialog({ open, onOpenChange, onInsert }: Props) {
       return res.data
     },
   })
+
+  useEffect(() => {
+    const handler = () => { if (open) refetch() }
+    window.addEventListener('directa:medias-updated', handler as any)
+    return () => { window.removeEventListener('directa:medias-updated', handler as any) }
+  }, [open, refetch])
 
   const payload = useMemo(() => {
     const d: any = data
@@ -92,8 +97,6 @@ export function ImagePickerDialog({ open, onOpenChange, onInsert }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className='sm:max-w-[1000px] w-full p-0 overflow-hidden flex flex-col'
-        onInteractOutside={(e) => { if (newMediaOpen) e.preventDefault() }}
-        onEscapeKeyDown={(e) => { if (newMediaOpen) e.preventDefault() }}
       >
         {/* Header com título */}
         <div className='border-b px-4 py-3'>
@@ -104,8 +107,8 @@ export function ImagePickerDialog({ open, onOpenChange, onInsert }: Props) {
 
         {/* Barra de ações acima da listagem */}
         <div className='px-2 flex items-center justify-end gap-2'>
-          {/* Botão para criar nova mídia */}
-          <NewMediaDialog onCreated={() => refetch()} onOpenChange={setNewMediaOpen} />
+          {/* Upload de novas mídias */}
+          <MultiUploadSheet />
           <Button variant={'ghost'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
             {(isLoading || isRefetching) ? 'Atualizando...' : 'Atualizar'}
           </Button>

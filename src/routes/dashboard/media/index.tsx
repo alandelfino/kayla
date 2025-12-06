@@ -4,13 +4,14 @@ import { useMemo, useState } from 'react'
 import { privateInstance } from '@/lib/auth'
 import { Topbar } from '../-components/topbar'
 import { Button } from '@/components/ui/button'
-import { Edit, Images, RefreshCcw, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { Images, RefreshCcw, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit, Trash } from 'lucide-react'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { NewMediaDialog } from './-components/new-media-dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 import { EditMediaDialog } from './-components/edit-media-dialog'
-import { DeleteMediaDialog } from './-components/delete-media-dialog'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
+import { MultiUploadSheet } from './-components/multi-upload-sheet'
+import { BulkDeleteMediasDialog } from './-components/delete-media-dialog'
 
 export const Route = createFileRoute('/dashboard/media/')({
   component: RouteComponent,
@@ -20,6 +21,8 @@ type ApiMedia = {
   id: number
   name?: string
   image?: { url?: string | null } | null
+  mime?: string | null
+  size?: number | null
   created_at?: number
   updated_at?: number
 }
@@ -28,6 +31,8 @@ function RouteComponent() {
   const [selected, setSelected] = useState<ApiMedia | null>(null)
   const [page, setPage] = useState<number>(1)
   const [perPage, setPerPage] = useState<number>(20)
+  const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['medias', page, perPage],
@@ -54,9 +59,15 @@ function RouteComponent() {
       }
     }
     const mediasObj = d.medias ?? d
-    const items: ApiMedia[] = Array.isArray(mediasObj?.items)
-      ? (mediasObj.items as ApiMedia[])
-      : (Array.isArray(d) ? (d as ApiMedia[]) : [])
+    const rawItems: any[] = Array.isArray(mediasObj?.items)
+      ? (mediasObj.items as any[])
+      : (Array.isArray(d) ? (d as any[]) : [])
+    const items: ApiMedia[] = rawItems.map((it) => {
+      const img = it?.image ?? {}
+      const mime = it?.mime ?? img?.mime ?? img?.type ?? img?.content_type ?? img?.mimetype ?? null
+      const size = it?.size ?? img?.size ?? img?.bytes ?? null
+      return { ...it, mime, size }
+    })
     const curPage = typeof mediasObj?.curPage === 'number' ? mediasObj.curPage : page
     const pageTotal = typeof mediasObj?.pageTotal === 'number' ? mediasObj.pageTotal : 1
     const itemsTotal = typeof mediasObj?.itemsTotal === 'number' ? mediasObj.itemsTotal : items.length
@@ -67,6 +78,22 @@ function RouteComponent() {
   }, [data, page, perPage])
 
   const medias: ApiMedia[] = payload.items
+
+  const isSelected = (id: number) => selectedIds.includes(id)
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+  }
+
+  const handleBulkEdit = () => {
+    if (selectedIds.length !== 1) return
+    const media = medias.find((m) => m.id === selectedIds[0]) || null
+    if (media) setSelected(media)
+  }
+
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) return
+    setBulkDeleteOpen(true)
+  }
 
   const formatBytes = (bytes?: number | null) => {
     if (!bytes || typeof bytes !== 'number' || bytes < 0) return '—'
@@ -85,7 +112,7 @@ function RouteComponent() {
     return fromMime ? (fromMime ?? '').toUpperCase() : '—'
   }
 
-  
+
 
   return (
     <div className='flex flex-col w-full h-full'>
@@ -97,14 +124,19 @@ function RouteComponent() {
         {/* Actions */}
         <div className='border-b flex w-full items-center p-2 gap-4'>
 
-          <div className='flex items-center gap-2 flex-1'>
-            <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
-              {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
-            </Button>
-          </div>
+          <div className='flex items-center gap-2 flex-1' />
 
           <div className='flex items-center gap-2'>
-            <NewMediaDialog onCreated={() => refetch()} />
+            <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => refetch()} size={'sm'}>
+              {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
+            </Button>
+            <Button variant={'outline'} onClick={handleBulkEdit} disabled={selectedIds.length !== 1} size={'sm'}>
+              <Edit className='w-4 h-4' /> Editar
+            </Button>
+            <Button variant={'outline'} onClick={handleBulkDelete} disabled={selectedIds.length === 0} size={'sm'}>
+              <Trash className='w-4 h-4' /> Excluir
+            </Button>
+            <MultiUploadSheet />
           </div>
 
         </div>
@@ -124,7 +156,7 @@ function RouteComponent() {
               </EmptyHeader>
               <EmptyContent>
                 <div className='flex gap-2'>
-                  <NewMediaDialog onCreated={() => refetch()} />
+                  <MultiUploadSheet />
                   <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => refetch()}>
                     {(isLoading || isRefetching) ? <><RefreshCcw className='animate-spin' /> Atualizando...</> : <><RefreshCcw /> Atualizar</>}
                   </Button>
@@ -134,29 +166,29 @@ function RouteComponent() {
           ) : (
             <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4'>
               {medias.map((m) => (
-                <div key={m.id} className='group relative rounded-md border bg-background hover:shadow-md transition-shadow overflow-hidden'>
+                <div key={m.id} className={`group relative rounded-lg border border-transparent p-1 bg-background hover:bg-neutral-100 transition-shadow overflow-hidden ${isSelected(m.id) ? 'ring-2 ring-primary' : ''}`}>
                   <div className='aspect-square w-full bg-muted flex items-center justify-center'>
                     {m.image?.url ? (
-                      <img src={m.image.url} alt={m.name ?? 'media'} className='object-cover w-full h-full' />
+                      <img src={m.image.url} alt={m.name ?? 'media'} className='object-cover w-full h-full rounded-lg' />
                     ) : (
                       <div className='flex flex-col items-center justify-center text-muted-foreground'>
                         <Images className='w-10 h-10' />
                         <span className='text-xs mt-2'>Sem imagem</span>
                       </div>
                     )}
+                    <div className='absolute top-2 left-2'>
+                      <Checkbox checked={isSelected(m.id)} onCheckedChange={() => toggleSelect(m.id)} aria-label='Selecionar mídia' className='bg-background' />
+                    </div>
                   </div>
                   <div className='p-2 flex items-center justify-between gap-2'>
                     <div className='flex-1 min-w-0'>
                       <div className='text-xs font-medium truncate' title={m.name ?? ''}>{m.name ?? 'Mídia'}</div>
-                      <div className='mt-1 flex items-center gap-2 text-[10px] text-muted-foreground'>
-                        <span className='px-1 rounded border bg-muted/20'>{getExtension(m.name, null)}</span>
-                        <span className='px-1 rounded border bg-muted/20'>{formatBytes(null)}</span>
+                      <div className='mt-1 text-xs 2xl:text-sm text-muted-foreground'>
+                        <span>{m.mime ?? getExtension(m.name, null)}</span>
+                        <span> • {formatBytes(m.size ?? null)}</span>
                       </div>
                     </div>
-                    <div className='opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1'>
-                      <Button size={'icon'} variant={'outline'} onClick={() => setSelected(m)}><Edit className='w-4 h-4' /></Button>
-                      <DeleteMediaDialog media={m} onDeleted={() => refetch()} />
-                    </div>
+
                   </div>
                 </div>
               ))}
@@ -217,6 +249,7 @@ function RouteComponent() {
 
         {/* Dialog de edição / detalhes */}
         <EditMediaDialog media={selected} onClose={() => setSelected(null)} onSaved={() => refetch()} />
+        <BulkDeleteMediasDialog open={bulkDeleteOpen} onOpenChange={(v) => { setBulkDeleteOpen(v); if (!v) { setSelectedIds([]) } }} ids={selectedIds} onDeleted={() => { setSelectedIds([]); refetch() }} />
 
       </div>
     </div>

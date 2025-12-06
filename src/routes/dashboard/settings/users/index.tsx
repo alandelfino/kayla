@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { RefreshCw, Edit } from 'lucide-react'
-import { formatDateByCompany, getCompanyTimeZone, getCompanyConfig } from '@/lib/format'
+ 
 
 
 import { EditUserCompanySheet } from './-components/edit-user-company'
@@ -294,7 +294,7 @@ function RouteComponent() {
     const ms = normalizeEpoch(v)
     if (!ms) return '-'
     try {
-      const tz = getCompanyTimeZone()
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
       const d = new Date(ms)
       const parts = new Intl.DateTimeFormat('en-US', {
         timeZone: tz,
@@ -307,20 +307,16 @@ function RouteComponent() {
       const dd = get('day')
       const MM = get('month')
       const yyyy = get('year')
-      const cfg = getCompanyConfig()
-      const mask = String(cfg?.date_format ?? 'dd/mm/yyyy HH:mm:ss')
-      if (/^dd\/mm\/yyyy(\s|-|$)/i.test(mask)) return `${dd}/${MM}/${yyyy}`
-      if (/^yyyy\/mm\/dd(\s|-|$)/i.test(mask)) return `${yyyy}/${MM}/${dd}`
       return `${dd}/${MM}/${yyyy}`
     } catch {
-      return formatDateByCompany(ms)
+      return new Date(ms).toLocaleDateString('pt-BR')
     }
   }
   const fmtTimeOnly = (v?: number) => {
     const ms = normalizeEpoch(v)
     if (!ms) return ''
     try {
-      const tz = getCompanyTimeZone()
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
       const d = new Date(ms)
       const parts = new Intl.DateTimeFormat('en-US', {
         timeZone: tz,

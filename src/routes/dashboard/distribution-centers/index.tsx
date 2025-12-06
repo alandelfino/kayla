@@ -6,13 +6,14 @@ import { DataTable } from '@/components/data-table'
 import type { ColumnDef } from '@/components/data-table'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { Factory, Edit, RefreshCcw, Trash } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+ 
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { privateInstance } from '@/lib/auth'
 import { toast } from 'sonner'
-import { NewDistributionCenterSheet } from '../settings/distribution-centers/-components/new-distribution-center'
-import { EditDistributionCenterSheet } from '../settings/distribution-centers/-components/edit-distribution-center'
-import { DeleteDistributionCenter } from '../settings/distribution-centers/-components/delete-distribution-center'
+import { NewDistributionCenterSheet } from './-components/new-distribution-center'
+import { EditDistributionCenterSheet } from './-components/edit-distribution-center'
+import { DeleteDistributionCenter } from './-components/delete-distribution-center'
 
 export const Route = createFileRoute('/dashboard/distribution-centers/')({
   component: RouteComponent,
@@ -54,7 +55,6 @@ function RouteComponent() {
   const [selected, setSelected] = useState<number[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [items, setItems] = useState<DistributionCenter[]>([])
 
   const { data, isLoading, isRefetching, isError, refetch } = useQuery({
     refetchOnWindowFocus: false,
@@ -67,6 +67,31 @@ function RouteComponent() {
       return response.data as DistributionCentersResponse
     }
   })
+
+  const [items, setItems] = useState<DistributionCenter[]>([])
+
+  const normalizeEpoch = (v?: number): number | undefined => {
+    if (typeof v !== 'number' || !Number.isFinite(v)) return undefined
+    const abs = Math.abs(v)
+    if (abs < 1e11) return Math.round(v * 1000)
+    if (abs > 1e14) return Math.round(v / 1000)
+    return v
+  }
+  const fmtDateOnly = (v?: number) => {
+    const ms = normalizeEpoch(v)
+    if (!ms) return '-'
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+      const d = new Date(ms)
+      const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(d)
+      const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+      const dd = get('day'); const MM = get('month'); const yyyy = get('year')
+      return `${dd}/${MM}/${yyyy}`
+    } catch {
+      const d = new Date(ms)
+      return d.toLocaleDateString('pt-BR')
+    }
+  }
 
   useEffect(() => {
     if (!data) return
@@ -84,23 +109,45 @@ function RouteComponent() {
   useEffect(() => { if (isRefetching) setSelected([]) }, [isRefetching])
   useEffect(() => { if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages) }, [totalPages, currentPage])
 
-  const toggleSelect = (id: number) => { if (selected.includes(id)) setSelected([]); else setSelected([id]) }
+  const toggleSelectAll = () => { if (selected.length === items.length) setSelected([]); else setSelected(items.map(i => i.id)) }
+  const toggleSelect = (id: number) => { if (selected.includes(id)) setSelected(selected.filter(s => s !== id)); else setSelected([...selected, id]) }
 
-  const columns: ColumnDef<DistributionCenter>[] = useMemo(() => [
+  const columns: ColumnDef<DistributionCenter>[] = [
     {
       id: 'select',
       width: '60px',
-      header: () => (<div className='flex justify-center items-center text-xs text-neutral-500'>Sel.</div>),
-      cell: (row) => (
+      header: () => (
         <div className='flex justify-center items-center'>
-          <Checkbox checked={selected.includes(row.id)} onCheckedChange={() => toggleSelect(row.id)} />
+          <Checkbox
+            checked={items.length > 0 && selected.length === items.length}
+            onCheckedChange={toggleSelectAll}
+          />
         </div>
       ),
-      headerClassName: 'w-[60px] min-w-[60px] border-r',
-      className: 'w-[60px] min-w-[60px] font-medium border-r p-2!'
+      cell: (row) => (
+        <div className='flex justify-center items-center'>
+          <Checkbox
+            checked={selected.includes(row.id)}
+            onCheckedChange={() => toggleSelect(row.id)}
+          />
+        </div>
+      ),
+      headerClassName: 'w-[60px] border-r',
+      className: 'font-medium border-r p-2!'
     },
     { id: 'name', header: 'Nome', cell: (i) => i.name ?? '—', className: 'border-r p-2!' },
-  ], [items, selected])
+    {
+      id: 'created_at',
+      header: 'Criado em',
+      width: '12.5rem',
+      cell: (i) => {
+        const d = fmtDateOnly(i.created_at)
+        return (<span className='text-sm'>{d || '-'}</span>)
+      },
+      headerClassName: 'w-[12.5rem] min-w-[12.5rem] border-r',
+      className: 'w-[12.5rem] min-w-[12.5rem] border-r p-2!'
+    },
+  ]
 
   return (
     <div className='flex flex-col w-full h-full'>
@@ -112,8 +159,16 @@ function RouteComponent() {
             <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelected([]); refetch() }}>
               {(isLoading || isRefetching) ? (<><RefreshCcw className='animate-spin' /> Atualizando...</>) : (<><RefreshCcw /> Atualizar</>)}
             </Button>
-            {selected.length === 1 ? (<DeleteDistributionCenter distributionCenterId={selected[0]} onDeleted={() => { setSelected([]); refetch() }} />) : (<Button variant={'outline'} disabled><Trash /> Excluir</Button>)}
-            {selected.length === 1 ? (<EditDistributionCenterSheet distributionCenterId={selected[0]} onSaved={() => { refetch() }} />) : (<Button variant={'outline'} disabled><Edit /> Editar</Button>)}
+            {selected.length === 1 ? (
+              <DeleteDistributionCenter distributionCenterId={selected[0]} onDeleted={() => { setSelected([]); refetch() }} />
+            ) : (
+              <Button variant={'outline'} disabled><Trash /> Excluir</Button>
+            )}
+            {selected.length === 1 ? (
+              <EditDistributionCenterSheet distributionCenterId={selected[0]} onSaved={() => { refetch() }} />
+            ) : (
+              <Button variant={'outline'} disabled><Edit /> Editar</Button>
+            )}
             <NewDistributionCenterSheet onCreated={() => { refetch() }} />
           </div>
         </div>

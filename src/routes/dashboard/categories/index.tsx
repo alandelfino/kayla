@@ -6,7 +6,7 @@ import { NewCategorySheet } from './-components/new-category'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
-import { Edit, Funnel, RefreshCcw, Trash, List } from 'lucide-react'
+import { Edit, Funnel, RefreshCcw, Trash, List, ChevronDown, FileIcon } from 'lucide-react'
 import { EditCategorySheet } from './-components/edit-category'
 import { useEffect, useMemo, useState } from 'react'
 import { DeleteCategory } from './-components/delete-category'
@@ -160,7 +160,7 @@ function RouteComponent() {
         </div>
       ),
       headerClassName: 'w-[60px] border-r',
-      className: 'font-medium border-r p-2!'
+      className: 'font-medium border-r !px-4'
     },
     {
       id: 'name',
@@ -182,14 +182,20 @@ function RouteComponent() {
           return (
             <div className="relative overflow-hidden">
               {guides}
-              <div style={{ paddingLeft: `${row.depth * indent}px` }} className={hasChildren ? 'font-semibold' : ''}>
-                {row.category.name ?? row.category.nome ?? 'Categoria'}
+              <div style={{ paddingLeft: `${row.depth * indent}px` }} className={hasChildren ? 'font-semibold flex items-center gap-2' : 'flex items-center gap-2'}>
+                {hasChildren ? (
+                  <ChevronDown className='h-4 w-4 text-muted-foreground' />
+                ) : (
+                  <FileIcon className='h-4 w-4 text-muted-foreground' />
+                )}
+                <span>{row.category.name ?? row.category.nome ?? 'Categoria'}</span>
               </div>
             </div>
           )
         })()
       ),
-      className: 'border-r p-2!'
+      headerClassName: 'border-r px-4',
+      className: 'border-r !px-4'
     },
   ]
 

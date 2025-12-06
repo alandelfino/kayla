@@ -39,16 +39,7 @@ export function formatarMoeda(valor: unknown): string {
     return Number.isFinite(n) ? n : NaN
   })()
   if (!Number.isFinite(num)) return '-'
-  let currency = 'BRL'
-  try {
-    if (typeof window !== 'undefined' && window?.localStorage) {
-      const cfg = getCompanyConfig()
-      const currRaw = String(cfg?.currency ?? (cfg as any)?.moeda ?? (cfg as any)?.company?.currency ?? '').toUpperCase()
-      const m = currRaw.match(/([A-Z]{3}).*\(([^)]+)\)/)
-      const code = m ? m[1] : currRaw.replace(/[^A-Z]/g, '')
-      if (code) currency = code
-    }
-  } catch {}
+  const currency = 'BRL'
   const localeMap: Record<string, string> = {
     BRL: 'pt-BR',
     USD: 'en-US',
@@ -105,19 +96,13 @@ export function getCompanyConfig(): CompanyConfig | null {
 }
 
 export function getCurrencyInfo() {
-  const cfg = getCompanyConfig()
-  const currRaw = String(cfg?.currency ?? '').toUpperCase()
-  const m = currRaw.match(/([A-Z]{3}).*\(([^)]+)\)/)
-  const code = m ? m[1] : currRaw.replace(/[^A-Z]/g, '') || 'BRL'
-  const symbol = m ? m[2].trim() : null
-  return { code, symbol }
+  return { code: 'BRL', symbol: 'R$' }
 }
 
 export function formatDateByCompany(value?: number | Date): string {
   if (!value) return '-'
   const d = value instanceof Date ? value : new Date(value)
-  const cfg = getCompanyConfig()
-  const mask = String(cfg?.date_format ?? 'dd/mm/yyyy HH:mm:ss')
+  const mask = 'dd/mm/yyyy HH:mm:ss'
   const tz = getCompanyTimeZone()
   try {
     const parts = new Intl.DateTimeFormat('en-US', {
@@ -150,16 +135,16 @@ export function formatDateByCompany(value?: number | Date): string {
 
 export function formatNumberByCompany(n?: number): string {
   if (typeof n !== 'number' || !Number.isFinite(n)) return '-'
-  const cfg = getCompanyConfig()
-  const mask = String(cfg?.number_format ?? '0.000,00')
-  const isCommaDecimal = /,\d{2}$/.test(mask)
-  const locale = isCommaDecimal ? 'pt-BR' : 'en-US'
+  const locale = 'pt-BR'
   try { return new Intl.NumberFormat(locale).format(n) } catch { return n.toLocaleString(locale) }
 }
 
 export function getCompanyTimeZone(): string {
-  const cfg = getCompanyConfig()
-  return String(cfg?.time_zone ?? 'America/Sao_Paulo')
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  } catch {
+    return 'UTC'
+  }
 }
 
 export function getCompanyLogoUrl(): string | null {

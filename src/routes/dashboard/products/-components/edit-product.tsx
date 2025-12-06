@@ -55,6 +55,7 @@ const formSchema = z.object({
   ),
   derivation_ids: z.array(z.number()).default([]),
   warranty_ids: z.array(z.number()).default([]),
+  store_ids: z.array(z.number()).default([]),
   category_ids: z.array(z.number()).min(1, 'Selecione pelo menos uma categoria').default([]),
 }).superRefine((data, ctx) => {
   if (data.type === 'with_derivations' && (!data.derivation_ids || data.derivation_ids.length === 0)) {
@@ -80,6 +81,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
       unit_id: undefined,
       brand_id: undefined,
       warranty_ids: [],
+      store_ids: [],
       derivation_ids: [],
       category_ids: [],
     }
@@ -157,6 +159,35 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
       }
       const warrantyIds = (rawWarrantyIds as any[]).map((v: any) => Number(v)).filter((n) => Number.isFinite(n))
 
+      let rawStoreIds = Array.isArray((p as any)?.store_ids)
+        ? ((p as any).store_ids as any[])
+        : Array.isArray((p as any)?.stores?.items)
+          ? ((p as any).stores.items as any[]).map((s: any) => s?.store_id ?? s?.id)
+          : Array.isArray((p as any)?.stores)
+            ? ((p as any).stores as any[]).map((s: any) => s?.store_id ?? s?.id)
+            : []
+
+      if (!rawStoreIds || rawStoreIds.length === 0) {
+        const entries = queryClient.getQueriesData({ queryKey: ['products'] }) as any[]
+        for (const [, listData] of entries) {
+          const itemsArr = Array.isArray((listData as any)?.items) ? (listData as any).items : Array.isArray(listData) ? listData : []
+          const found = itemsArr.find((it: any) => Number(it?.id) === Number(productId))
+          if (found) {
+            const fromItems = Array.isArray(found?.stores?.items) ? found.stores.items : null
+            const fromArray = Array.isArray(found?.stores) ? found.stores : null
+            rawStoreIds = Array.isArray(found?.store_ids)
+              ? found.store_ids
+              : Array.isArray(fromItems)
+                ? (fromItems as any[]).map((s: any) => s?.store_id ?? s?.id)
+                : Array.isArray(fromArray)
+                  ? (fromArray as any[]).map((s: any) => s?.store_id ?? s?.id)
+                  : []
+            break
+          }
+        }
+      }
+      const storeIds = (rawStoreIds as any[]).map((v: any) => Number(v)).filter((n) => Number.isFinite(n))
+
       let rawCategoryIds = Array.isArray((p as any)?.category_ids)
         ? ((p as any).category_ids as any[])
         : Array.isArray((p as any)?.categories?.items)
@@ -196,6 +227,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
         unit_id: typeof p.unit_id === 'number' ? p.unit_id : undefined,
         brand_id: typeof p.brand_id === 'number' ? p.brand_id : undefined,
         warranty_ids: warrantyIds,
+        store_ids: storeIds,
         derivation_ids: derivationIds,
         category_ids: categoryIds,
       })
@@ -221,6 +253,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
         unit_id: undefined,
         brand_id: undefined,
         warranty_ids: [],
+        store_ids: [],
         derivation_ids: [],
         category_ids: [],
       })
@@ -361,7 +394,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant={'outline'}>
+        <Button variant={'outline'} size={'sm'}>
           <Edit className='w-4 h-4' /> Editar
         </Button>
       </SheetTrigger>
@@ -539,7 +572,7 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
                           <FormMessage />
                         </FormItem>
                       )} />
-                    </div>
+                  </div>
 
                   <div className='grid grid-cols-1 gap-4'>
               <FormField control={form.control} name='warranty_ids' render={({ field }) => (
@@ -566,6 +599,33 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
                   <FormMessage />
                 </FormItem>
               )} />
+                  </div>
+
+                  <div className='grid grid-cols-1 gap-4'>
+                    <FormField control={form.control} name='store_ids' render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Lojas</FormLabel>
+                        <FormControl>
+                          <TagsSelect
+                            value={field.value || []}
+                            onChange={(next) => form.setValue('store_ids', (next as any[]).map((v) => Number(v)).filter((n) => Number.isFinite(n)), { shouldDirty: true, shouldValidate: true })}
+                            disabled={loading || isPending}
+                            enabled={open}
+                            queryKey={['stores']}
+                            fetcher={async () => {
+                              const response = await privateInstance.get('/api:c3X9fE5j/stores?per_page=100')
+                              if (response.status !== 200) throw new Error('Erro ao carregar lojas')
+                              return response.data as any
+                            }}
+                            getId={(item: any) => item?.id}
+                            getLabel={(item: any) => item?.name ?? `#${item?.id}`}
+                            placeholder='Selecione as lojas...'
+                            searchPlaceholder='Digite para pesquisar'
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                   </div>
 
 
