@@ -98,7 +98,7 @@ export function NewCategorySheet({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="default">
+        <Button variant="default" size="sm">
           <Plus className="w-4 h-4" /> Adicionar Categoria
         </Button>
       </SheetTrigger>
@@ -131,7 +131,7 @@ export function NewCategorySheet({
                 name="parent_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Categoria pai</FormLabel>
+                    <FormLabel>Subcategoria de</FormLabel>
                     <FormControl>
                       <Select
                         value={String(field.value ?? 0)}
@@ -140,9 +140,14 @@ export function NewCategorySheet({
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Selecione a categoria pai" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent
+                          position="popper"
+                          className="max-h-64 z-[60] overscroll-y-contain"
+                          onWheel={(e) => { e.stopPropagation(); const el = e.currentTarget as HTMLElement; el.scrollTop += e.deltaY; e.preventDefault(); }}
+                          onWheelCapture={(e) => { e.stopPropagation(); const el = e.currentTarget as HTMLElement; el.scrollTop += e.deltaY; e.preventDefault(); }}
+                        >
                           <SelectGroup>
-                            <SelectItem value={"0"}>Sem categoria pai</SelectItem>
+                            <SelectItem value={"0"}>Nenhuma</SelectItem>
                             {isLoadingCategories ? (
                               <SelectItem value={"loading"} disabled>Carregando...</SelectItem>
                             ) : (

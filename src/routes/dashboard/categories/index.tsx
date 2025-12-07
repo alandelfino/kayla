@@ -6,7 +6,7 @@ import { NewCategorySheet } from './-components/new-category'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
-import { Edit, Funnel, RefreshCcw, Trash, List, ChevronDown, FileIcon } from 'lucide-react'
+import { Edit, RefreshCcw, Trash, List, RefreshCw } from 'lucide-react'
 import { EditCategorySheet } from './-components/edit-category'
 import { useEffect, useMemo, useState } from 'react'
 import { DeleteCategory } from './-components/delete-category'
@@ -84,7 +84,7 @@ function RouteComponent() {
     setSelectedCategories((prev) => (prev.includes(id) ? [] : [id]))
   }
 
-  const indent = 18
+  const indent = 22
 
   const flattenedCategories: FlatCategory[] = useMemo(() => {
     // Se houver nested children, usar DFS direta
@@ -159,8 +159,8 @@ function RouteComponent() {
           />
         </div>
       ),
-      headerClassName: 'w-[60px] border-r',
-      className: 'font-medium border-r !px-4'
+      headerClassName: 'w-[60px] border-r !px-2',
+      className: 'font-medium border-r !p-0 !px-2'
     },
     {
       id: 'name',
@@ -184,18 +184,22 @@ function RouteComponent() {
               {guides}
               <div style={{ paddingLeft: `${row.depth * indent}px` }} className={hasChildren ? 'font-semibold flex items-center gap-2' : 'flex items-center gap-2'}>
                 {hasChildren ? (
-                  <ChevronDown className='h-4 w-4 text-muted-foreground' />
+                  <>
+                    <span>{row.category.name ?? row.category.nome ?? 'Categoria'}</span>
+                  </>
                 ) : (
-                  <FileIcon className='h-4 w-4 text-muted-foreground' />
+                  <>
+                    <span className='text-neutral-700'>{row.category.name ?? row.category.nome ?? 'Categoria'}</span>
+                  </>
                 )}
-                <span>{row.category.name ?? row.category.nome ?? 'Categoria'}</span>
+
               </div>
             </div>
           )
         })()
       ),
-      headerClassName: 'border-r px-4',
-      className: 'border-r !px-4'
+      headerClassName: 'border-r !px-3',
+      className: 'border-r !p-0 !px-3'
     },
   ]
 
@@ -208,28 +212,21 @@ function RouteComponent() {
       <div className='flex flex-col w-full h-full flex-1 overflow-hidden'>
 
         {/* Actions */}
-        <div className='border-b flex w-full items-center p-2 gap-4'>
-
-          {/* Filters */}
-          <div className='flex items-center gap-2 flex-1'>
-            <Button variant={'outline'}>
-              <Funnel /> Filtros
-            </Button>
-          </div>
+        <div className='border-b flex w-full items-center p-2 gap-4 justify-end'>
 
           <div className='flex items-center gap-2'>
-            <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelectedCategories([]); refetch() }}>
+            <Button variant={'ghost'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => { setSelectedCategories([]); refetch() }}>
               {
                 (isLoading || isRefetching)
-                  ? <><RefreshCcw className='animate-spin' /> Atualizando...</>
-                  : <><RefreshCcw /> Atualizar</>
+                  ? <><RefreshCw className='animate-spin' /> Atualizando...</>
+                  : <><RefreshCw /> Atualizar</>
               }
             </Button>
 
             {selectedCategories.length === 1 ? (
               <DeleteCategory categoryId={selectedCategories[0]} />
             ) : (
-              <Button variant={'outline'} disabled>
+              <Button variant={'outline'} disabled size={'sm'}>
                 <Trash /> Excluir
               </Button>
             )}
@@ -237,7 +234,7 @@ function RouteComponent() {
             {selectedCategories.length === 1 ? (
               <EditCategorySheet categoryId={selectedCategories[0]} categories={categories} />
             ) : (
-              <Button variant={'outline'} disabled>
+              <Button variant={'outline'} disabled size={'sm'}>
                 <Edit /> Editar
               </Button>
             )}
@@ -252,6 +249,7 @@ function RouteComponent() {
           columns={columns}
           data={flattenedCategories}
           loading={isLoading || isRefetching}
+          rowClassName='!h-10'
           page={currentPage}
           perPage={perPage}
           totalItems={flattenedCategories.length}

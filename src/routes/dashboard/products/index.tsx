@@ -116,11 +116,11 @@ function RouteComponent() {
       headerClassName: 'w-[60px] min-w-[60px] border-r',
       className: 'w-[60px] min-w-[60px] font-medium border-r p-2!'
     },
-    { id: 'sku', header: 'SKU', width: '160px', cell: (p) => p.sku ?? '—', headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
-    { id: 'name', header: 'Nome', width: '280px', cell: (p) => p.name ?? '—', headerClassName: 'w-[280px] min-w-[280px] border-r', className: 'w-[280px] min-w-[280px] p-2!' },
-    { id: 'type', header: 'Tipo', width: '180px', cell: (p) => (p.type === 'with_derivations' ? 'Com variações' : 'Simples'), headerClassName: 'w-[180px] min-w-[180px] border-r', className: 'w-[180px] min-w-[180px] p-2!' },
+    { id: 'sku', header: 'SKU', width: '160px', cell: (p) => (<span className='block truncate' title={p.sku ?? '—'}>{p.sku ?? '—'}</span>), headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2! min-w-0' },
+    { id: 'name', header: 'Nome', width: '280px', cell: (p) => (<span className='block truncate' title={p.name ?? '—'}>{p.name ?? '—'}</span>), headerClassName: 'w-[280px] min-w-[280px] border-r', className: 'w-[280px] min-w-[280px] p-2! min-w-0' },
+    { id: 'type', header: 'Tipo', width: '180px', cell: (p) => (<span className='block truncate' title={p.type === 'with_derivations' ? 'Com variações' : 'Simples'}>{p.type === 'with_derivations' ? 'Com variações' : 'Simples'}</span>), headerClassName: 'w-[180px] min-w-[180px] border-r', className: 'w-[180px] min-w-[180px] p-2! min-w-0' },
     
-    { id: 'managed_inventory', header: 'Gerenciar estoque', width: '160px', cell: (p) => p.managed_inventory ? 'Sim' : 'Não', headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2!' },
+    { id: 'managed_inventory', header: 'Gerenciar estoque', width: '160px', cell: (p) => (<span className='block truncate' title={p.managed_inventory ? 'Sim' : 'Não'}>{p.managed_inventory ? 'Sim' : 'Não'}</span>), headerClassName: 'w-[160px] min-w-[160px] border-r', className: 'w-[160px] min-w-[160px] p-2! min-w-0' },
     { id: 'active', header: 'Status', width: '120px', cell: (p) => {
       const active = p.active === true
       return (
@@ -196,6 +196,7 @@ function RouteComponent() {
           columns={columns}
           data={items}
           loading={isLoading || isRefetching}
+          rowClassName='h-9'
           page={currentPage}
           perPage={perPage}
           totalItems={totalItems}

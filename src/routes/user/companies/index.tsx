@@ -1,17 +1,21 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { privateInstance, auth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Loader2, Building2, Trash, LogIn } from 'lucide-react'
+import { Loader2, Building2, Trash, LogIn, MoreVertical } from 'lucide-react'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { getAvatarAbbrev } from '@/lib/utils'
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+//
 
 type UserCompany = {
   id: number
@@ -26,6 +30,7 @@ type UserCompany = {
   users_profile_id?: number
   image?: { url?: string | null } | null
   segment?: string | null
+  segment_description?: string | null
   website?: string | null
   country?: string | null
 }
@@ -44,6 +49,10 @@ function getSubdomain() {
 function UserCompaniesPage() {
   const navigate = useNavigate()
   const [loggingCompanyId, setLoggingCompanyId] = useState<number | null>(null)
+  const [revokeOpen, setRevokeOpen] = useState(false)
+  const [revokingCompany, setRevokingCompany] = useState<UserCompany | null>(null)
+  const [revokeConfirmText, setRevokeConfirmText] = useState('')
+  const queryClient = useQueryClient()
 
   const { data, isLoading, isError, error } = useQuery({
     refetchOnWindowFocus: false,
@@ -54,22 +63,31 @@ function UserCompaniesPage() {
       const rawItems = Array.isArray(res.data) ? res.data : (res.data?.items ?? [])
       const normalized: UserCompany[] = rawItems
         .map((it: any) => {
-          const rawId = Number(it.id)
-          const rawCompanyId = typeof it.company_id === 'number' ? it.company_id : undefined
+          const c = it?.company ?? {}
+          const rawCompanyId = typeof c?.id === 'number' ? c.id : (typeof it?.company_id === 'number' ? it.company_id : undefined)
+          const id = Number(rawCompanyId)
+          const name = String(c?.name ?? it?.name ?? '')
+          const alias = typeof c?.alias === 'string' ? c.alias : (typeof it?.alias === 'string' ? it.alias : null)
+          const imageUrl = c?.image?.url
+          const segmentName = typeof c?.segment?.name === 'string' ? c.segment.name : (typeof c?.segment === 'string' ? c.segment : null)
+          const segmentDescription = typeof c?.segment?.description === 'string' ? c.segment.description : null
+          const website = typeof c?.website === 'string' ? c.website : (typeof it?.website === 'string' ? it.website : null)
+          const active = typeof it?.active === 'boolean' ? it.active : (typeof c?.active === 'boolean' ? c.active : undefined)
           return {
-            id: Number.isFinite(rawId) ? rawId : (rawCompanyId ?? rawId),
-            company_id: rawCompanyId,
-            created_at: Number(it.created_at) || Date.now(),
-            user_id: typeof it.user_id === 'number' ? it.user_id : null,
-            name: String(it.name ?? ''),
-            alias: typeof it.alias === 'string' ? it.alias : null,
-            is_me: Boolean(it.is_me),
-            active: typeof it.active === 'boolean' ? it.active : undefined,
-            users_profile_id: typeof it.users_profile_id === 'number' ? it.users_profile_id : undefined,
-            image: (it?.image && typeof it.image?.url === 'string') ? { url: it.image.url } : null,
-            segment: typeof it.segment === 'string' ? it.segment : null,
-            website: typeof it.website === 'string' ? it.website : null,
-            country: typeof it.country === 'string' ? it.country : null,
+            id: Number.isFinite(id) ? id : undefined as any,
+            company_id: Number.isFinite(id) ? id : undefined,
+            created_at: Number(c?.created_at) || Date.now(),
+            user_id: typeof it?.user_id === 'number' ? it.user_id : null,
+            name,
+            alias,
+            is_me: Boolean(it?.is_me),
+            active,
+            users_profile_id: typeof it?.users_profile_id === 'number' ? it.users_profile_id : undefined,
+            image: (imageUrl && typeof imageUrl === 'string') ? { url: imageUrl } : null,
+            segment: segmentName,
+            segment_description: segmentDescription,
+            website,
+            country: typeof it?.country === 'string' ? it.country : null,
           }
         })
         .filter((uc: UserCompany) => Number.isFinite(uc.id) && !!uc.name)
@@ -118,6 +136,24 @@ function UserCompaniesPage() {
     }
   }
 
+  const { isPending: isRevoking, mutateAsync: revokeAccess } = useMutation({
+    mutationFn: async () => {
+      const companyId = revokingCompany?.company_id ?? revokingCompany?.id
+      const res = await privateInstance.post('https://server.directacrm.com.br/api:eA5lqIuH/auth/remove-access', { company_id: companyId })
+      return res.data
+    },
+    onSuccess: () => {
+      toast.success('Acesso revogado com sucesso')
+      setRevokeOpen(false)
+      setRevokingCompany(null)
+      setRevokeConfirmText('')
+      queryClient.invalidateQueries({ queryKey: ['auth', 'companies'] })
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message ?? 'Falha ao revogar acesso')
+    }
+  })
+
   return (
     <div className='mx-auto p-6'>
 
@@ -149,63 +185,50 @@ function UserCompaniesPage() {
         {isError && (<div className='text-destructive'>Não foi possível carregar as empresas. Verifique sua autenticação.</div>)}
 
         {!isLoading && !isError && (
-          <Accordion type='single' collapsible className='w-full border rounded-lg'>
+          <div className='space-y-3'>
             {(data ?? []).map((uc) => (
-              <AccordionItem key={uc.id} value={`company-${uc.id}`} className='px-4'>
-                <AccordionTrigger className='hover:no-underline'>
-                  <div className='flex items-center gap-3 group'>
-                    <Avatar className='h-12 w-12 rounded-md border p-1'>
-                      <AvatarImage src={uc.image?.url ?? undefined} alt={uc.name} />
-                      <AvatarFallback className='rounded-md text-[10px] leading-none font-semibold'>
-                        {getAvatarAbbrev(uc.name || 'Empresa')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className='font-medium leading-none text-lg'>{uc.name}</span>
-                    {uc.is_me ? (
-                      <Badge variant={'default'} className='text-xs bg-blue-50 text-blue-500'>proprietário</Badge>
-                    ) : null}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className='flex flex-col gap-4'>
-                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
-                      <div className='flex items-center gap-2'>
-                        <span className='text-xs text-muted-foreground'>Acesso</span>
-                        {uc.alias ? <Badge variant={'secondary'}>{uc.alias}</Badge> : <span className='text-xs text-muted-foreground'>—</span>}
+              <Card key={uc.id}>
+
+                <CardContent className='p-4 relative'>
+                  <div className='grid grid-cols-1 sm:grid-cols-[1fr_220px] gap-4 items-stretch'>
+                    <div className='flex flex-col gap-3'>
+                      <div className='flex items-center gap-3'>
+                        <Avatar className='h-12 w-12 rounded-md border p-1'>
+                          <AvatarImage src={uc.image?.url ?? undefined} alt={uc.name} />
+                          <AvatarFallback className='rounded-md text-[10px] leading-none font-semibold'>
+                            {getAvatarAbbrev(uc.name || 'Empresa')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className='flex items-center gap-2'>
+                          <CardTitle className='m-0 text-lg font-medium leading-none'>{uc.name}</CardTitle>
+                          {uc.is_me ? (
+                            <Badge variant={'default'} className='text-xs bg-blue-50 text-blue-500'>proprietário</Badge>
+                          ) : null}
+                        </div>
                       </div>
-                      <div className='flex items-center gap-2'>
-                        <span className='text-xs text-muted-foreground'>Segmento</span>
-                        <span className='text-sm'>{uc.segment ?? '—'}</span>
-                      </div>
-                      <div className='flex items-center gap-2'>
-                        <span className='text-xs text-muted-foreground'>Website</span>
-                        {uc.website ? (
-                          <a href={uc.website} target='_blank' rel='noreferrer' className='text-sm text-primary hover:underline'>
-                            {uc.website}
-                          </a>
-                        ) : (
-                          <span className='text-sm'>—</span>
-                        )}
-                      </div>
-                      <div className='flex items-center gap-2'>
-                        <span className='text-xs text-muted-foreground'>País</span>
-                        <span className='text-sm'>{uc.country ?? '—'}</span>
+                      <div className='gap-x-3 gap-y-2 items-start'>
+                        <div className='flex flex-col'>
+                          <span className='text-sm font-medium'>{uc.segment ?? '—'}</span>
+                          {uc.segment_description ? (
+                            <span className='text-xs text-muted-foreground'>{uc.segment_description}</span>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
-                    <div className='flex w-full gap-4'>
-                      <Button variant={'destructive'} className='h-9 rounded-lg px-5 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600' onClick={() => enterCompany(uc)} disabled={loggingCompanyId === (uc.company_id ?? uc.id)}>
-                        {loggingCompanyId === uc.id ? (
-                          <>
-                            <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                            Removendo...
-                          </>
-                        ) : (
-                          <>
-                            <Trash className='ml-1 h-4 w-4' />
-                            Remover Acesso
-                          </>
-                        )}
-                      </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild className='absolute top-2 right-2'>
+                        <Button variant={'ghost'} size={'icon'} className=' w-7 h-7 rounded-md'>
+                          <MoreVertical className='h-4 w-4' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end' className='w-44'>
+                        <DropdownMenuItem onClick={() => { setRevokingCompany(uc); setRevokeOpen(true) }} className='text-red-600 focus:text-red-600'>
+                          <Trash className='mr-2 h-4 w-4' />
+                          Revogar Acesso
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <div className='flex items-center justify-center'>
                       <Button variant={'default'} className='h-9 rounded-lg px-5' onClick={() => enterCompany(uc)} disabled={loggingCompanyId === (uc.company_id ?? uc.id)}>
                         {loggingCompanyId === uc.id ? (
                           <>
@@ -220,9 +243,28 @@ function UserCompaniesPage() {
                       </Button>
                     </div>
                   </div>
-                </AccordionContent>
-              </AccordionItem>
+                </CardContent>
+              </Card>
             ))}
+            <Dialog open={revokeOpen} onOpenChange={(o) => { setRevokeOpen(o); if (!o) { setRevokingCompany(null); setRevokeConfirmText('') } }}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Revogar acesso</DialogTitle>
+                  <DialogDescription>Deseja revogar seu acesso à empresa {revokingCompany?.name}?</DialogDescription>
+                </DialogHeader>
+                <div className='space-y-2'>
+                  <Label htmlFor='revoke-confirm'>Digite "revogar" para confirmar</Label>
+                  <Input id='revoke-confirm' value={revokeConfirmText} onChange={(e) => setRevokeConfirmText(e.target.value)} placeholder='revogar' aria-invalid={revokeConfirmText.length > 0 && revokeConfirmText.trim().toLowerCase() !== 'revogar'} />
+                </div>
+                <DialogFooter>
+                  <Button variant={'outline'} onClick={() => setRevokeOpen(false)}>Cancelar</Button>
+                  <Button variant={'destructive'} onClick={() => revokeAccess()} disabled={isRevoking || revokeConfirmText.trim().toLowerCase() !== 'revogar'}>
+                    {isRevoking ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null}
+                    {isRevoking ? 'Revogando...' : 'Confirmar revogação'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
             {(!data || data.length === 0) && (
               <Empty>
                 <EmptyHeader>
@@ -237,7 +279,7 @@ function UserCompaniesPage() {
                 </EmptyContent>
               </Empty>
             )}
-          </Accordion>
+          </div>
         )}
       </div>
     </div>

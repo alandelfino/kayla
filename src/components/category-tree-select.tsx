@@ -143,7 +143,11 @@ export function CategoryTreeSelect({ value, onChange, disabled, items, rootChild
         })}
       </TagsTrigger>
       <TagsContent align='start' sideOffset={8}>
-        <div className='max-h-60 overflow-auto pr-1 p-4'>
+        <div
+          className='max-h-60 overflow-auto pr-1 p-4 overscroll-y-contain'
+          onWheel={(e) => { e.stopPropagation(); const el = e.currentTarget as HTMLElement; el.scrollTop += e.deltaY; e.preventDefault(); }}
+          onWheelCapture={(e) => { e.stopPropagation(); const el = e.currentTarget as HTMLElement; el.scrollTop += e.deltaY; e.preventDefault(); }}
+        >
           {renderNodes(rootChildren, 0)}
         </div>
       </TagsContent>

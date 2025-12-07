@@ -477,7 +477,12 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
                               <SelectTrigger className='w-full' aria-label='Tipo do produto'>
                                 <SelectValue placeholder='Selecione o tipo' />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent
+                                position="popper"
+                                className="max-h-64 z-[60] overscroll-y-contain"
+                                onWheel={(e) => { e.stopPropagation(); const el = e.currentTarget as HTMLElement; el.scrollTop += e.deltaY; e.preventDefault(); }}
+                                onWheelCapture={(e) => { e.stopPropagation(); const el = e.currentTarget as HTMLElement; el.scrollTop += e.deltaY; e.preventDefault(); }}
+                              >
                                 <SelectGroup>
                                   <SelectItem value='simple'>Simples</SelectItem>
                                   <SelectItem value='with_derivations'>Com variações</SelectItem>
@@ -527,7 +532,12 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
                               <SelectTrigger className='w-full'>
                                 <SelectValue placeholder={isUnitsLoading ? 'Carregando unidades...' : 'Selecione a unidade'} />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent
+                                position="popper"
+                                className="max-h-64 z-[60] overscroll-y-contain"
+                                onWheel={(e) => { e.stopPropagation(); const el = e.currentTarget as HTMLElement; el.scrollTop += e.deltaY; e.preventDefault(); }}
+                                onWheelCapture={(e) => { e.stopPropagation(); const el = e.currentTarget as HTMLElement; el.scrollTop += e.deltaY; e.preventDefault(); }}
+                              >
                                 <SelectGroup>
                                   {Array.isArray((unitsData as any)?.items)
                                     ? (unitsData as any).items.map((u: any) => (
@@ -554,7 +564,12 @@ export function EditProductSheet({ productId, onSaved }: { productId: number, on
                               <SelectTrigger className='w-full'>
                                 <SelectValue placeholder={isBrandsLoading ? 'Carregando marcas...' : 'Selecione a marca'} />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent
+                                position="popper"
+                                className="max-h-64 z-[60] overscroll-y-contain"
+                                onWheel={(e) => { e.stopPropagation(); const el = e.currentTarget as HTMLElement; el.scrollTop += e.deltaY; e.preventDefault(); }}
+                                onWheelCapture={(e) => { e.stopPropagation(); const el = e.currentTarget as HTMLElement; el.scrollTop += e.deltaY; e.preventDefault(); }}
+                              >
                                 <SelectGroup>
                                   {Array.isArray((brandsData as any)?.items)
                                     ? (brandsData as any).items.map((b: any) => (
