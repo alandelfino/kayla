@@ -28,8 +28,8 @@ export function DeleteDerivation({ derivationId, onDeleted }: { derivationId: nu
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size={'sm'} variant={'ghost'}>
-          <Trash /> Excluir
+        <Button size={'sm'} variant={'outline'}>
+          <Trash className="size-[0.85rem]" /> Excluir
         </Button>
       </DialogTrigger>
       <DialogContent>

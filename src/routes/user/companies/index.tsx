@@ -161,7 +161,7 @@ function UserCompaniesPage() {
         <div className='flex flex-col gap-2'>
           <div className='flex flex-col text-xl'>
             {(() => { const sub = getSubdomain(); let name = 'Usuário'; try { const raw = localStorage.getItem(`${sub}-directa-user`); const u = raw ? JSON.parse(raw) : null; name = u?.name?.split(' ')[0] || name } catch { } return (<span className='text-md font-medium'>Olá {name},</span>) })()}
-            <span className='text-sm text-muted-foreground'>Você tem {data?.length ?? 0} contas disponíveis, qual conta você deseja acessar?</span>
+            <span className='text-sm text-muted-foreground'>Você tem {data?.length ?? 0} {data?.length === 1 ? 'conta disponível para acesso.' : 'contas disponíveis, qual deseja acessar?'}</span>
           </div>
         </div>
 

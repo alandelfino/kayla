@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
-import { Edit, Funnel, GitFork, RefreshCcw, Trash, Type as TypeIcon, Palette, Image as ImageIcon, List, ArrowUpRight } from 'lucide-react'
+import { Edit, Funnel, GitFork, RefreshCcw, Trash, Type as TypeIcon, Palette, Image as ImageIcon, List, ArrowUpRight, RefreshCw } from 'lucide-react'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { NewDerivationSheet } from './-components/new-derivation'
 import { EditDerivationSheet } from './-components/edit-derivation'
@@ -177,8 +177,8 @@ function RouteComponent() {
 
           {/* Filters */}
           <div className='flex items-center gap-2 flex-1'>
-            <Button variant={'outline'}>
-              <Funnel /> Filtros
+            <Button variant={'outline'} size="sm">
+              <Funnel className="size-[0.85rem]" /> Filtros
             </Button>
           </div>
 
@@ -186,32 +186,32 @@ function RouteComponent() {
             <Button variant={'ghost'} disabled={isLoading || isRefetching} onClick={() => { setSelectedDerivations([]); refetch() }}>
               {
                 (isLoading || isRefetching)
-                  ? <><RefreshCcw className='animate-spin' /> Atualizando...</>
-                  : <><RefreshCcw /> Atualizar</>
+                  ? <><RefreshCw className='animate-spin size-[0.85rem]' /> Atualizando...</>
+                  : <><RefreshCw className="size-[0.85rem]" /> Atualizar</>
               }
             </Button>
 
             {selectedDerivations.length === 1 ? (
               <DeleteDerivation derivationId={selectedDerivations[0]} onDeleted={() => { setSelectedDerivations([]); refetch() }} />
             ) : (
-              <Button variant={'ghost'} disabled>
-                <Trash /> Excluir
+              <Button variant={'outline'} size="sm" disabled>
+                <Trash className="size-[0.85rem]" /> Excluir
               </Button>
             )}
 
             {selectedDerivations.length === 1 && selectedDerivationType ? (
               <DerivationItemsSheet derivationId={selectedDerivations[0]} derivationType={selectedDerivationType} />
             ) : (
-              <Button variant={'ghost'} disabled>
-                <List /> Items
+              <Button variant={'outline'} size="sm" disabled>
+                <List className="size-[0.85rem]" /> Items
               </Button>
             )}
 
             {selectedDerivations.length === 1 ? (
               <EditDerivationSheet derivationId={selectedDerivations[0]} />
             ) : (
-              <Button variant={'ghost'} disabled>
-                <Edit /> Editar
+              <Button variant={'outline'} size="sm" disabled>
+                <Edit className="size-[0.85rem]" /> Editar
               </Button>
             )}
             <NewDerivationSheet onCreated={() => { setSelectedDerivations([]); refetch() }} />

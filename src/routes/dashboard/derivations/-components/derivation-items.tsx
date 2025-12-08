@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, SheetFooter, SheetClose } from '@/components/ui/sheet'
-import { GripVertical, List } from 'lucide-react'
-import { Skeleton } from '@/components/ui/skeleton'
+import { List } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { DataTable, type ColumnDef } from '@/components/data-table'
 import { DerivationItemCreateDialog } from './derivation-item-create-dialog'
 import { DerivationItemEditDialog } from './derivation-item-edit-dialog'
 import { DerivationItemDeleteDialog } from './derivation-item-delete-dialog'
@@ -20,10 +21,7 @@ type DerivationItem = {
 export function DerivationItemsSheet({ derivationId, derivationType }: { derivationId: number, derivationType: 'text' | 'color' | 'image' }) {
   const [open, setOpen] = useState(false)
   const [itemsLocal, setItemsLocal] = useState<DerivationItem[]>([])
-  const [draggingId, setDraggingId] = useState<number | null>(null)
-  const [hoveredId, setHoveredId] = useState<number | null>(null)
-  const [dropPosition, setDropPosition] = useState<'before' | 'after' | null>(null)
-  const draggedItem = useMemo(() => itemsLocal.find((i) => i.id === draggingId) ?? null, [itemsLocal, draggingId])
+  const [selectedId, setSelectedId] = useState<number | null>(null)
   // Guarda a ordenação anterior para reverter em caso de erro ao salvar
   const prevOrderRef = useRef<DerivationItem[]>([])
 
@@ -57,37 +55,60 @@ export function DerivationItemsSheet({ derivationId, derivationType }: { derivat
     setItemsLocal(items)
   }, [items])
 
-  // Drag and drop
-  const handleDragStart = (id: number) => { if (savingOrder) return; setDraggingId(id) }
-  const handleDragOver = (e: React.DragEvent, targetId: number) => {
-    if (savingOrder) return
-    e.preventDefault()
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const isBefore = e.clientY < rect.top + rect.height / 2
-    setDropPosition(isBefore ? 'before' : 'after')
-    if (hoveredId !== targetId) setHoveredId(targetId)
-  }
-  const handleDragEnter = (targetId: number) => { if (savingOrder) return; setHoveredId(targetId) }
-  const handleDragLeave = (targetId: number) => { if (savingOrder) return; if (hoveredId === targetId) setHoveredId(null) }
-  const handleDrop = (targetId: number) => {
-    if (savingOrder) return
-    if (!draggingId || draggingId === targetId) return
-    const sourceIndex = itemsLocal.findIndex((i) => i.id === draggingId)
-    const targetIndex = itemsLocal.findIndex((i) => i.id === targetId)
-    if (sourceIndex < 0 || targetIndex < 0) return
-    const next = [...itemsLocal]
-    const [moved] = next.splice(sourceIndex, 1)
-    const insertIndex = dropPosition === 'after' ? targetIndex + 1 : targetIndex
-    next.splice(insertIndex, 0, moved)
-    const reordered = next.map((it, idx) => ({ ...it, order: idx + 1 }))
-    // snapshot da ordenação anterior
-    prevOrderRef.current = itemsLocal
-    setItemsLocal(reordered)
-    reorderMutation(reordered)
-    setHoveredId(null)
-    setDropPosition(null)
-    setDraggingId(null)
-  }
+  const selectedItem = useMemo(() => itemsLocal.find((i) => i.id === selectedId) ?? null, [itemsLocal, selectedId])
+
+  const columns: ColumnDef<DerivationItem>[] = [
+    {
+      id: 'select',
+      width: '60px',
+      header: (
+        <div className='flex items-center justify-center text-xs text-muted-foreground'>Sel.</div>
+      ),
+      cell: (i) => (
+        <div className='flex items-center justify-center'>
+          <Checkbox
+            checked={selectedId === i.id}
+            onCheckedChange={() => setSelectedId(selectedId === i.id ? null : i.id)}
+          />
+        </div>
+      ),
+      headerClassName: 'w-[60px] border-r',
+      className: 'font-medium border-r',
+    },
+    {
+      id: 'name',
+      header: 'Nome',
+      cell: (i) => (
+        <span className='block truncate min-w-0' title={i.name ?? ''}>{i.name ?? ''}</span>
+      ),
+      width: '240px',
+      headerClassName: 'w-[240px] min-w-[240px] border-r',
+      className: 'w-[240px] min-w-[240px] !px-4',
+    },
+    {
+      id: 'value',
+      header: 'Valor',
+      cell: (i) => (
+        derivationType === 'color' ? (
+          <div className='flex items-center gap-2'>
+            <div className='rounded-sm border h-[20px] w-[20px]' style={{ backgroundColor: /^#(?:[0-9a-fA-F]{3}){1,2}$/.test(i.value ?? '') ? i.value : '#000000' }} />
+            <span className='truncate text-sm text-muted-foreground' title={i.value}>{i.value}</span>
+          </div>
+        ) : derivationType === 'image' ? (
+          <div className='flex items-center gap-2'>
+            <div className='rounded-sm border overflow-hidden h-[24px] w-[24px]'>
+              <img src={i.value} alt='Imagem do item' className='h-full w-full object-cover' />
+            </div>
+            <span className='truncate text-sm text-muted-foreground' title={i.value}>{i.value}</span>
+          </div>
+        ) : (
+          <span className='truncate text-sm text-muted-foreground' title={i.value}>{i.value}</span>
+        )
+      ),
+      headerClassName: 'border-r',
+      className: '!px-4',
+    },
+  ]
 
   // Create item dialog
   // Create dialog agora é um componente isolado que gerencia seu próprio estado e mutation
@@ -126,8 +147,8 @@ export function DerivationItemsSheet({ derivationId, derivationType }: { derivat
   return (
     <Sheet open={open} onOpenChange={(o) => { setOpen(o); if (o) refetch() }}>
       <SheetTrigger asChild>
-        <Button size={'sm'} variant={'ghost'}>
-          <List /> Items
+        <Button size={'sm'} variant={'outline'}>
+          <List className="size-[0.85rem]" /> Items
         </Button>
       </SheetTrigger>
       {/* Sheet com largura ajustada e layout em coluna ocupando toda a altura */}
@@ -140,118 +161,38 @@ export function DerivationItemsSheet({ derivationId, derivationType }: { derivat
         {/* Conteúdo principal ocupando todo o espaço disponível */}
         <div className='flex flex-col flex-1 overflow-hidden'>
           {/* Actions */}
-          <div className='flex items-center gap-2 px-4'>
+          <div className='flex items-center gap-2 px-4 justify-end'>
+            {selectedItem ? (
+              <>
+                <DerivationItemEditDialog derivationId={derivationId} derivationType={derivationType} item={selectedItem} onUpdated={() => { refetch(); }} />
+                <DerivationItemDeleteDialog itemId={selectedItem.id} onDeleted={() => { refetch(); }} />
+              </>
+            ) : (
+              <>
+                <Button size={'sm'} variant={'outline'} disabled>Editar</Button>
+                <Button size={'sm'} variant={'outline'} disabled>Excluir</Button>
+              </>
+            )}
             <DerivationItemCreateDialog derivationId={derivationId} derivationType={derivationType} itemsCount={itemsLocal.length} onCreated={() => refetch()} />
           </div>
 
-          {/* Listagem simples com drag-and-drop */}
-          <div className='my-4 mb-0 flex-1 flex flex-col overflow-hidden border-t'>
-            <div className='px-4 py-2 text-xs text-muted-foreground sticky top-0 bg-background border-b z-10'>
-              Arraste os itens para reordenar {savingOrder ? '(salvando...)' : ''}
-            </div>
-            <ul className='flex-1 overflow-auto px-4 py-2 space-y-2'>
-              {(isLoading || isRefetching) ? (
-                Array.from({ length: 6 }).map((_, idx) => (
-                  <li key={`sk-${idx}`} className='rounded-md border bg-background shadow-sm px-3 py-2 flex items-center gap-3'>
-                    <Skeleton className='h-4 w-4' />
-                    <Skeleton className='h-5 w-12' />
-                    <Skeleton className='h-5 w-24' />
-                    {(derivationType === 'color' || derivationType === 'image') && (
-                      <Skeleton className='h-[30px] w-[30px] rounded-sm' />
-                    )}
-                    <Skeleton className='h-5 w-full flex-1' />
-                    <div className='flex items-center gap-2'>
-                      <Skeleton className='h-8 w-16' />
-                      <Skeleton className='h-8 w-16' />
-                    </div>
-                  </li>
-                ))
-              ) : (
-                itemsLocal.length === 0 ? (
-                  <li className='p-4 text-center text-sm text-muted-foreground'>Nenhum item encontrado</li>
-                ) : (
-                  itemsLocal.map((i) => (
-                  <li
-                    key={i.id}
-                    draggable={!savingOrder}
-                    onDragStart={() => handleDragStart(i.id)}
-                    onDragOver={(e) => handleDragOver(e, i.id)}
-                    onDragEnter={() => handleDragEnter(i.id)}
-                    onDragLeave={() => handleDragLeave(i.id)}
-                    onDragEnd={() => setDraggingId(null)}
-                    onDrop={() => handleDrop(i.id)}
-                    className={`group relative rounded-md border transition-all duration-200 ease-out px-3 py-2 flex items-center gap-3 ${draggingId === i.id ? 'border-2 border-dashed border-muted-foreground/40 bg-transparent shadow-none ring-0 opacity-90' : 'bg-background shadow-sm hover:shadow-md'} ${hoveredId === i.id && draggingId !== i.id ? 'ring-1 ring-primary/30 bg-primary/5' : ''}`}
-                  >
-                    {/* Indicador visual da posição de drop */}
-                    {hoveredId === i.id && draggingId !== i.id && (
-                      <div className={`absolute left-0 right-0 h-0.5 bg-primary/60 ${dropPosition === 'after' ? 'bottom-0' : 'top-0'}`} />
-                    )}
-                    {/* Preview fantasma do item sendo arrastado */}
-                    {hoveredId === i.id && draggingId !== null && draggingId !== i.id && draggedItem && (
-                      <div className={`absolute left-2 right-2 ${dropPosition === 'after' ? 'bottom-[-10px]' : 'top-[-10px]'} pointer-events-none`}> 
-                        <div className='rounded-md border-2 border-dashed border-muted-foreground/40 bg-background/80 backdrop-blur-[2px] shadow-sm px-3 py-2 text-xs flex items-center gap-3 opacity-85'>
-                          <GripVertical className='text-muted-foreground' />
-                          <span className='inline-flex items-center justify-center px-2 py-0.5 rounded bg-muted text-[10px] text-muted-foreground'>#{draggedItem.order}</span>
-                          <span className='truncate font-medium min-w-[80px] max-w-[180px]' title={draggedItem.name ?? ''}>{draggedItem.name ?? ''}</span>
-                          {derivationType === 'color' ? (
-                            <>
-                              <div
-                                className='rounded-sm border h-[20px] w-[20px]'
-                                style={{
-                                  backgroundColor: /^#(?:[0-9a-fA-F]{3}){1,2}$/.test(draggedItem.value ?? '') ? draggedItem.value : '#000000'
-                                }}
-                                aria-label={`Cor ${draggedItem.value}`}
-                              />
-                              <span className='truncate text-[11px] text-muted-foreground'>{draggedItem.value}</span>
-                            </>
-                          ) : derivationType === 'image' ? (
-                            <>
-                              <div className='rounded-sm border overflow-hidden h-[20px] w-[20px]'>
-                                <img src={draggedItem.value} alt='Imagem do item' className='h-full w-full object-cover' />
-                              </div>
-                              <span className='truncate text-[11px] text-muted-foreground'>{draggedItem.value}</span>
-                            </>
-                          ) : (
-                            <span className='truncate text-[11px] text-muted-foreground'>{draggedItem.value}</span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    <GripVertical className={`text-muted-foreground ${savingOrder ? 'cursor-not-allowed opacity-50' : (draggingId ? 'cursor-grabbing' : 'cursor-grab')}`} />
-                    <span className='inline-flex items-center justify-center px-2 py-0.5 rounded bg-muted text-xs text-muted-foreground'>#{i.order}</span>
-                    {/* Nome do item */}
-                    <span className='truncate font-medium min-w-[120px] max-w-[240px]' title={i.name ?? ''}>{i.name ?? ''}</span>
-
-                    {derivationType === 'color' ? (
-                      <>
-                        <div
-                          className='rounded-sm border h-[30px] w-[30px]'
-                          style={{
-                            backgroundColor: /^#(?:[0-9a-fA-F]{3}){1,2}$/.test(i.value ?? '') ? i.value : '#000000'
-                          }}
-                          aria-label={`Cor ${i.value}`}
-                        />
-                        <span className='flex-1 truncate text-sm text-muted-foreground'>{i.value}</span>
-                      </>
-                    ) : derivationType === 'image' ? (
-                      <>
-                        <div className='rounded-sm border overflow-hidden h-[30px] w-[30px]'>
-                          <img src={i.value} alt='Imagem do item' className='h-full w-full object-cover' />
-                        </div>
-                        <span className='flex-1 truncate text-sm text-muted-foreground'>{i.value}</span>
-                      </>
-                    ) : (
-                      <span className='flex-1 truncate text-sm text-muted-foreground'>{i.value}</span>
-                    )}
-                    <div className='flex items-center gap-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity'>
-                      <DerivationItemEditDialog derivationId={derivationId} derivationType={derivationType} item={i} onUpdated={() => refetch()} />
-                      <DerivationItemDeleteDialog itemId={i.id} onDeleted={() => refetch()} />
-                    </div>
-                  </li>
-                  ))
-                )
-              )}
-            </ul>
+          <div className='mt-2 mb-0 flex-1 flex flex-col overflow-hidden px-4'>
+            <DataTable<DerivationItem>
+              columns={columns}
+              data={itemsLocal}
+              loading={isLoading || isRefetching}
+              hideFooter={true}
+              enableReorder={true}
+              reorderDisabled={savingOrder}
+              onRowClick={(item) => setSelectedId(item.id)}
+              rowIsSelected={(item) => item.id === selectedId}
+              onReorder={(reordered) => {
+                const next = reordered.map((it, idx) => ({ ...it, order: idx + 1 }))
+                prevOrderRef.current = itemsLocal
+                setItemsLocal(next)
+                reorderMutation(next)
+              }}
+            />
           </div>
         </div>
 

@@ -4,8 +4,6 @@ import { auth, privateInstance } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from '@/components/ui/navigation-menu'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import InfoMenu from '@/components/info-menu'
-import NotificationMenu from '@/components/notification-menu'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { User as UserIcon, Building2, Mail } from 'lucide-react'
@@ -30,7 +28,7 @@ function UserLayout() {
       const parsed = raw ? JSON.parse(raw) : null
       const avatarUrl: string | null = parsed?.image?.url ?? parsed?.avatar_url ?? null
       setUser(parsed ? { email: parsed?.email ?? '', name: parsed?.name ?? '', avatarUrl } : null)
-    } catch {}
+    } catch { }
     const handler = (evt: Event) => {
       const e = evt as CustomEvent<{ name?: string, email?: string, avatarUrl?: string | null }>
       const d = e.detail
@@ -46,7 +44,7 @@ function UserLayout() {
   }, [])
 
   async function signOut() {
-    try { await privateInstance.post('/api:eA5lqIuH/auth/logout', {}) } catch {}
+    try { await privateInstance.post('/api:eA5lqIuH/auth/logout', {}) } catch { }
     try {
       const sub = getSubdomain()
       localStorage.removeItem(`${sub}-directa-authToken`)
@@ -55,7 +53,7 @@ function UserLayout() {
       localStorage.removeItem(`${sub}-kayla-authToken`)
       localStorage.removeItem(`${sub}-kayla-user`)
       localStorage.removeItem(`${sub}-kayla-company`)
-    } catch {}
+    } catch { }
     navigate({ to: '/sign-in' })
   }
 
@@ -99,7 +97,7 @@ function UserLayout() {
             </Popover>
             <div className='flex items-center gap-6'>
               <a href='#' className='text-primary hover:text-primary/90'>
-                <img src='/directa-crm-logo.png' alt='Directa' className='h-8 w-auto' />
+                <img src='/directa-crm-logo.png' alt='Directa' className='h-7 w-auto' />
               </a>
               <NavigationMenu className='max-md:hidden'>
                 <NavigationMenuList className='gap-2'>
@@ -117,16 +115,12 @@ function UserLayout() {
             </div>
           </div>
           <div className='flex items-center gap-4'>
-            <div className='flex items-center gap-2'>
-              <InfoMenu />
-              <NotificationMenu />
-            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant='ghost' className='h-11 rounded-md flex items-center gap-2'>
                   <Avatar className='h-8 w-8 rounded-lg'>
                     <AvatarImage src={user?.avatarUrl || undefined} alt={user?.name || ''} />
-                    <AvatarFallback className='rounded-lg'>{(user?.name || '').split(' ').map(p => p[0]).join('').slice(0,2).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback className='rounded-lg'>{(user?.name || '').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className='hidden sm:grid text-left text-sm leading-tight'>
                     <span className='truncate font-medium max-w-[160px]'>{user?.name || ''}</span>

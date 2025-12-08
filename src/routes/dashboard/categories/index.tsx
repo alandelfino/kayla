@@ -215,27 +215,27 @@ function RouteComponent() {
         <div className='border-b flex w-full items-center p-2 gap-4 justify-end'>
 
           <div className='flex items-center gap-2'>
-            <Button variant={'ghost'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => { setSelectedCategories([]); refetch() }}>
+            <Button className='font-normal' variant={'ghost'} size={'sm'} disabled={isLoading || isRefetching} onClick={() => { setSelectedCategories([]); refetch() }}>
               {
                 (isLoading || isRefetching)
-                  ? <><RefreshCw className='animate-spin' /> Atualizando...</>
-                  : <><RefreshCw /> Atualizar</>
+                  ? <><RefreshCw className='animate-spin w-4 h-4' /> Atualizando...</>
+                  : <><RefreshCw className='size-[0.85rem]' /> Atualizar</>
               }
             </Button>
 
             {selectedCategories.length === 1 ? (
               <DeleteCategory categoryId={selectedCategories[0]} />
             ) : (
-              <Button variant={'outline'} disabled size={'sm'}>
-                <Trash /> Excluir
+              <Button className='font-normal' variant={'outline'} disabled size={'sm'}>
+                <Trash className='size-[0.85rem]' />Excluir
               </Button>
             )}
 
             {selectedCategories.length === 1 ? (
               <EditCategorySheet categoryId={selectedCategories[0]} categories={categories} />
             ) : (
-              <Button variant={'outline'} disabled size={'sm'}>
-                <Edit /> Editar
+              <Button className='font-normal' variant={'outline'} disabled size={'sm'}>
+                <Edit className='size-[0.85rem]' /> Editar
               </Button>
             )}
 

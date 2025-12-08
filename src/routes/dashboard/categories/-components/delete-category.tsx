@@ -40,8 +40,8 @@ export function DeleteCategory({ categoryId, disabled = false }: { categoryId: n
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={disabled || !categoryId}>
-          <Trash /> Excluir
+        <Button className="font-normal" variant="outline" size="sm" disabled={disabled || !categoryId}>
+          <Trash className="size-[0.85rem]" /> Excluir
         </Button>
       </DialogTrigger>
       <DialogContent>

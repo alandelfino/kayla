@@ -96,8 +96,8 @@ export function EditDerivationSheet({ derivationId, onUpdated }: { derivationId:
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button size={'sm'} variant={'ghost'}>
-          <Edit /> Editar
+        <Button size={'sm'} variant={'outline'}>
+          <Edit className="size-[0.85rem]" /> Editar
         </Button>
       </SheetTrigger>
       <SheetContent>

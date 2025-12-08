@@ -112,8 +112,8 @@ export function EditCategorySheet({ categoryId, categories: categoriesProp = [] 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant={'outline'} size="sm">
-          <Edit /> Editar
+        <Button className="font-normal" variant={'outline'} size="sm">
+          <Edit className="size-[0.85rem]" /> Editar
         </Button>
       </SheetTrigger>
       <SheetContent>
